@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/franka_pole.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/franka_pole.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/franka_pole.xacro" > "${PROJECT_SOURCE_DIR}/franka_pole.urdf")
+add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/franka_pole.urdf")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
