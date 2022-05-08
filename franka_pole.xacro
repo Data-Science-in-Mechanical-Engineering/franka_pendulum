@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="franka_pole">
+  <xacro:arg name="arm_id" default="panda" />
+  
+  <!-- Create a simulatable URDF -->
+  <xacro:include filename="$(find franka_description)/robots/utils.xacro" />
+  <xacro:include filename="$(find franka_description)/robots/panda_gazebo.xacro" />
+  <xacro:panda_arm arm_id="$(arg arm_id)" />
+  <xacro:hand arm_id="$(arg arm_id)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id)_link8" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint1" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint2" transmission="hardware_interface/EffortJointInterface" />
+  
+  <!-- Gazebo requires a joint to a link called "world" for statically mounted robots -->
+  <link name="world" />
+    <joint name="world_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="world" />
+    <child  link="$(arg arm_id)_link0" />
+  </joint>
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint1" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint2" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint3" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint4" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint5" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint6" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint7" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:transmission-franka-state arm_id="$(arg arm_id)" />
+  <xacro:transmission-franka-model arm_id="$(arg arm_id)" root="$(arg arm_id)_joint1" tip="$(arg arm_id)_joint8" />
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <controlPeriod>0.001</controlPeriod>
+      <robotSimType>franka_gazebo/FrankaHWSim</robotSimType>
+    </plugin>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+
+  <!-- Pendulum -->  
+  <xacro:property name="junction_mass" value="0.1" />
+  <xacro:property name="ball_mass" value="0.1" />
+  <xacro:property name="beam_mass" value="0.5" />
+  <xacro:property name="width" value="0.1" />
+  <xacro:property name="junction_height" value="0.1" />
+  <xacro:property name="junction_width" value="0.1" />
+  <xacro:property name="junction_length" value="0.1" />
+  <xacro:property name="beam_length" value="0.6" />
+  <xacro:property name="beam_radius" value="0.01" />
+  <xacro:property name="ball_radius" value="0.05" />
+
+  <!-- Connection -->   
+  <joint name="$(arg arm_id)_pole" type="fixed">
+    <origin xyz="0.02 -0.02 0.12" rpy="${pi} 0 ${-pi/4}" />
+    <parent link="$(arg arm_id)_link8" />
+    <child  link="$(arg arm_id)_pole_junction" />
+  </joint>
+  
+  <!-- Junction -->
+  <link name="$(arg arm_id)_pole_junction">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${junction_length} ${junction_width} ${junction_height}"/>
+      </geometry>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${junction_mass}"/>
+      <inertia
+      ixx="${junction_mass / 12.0 * (junction_width*junction_width + junction_height*junction_height)}" ixy="0.0" ixz="0.0"
+      iyy="${junction_mass / 12.0 * (junction_length*junction_length + junction_height*junction_height)}" iyz="0.0"
+      izz="${junction_mass / 12.0 * (junction_width*junction_width + junction_length*junction_length)}"/>
+    </inertial>
+  </link>
+  
+  <joint name="$(arg arm_id)_pole_junction_beam" type="revolute">
+    <parent link="$(arg arm_id)_pole_junction"/>
+    <child link="$(arg arm_id)_pole_beam"/>
+    <origin xyz="${junction_length/2.0} 0 ${junction_height/2.0}" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit acceleration="100000" lower="-.2" effort="0" upper=".2" velocity="10000"/>
+    <dynamics damping="0.0"/>
+  </joint>
+  
+  <!-- Beam -->
+  <link name="$(arg arm_id)_pole_beam">
+    <visual>
+      <origin xyz="0 0 ${beam_length/2.0}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="${beam_length}" radius = "${beam_radius}"/>
+      </geometry>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 ${beam_length/2.0}" rpy="0 0 0"/>
+      <mass value="${beam_mass}"/>
+      <inertia
+      ixx="${beam_mass * beam_length*beam_length / 12.0 + beam_mass * beam_radius*beam_radius / 4.0}" ixy="0.0" ixz="0.0"
+      iyy="${beam_mass * beam_length*beam_length / 12.0 + beam_mass * beam_radius*beam_radius / 4.0}" iyz="0.0"
+      izz="${beam_mass * beam_radius*beam_radius / 2.0}"/>
+    </inertial>
+  </link>
+  
+  <joint name="$(arg arm_id)_pole_beam_ball" type="fixed">
+    <parent link="$(arg arm_id)_pole_beam"/>
+    <child link="$(arg arm_id)_pole_ball"/>
+    <origin xyz="0 0 ${beam_length}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Ball -->
+  <link name="$(arg arm_id)_pole_ball">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius = "${ball_radius}"/>
+      </geometry>
+    </visual>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${ball_mass}"/>
+      <inertia
+      ixx="${2.0 * ball_mass * ball_radius*ball_radius / 5.0}" ixy="0.0" ixz="0.0"
+      iyy="${2.0 * ball_mass * ball_radius*ball_radius / 5.0}" iyz="0.0"
+      izz="${2.0 * ball_mass * ball_radius*ball_radius / 5.0}"/>
+    </inertial>
+  </link>
+</robot>
