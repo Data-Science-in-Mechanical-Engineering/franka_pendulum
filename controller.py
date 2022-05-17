@@ -15,7 +15,7 @@ from matplotlib import animation
 class FrankaState:
     #Sets data from link states, called from Controller (gazebo only)
     def link_states_callback(self, link_states):
-        effector_index = link_states.name.index('panda::panda_link7')
+        effector_index = link_states.name.index(self._controller.get_arm_id() + "::" + self._controller.get_arm_id() + "_link7")
         self._effector_x = link_states.pose[effector_index].position.x
         self._effector_y = link_states.pose[effector_index].position.y
         self._effector_z = link_states.pose[effector_index].position.z
@@ -55,7 +55,7 @@ class FrankaState:
 class PoleState:
     #Sets data from link states, called from Controller (gazebo only)
     def link_states_callback(self, link_states):
-        beam_index = link_states.name.index('panda::panda_pole_beam')
+        beam_index = link_states.name.index(self._controller.get_arm_id() + "::" + self._controller.get_arm_id() + "_upper")
         angle = -Rotation.from_quat([
         link_states.pose[beam_index].orientation.x,
         link_states.pose[beam_index].orientation.y,
@@ -197,7 +197,7 @@ class Controller:
         if self._gazebo:
             if self._type == "position":
                 desired_pose = PoseStamped()
-                desired_pose.header.frame_id = "panda_link0"
+                desired_pose.header.frame_id = self._arm_id + "_link0"
                 desired_pose.header.stamp = rospy.Time(0)
                 desired_pose.pose.orientation.x = 1
                 desired_pose.pose.orientation.y = 0
@@ -226,6 +226,10 @@ class Controller:
     def get_desired_acceleration(self):
         return self._desired_acceleration
 
+    #Gets arm id
+    def get_arm_id(self):
+        return self._arm_id
+
     #Gets control type
     def get_type(self):
         return self._type
@@ -250,6 +254,7 @@ class Controller:
         self._b = 9.875003814697266 / 4
         self._c = 7.015979766845703 / 4
         self._d = 11.86760425567627 / 4
+        self._arm_id = rospy.get_param("~arm_id")
         self._type = rospy.get_param("~controller")
         self._gazebo = Boolean(rospy.get_param("~gazebo"))
         self._desired_acceleration = 0

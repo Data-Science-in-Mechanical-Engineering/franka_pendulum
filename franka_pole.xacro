@@ -37,61 +37,63 @@
 
 
   <!-- Pendulum -->  
-  <xacro:property name="junction_mass" value="0.1" />
+  <xacro:property name="lower_mass" value="0.5" />
+  <xacro:property name="upper_mass" value="0.1" />
   <xacro:property name="ball_mass" value="0.1" />
   <xacro:property name="beam_mass" value="0.5" />
-  <xacro:property name="width" value="0.1" />
-  <xacro:property name="junction_height" value="0.1" />
-  <xacro:property name="junction_width" value="0.1" />
-  <xacro:property name="junction_length" value="0.1" />
   <xacro:property name="beam_length" value="0.6" />
   <xacro:property name="beam_radius" value="0.01" />
   <xacro:property name="ball_radius" value="0.05" />
 
   <!-- Connection -->   
-  <joint name="$(arg arm_id)_pole" type="fixed">
-    <origin xyz="0.02 -0.02 0.12" rpy="${pi} 0 ${-pi/4}" />
+  <joint name="$(arg arm_id)_link8_pole" type="fixed">
+    <origin xyz="0.05 -0.05 0.03" rpy="${pi} 0 ${pi/4}" />
     <parent link="$(arg arm_id)_link8" />
-    <child  link="$(arg arm_id)_pole_junction" />
+    <child  link="$(arg arm_id)_lower" />
   </joint>
   
-  <!-- Junction -->
-  <link name="$(arg arm_id)_pole_junction">
+  <!-- Lower bearing -->
+  <link name="$(arg arm_id)_lower">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <box size="${junction_length} ${junction_width} ${junction_height}"/>
+        <mesh filename="package://franka_pole/visual/lower_bearing.dae"/>
       </geometry>
     </visual>
 
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="${junction_mass}"/>
+      <mass value="${lower_mass}"/>
       <inertia
-      ixx="${junction_mass / 12.0 * (junction_width*junction_width + junction_height*junction_height)}" ixy="0.0" ixz="0.0"
-      iyy="${junction_mass / 12.0 * (junction_length*junction_length + junction_height*junction_height)}" iyz="0.0"
-      izz="${junction_mass / 12.0 * (junction_width*junction_width + junction_length*junction_length)}"/>
+      ixx="0.0" ixy="0.0" ixz="0.0"
+      iyy="0.0" iyz="0.0"
+      izz="0.0"/>
     </inertial>
   </link>
   
-  <joint name="$(arg arm_id)_pole_junction_beam" type="revolute">
-    <parent link="$(arg arm_id)_pole_junction"/>
-    <child link="$(arg arm_id)_pole_beam"/>
-    <origin xyz="${junction_length/2.0} 0 ${junction_height/2.0}" rpy="0 0 0"/>
-    <axis xyz="1 0 0"/>
-    <limit acceleration="100000" lower="-.2" effort="0" upper=".2" velocity="10000"/>
+  <joint name="$(arg arm_id)_lower_upper" type="revolute">
+    <parent link="$(arg arm_id)_lower"/>
+    <child link="$(arg arm_id)_upper"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit velocity="1000000" lower="-.2" effort="0" upper=".2" />
     <dynamics damping="0.0"/>
   </joint>
   
-  <!-- Beam -->
-  <link name="$(arg arm_id)_pole_beam">
+  <!-- Upper bearing and beam -->
+  <link name="$(arg arm_id)_upper">
     <visual>
-      <origin xyz="0 0 ${beam_length/2.0}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${beam_length/2.0 + 0.03}" rpy="0 0 0"/>
       <geometry>
-        <cylinder length="${beam_length}" radius = "${beam_radius}"/>
+        <cylinder length="${beam_length - 0.06}" radius = "${beam_radius}"/>
       </geometry>
     </visual>
-
+    <visual>
+      <geometry>
+        <mesh filename="package://franka_pole/visual/upper_bearing.dae"/>
+      </geometry>
+    </visual>
+    
     <inertial>
       <origin xyz="0 0 ${beam_length/2.0}" rpy="0 0 0"/>
       <mass value="${beam_mass}"/>
@@ -102,14 +104,14 @@
     </inertial>
   </link>
   
-  <joint name="$(arg arm_id)_pole_beam_ball" type="fixed">
-    <parent link="$(arg arm_id)_pole_beam"/>
-    <child link="$(arg arm_id)_pole_ball"/>
+  <joint name="$(arg arm_id)_upper_ball" type="fixed">
+    <parent link="$(arg arm_id)_upper"/>
+    <child link="$(arg arm_id)_ball"/>
     <origin xyz="0 0 ${beam_length}" rpy="0 0 0"/>
   </joint>
 
   <!-- Ball -->
-  <link name="$(arg arm_id)_pole_ball">
+  <link name="$(arg arm_id)_ball">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>

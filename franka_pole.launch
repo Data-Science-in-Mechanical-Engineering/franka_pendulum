@@ -6,7 +6,7 @@
   <arg name="headless"    default="false"    doc="Should the gazebo GUI be launched?" />
   <arg name="paused"      default="false"    doc="Should the simulation directly be stopped at 0s?" />
   <arg name="arm_id"  	  default="panda"    doc="Name of the arm" />
-  <arg name="controller"  default="position" doc="Controller type, position/velocity/" />
+  <arg name="controller"  default="position" doc="Controller type, position/velocity/torque" />
   <arg name="initial_joint_positions"
        doc="Initial joint configuration of the panda. Specify as a list of name/value pairs in form of '-J [name-of-joint] [value-in-rad]'. Default is a 90 degree bend in the elbow"
        default="-J $(arg arm_id)_joint1 0
@@ -48,25 +48,32 @@
   </group>
 
   <!-- Start controllers -->  
-  <node name="$(arg arm_id)_controller_spawner"
+  <node name="$(arg arm_id)_position_controller_spawner"
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
     args="cartesian_impedance_example_controller"
     if="$(eval arg('controller') == 'position')"
   />
-  <node name="$(arg arm_id)_controller_spawner"
+  <node name="$(arg arm_id)_force_controller_spawner"
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
     args="force_example_controller"
     if="$(eval arg('controller') == 'torque')"
   />
+  <node name="$(arg arm_id)_gripper_controller_spawner"
+    pkg="controller_manager"
+    type="spawner"
+    respawn="false" output="screen"
+    args="franka_gripper"
+  />
   
   <!-- Start custom controller -->
   <node name="controller" pkg="franka_pole" type="controller.py" required="true" output="screen" >
     <param name="controller" value="$(arg controller)" />
     <param name="gazebo" value="$(arg gazebo)" />
+    <param name="arm_id" value="$(arg arm_id)" />
   </node>
 
 </launch>
