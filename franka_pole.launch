@@ -75,5 +75,12 @@
     <param name="gazebo" value="$(arg gazebo)" />
     <param name="arm_id" value="$(arg arm_id)" />
   </node>
+      
+  <!-- Start plotter -->
+  <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen" >
+    <param name="controller" value="$(arg controller)" />
+    <param name="gazebo" value="$(arg gazebo)" />
+    <param name="arm_id" value="$(arg arm_id)" />
+  </node>
 
 </launch>

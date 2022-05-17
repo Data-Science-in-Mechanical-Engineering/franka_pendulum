@@ -51,7 +51,8 @@ add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/franka_po
 ## Generate messages in the 'msg' folder
 add_message_files(
     FILES
-    OptParams.msg
+    ControllerParameters.msg
+    DebugSample.msg
 )
 
 ## Generate services in the 'srv' folder

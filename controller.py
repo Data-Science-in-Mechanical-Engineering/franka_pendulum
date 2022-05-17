@@ -1,15 +1,9 @@
 #!/usr/bin/python3
-from xmlrpc.client import Boolean
 import rospy
-import math
-import numpy as np
 from scipy.spatial.transform import Rotation
-from std_msgs.msg import Float64
 from gazebo_msgs.msg import LinkStates
 from geometry_msgs.msg import PoseStamped
-from franka_pole.msg import OptParams
-from matplotlib import pyplot as plt
-from matplotlib import animation
+from franka_pole.msg import ControllerParameters, DebugSample
 
 # Class containing and processing state of the robot arm
 class FrankaState:
@@ -29,11 +23,11 @@ class FrankaState:
 
     #Gets effector y position
     def get_effector_y(self):
-        return self._effector_y
+        return float(self._effector_y)
 
     #Gets effector y velocity
     def get_effector_dy(self):
-        return self._effector_dy
+        return float(self._effector_dy)
 
     #Creates FrankaState
     def __init__(self, controller):
@@ -80,11 +74,11 @@ class PoleState:
 
     #Gets pole angle
     def get_angle(self):
-        return self._angle
+        return float(self._angle)
 
     #Gets pole angular velocity
     def get_dangle(self):
-        return self._dangle
+        return float(self._dangle)
 
     #Creates PoleState
     def __init__(self, controller):
@@ -101,69 +95,33 @@ class PoleState:
             pass
         # Common callback with FrankaState is launched by Controller
 
-# Class responsible for sampling and plotting
-class Plot:
-    #Samples data and plots it, called from Plot
-    def animate_callback(self, i):
-        # angle
-        self._angle = np.roll(self._angle, -1)
-        self._angle[-1] = self._controller.pole_state.get_angle()
-        self._angle_line.set_data(self._time, self._angle)
-        # dangle
-        self._dangle = np.roll(self._dangle, -1)
-        self._dangle[-1] = self._controller.pole_state.get_dangle()
-        self._dangle_line.set_data(self._time, self._dangle)
-        # effector_y
-        self._effector_y = np.roll(self._effector_y, -1)
-        self._effector_y[-1] = self._controller.franka_state.get_effector_y()
-        self._effector_y_line.set_data(self._time, self._effector_y)
-        # efector_dy
-        self._effector_dy = np.roll(self._effector_dy, -1)
-        self._effector_dy[-1] = self._controller.franka_state.get_effector_dy()
-        self._effector_dy_line.set_data(self._time, self._effector_dy)
-        # desired_acceleration
-        self._desired_acceleration = np.roll(self._desired_acceleration, -1)
-        self._desired_acceleration[-1] = self._controller.get_desired_acceleration()
-        self._desired_acceleration_line.set_data(self._time, self._desired_acceleration)
-        
-        return self._angle_line, self._dangle_line, self._effector_y_line, self._effector_dy_line, self._desired_acceleration_line
+# Class responsible for sampling and publishing data
+class Sampler:
+    #Sets optimization parameters, called by user
+    def sample_timer_callback(self):
+        sample = DebugSample()
+        sample.angle = self._controller.pole_state.get_angle()
+        sample.dangle = self._controller.pole_state.get_dangle()
+        sample.effector_y = self._controller.franka_state.get_effector_y()
+        sample.effector_dy = self._controller.franka_state.get_effector_dy()
+        sample.desired_acceleration = self._controller.get_desired_acceleration()
+        self._sample_puslisher.publish(sample)
 
-    #Creates Plot
+    #Creates Sampler
     def __init__(self, controller):
         self._controller = controller
 
-        # Configuretion
-        self._sample_time = 10
+        # Configuration
         self._sample_frequency = 20
 
-        # Creating lines
-        self._figure, self._axes = plt.subplots(1, 1, num="franka_pole")
-        self._axes = [ self._axes ] # If one subplot
-        self._axes[0].set_xlim([-self._sample_time, 0])
-        self._axes[0].set_ylim([-10,10])
-        #self._axes[0].set_title("title")
-        self._angle_line, = self._axes[0].plot([], [], label="angle")
-        self._dangle_line, = self._axes[0].plot([], [], label="dangle")
-        self._effector_y_line, = self._axes[0].plot([], [], label="effector_y")
-        self._effector_dy_line, = self._axes[0].plot([], [], label="effector_dy")
-        self._desired_acceleration_line, = self._axes[0].plot([], [], label="desired_acceleration")
-        self._axes[0].legend(loc="upper left")
-
-        # Creating buffers
-        self._time = np.linspace(-self._sample_time, 0, self._sample_time * self._sample_frequency)
-        self._angle = np.zeros(self._sample_time * self._sample_frequency)
-        self._dangle = np.zeros(self._sample_time * self._sample_frequency)
-        self._effector_y = np.zeros(self._sample_time * self._sample_frequency)
-        self._effector_dy = np.zeros(self._sample_time * self._sample_frequency)
-        self._desired_acceleration = np.zeros(self._sample_time * self._sample_frequency)
-
-        # Starting animation
-        self._animation = animation.FuncAnimation(self._figure, lambda i: self.animate_callback(i), interval=1000/self._sample_frequency, blit=True)
+        # Creating timer
+        self._sample_puslisher = rospy.Publisher("/franka_pole/debug_samples", DebugSample, queue_size=10)
+        self._sample_publisher_timer = rospy.Timer(rospy.Duration(1 / self._sample_frequency), lambda msg: self.sample_timer_callback())
 
 # Main class
 class Controller:
     #Sets optimization parameters, called by user
-    def optparams_callback(self, optparams):
+    def parameters_callback(self, optparams):
         self._a = optparams.a
         self._b = optparams.b
         self._c = optparams.c
@@ -224,7 +182,7 @@ class Controller:
 
     #Gets desired acceleration
     def get_desired_acceleration(self):
-        return self._desired_acceleration
+        return float(self._desired_acceleration)
 
     #Gets arm id
     def get_arm_id(self):
@@ -240,7 +198,7 @@ class Controller:
 
     #Starts controller
     def spin(self):
-        plt.show()
+        rospy.spin()
 
     def __init__(self):
         # Initializing node
@@ -256,16 +214,16 @@ class Controller:
         self._d = 11.86760425567627 / 4
         self._arm_id = rospy.get_param("~arm_id")
         self._type = rospy.get_param("~controller")
-        self._gazebo = Boolean(rospy.get_param("~gazebo"))
+        self._gazebo = bool(rospy.get_param("~gazebo"))
         self._desired_acceleration = 0
 
         # Creating components
         self.franka_state = FrankaState(self)
         self.pole_state = PoleState(self)
-        self.plot = Plot(self)
+        self.sampler = Sampler(self)
 
         # Starting common callback for franka_state and pole_state
-        self._optparams_subscriber = rospy.Subscriber('/optparams', OptParams, lambda optparams: self.optparams_callback(optparams))
+        self._optparams_subscriber = rospy.Subscriber('/franka_pole/controller_parameters', ControllerParameters, lambda params: self.parameters_callback(params))
 
         # Starting common callback for franka_state and pole_state
         if self._gazebo:
