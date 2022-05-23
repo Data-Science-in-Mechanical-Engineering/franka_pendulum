@@ -16,9 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/franka_pole.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/franka_pole.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/franka_pole.xacro" > "${PROJECT_SOURCE_DIR}/franka_pole.urdf")
-add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/franka_pole.urdf")
-
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -117,15 +114,13 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
+include_directories(${catkin_INCLUDE_DIRS})
+
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/franka_pole.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/franka_pole.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/franka_pole.xacro" > "${PROJECT_SOURCE_DIR}/franka_pole.urdf")
+add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/franka_pole.urdf")
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/franka_pole.cpp
-# )
+add_library(franka_pole_controllers franka_pole_cartesian_controller.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

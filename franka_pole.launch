@@ -37,7 +37,7 @@
 
     <!-- Load controllers -->
     <rosparam file="$(find franka_gazebo)/config/franka_hw_sim.yaml" subst_value="true" />
-    <rosparam file="$(find franka_gazebo)/config/sim_controllers.yaml" subst_value="true" />
+    <rosparam file="$(find franka_pole)/franka_pole_controllers.yaml" subst_value="true" />
 
     <!-- Create robot -->
     <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />
@@ -52,7 +52,7 @@
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
-    args="cartesian_impedance_example_controller"
+    args="franka_pole_cartesian_controller"
     if="$(eval arg('controller') == 'position')"
   />
   <node name="$(arg arm_id)_force_controller_spawner"
