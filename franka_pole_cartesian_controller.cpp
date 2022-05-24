@@ -77,11 +77,11 @@ bool franka_pole::CartesianController::init(hardware_interface::RobotHW *robot_h
     }
   }
 
-  _nullspace_stiffness = 20.0;
-  _nullspace_damping = 2.0 * sqrt(_nullspace_stiffness);
   _cartesian_stiffness.setZero();
-  _cartesian_stiffness.diagonal().segment<3>(0) = Eigen::Matrix<double, 3, 1>::Ones() * 100.0;
+  _cartesian_stiffness.diagonal().segment<3>(0) = Eigen::Matrix<double, 3, 1>::Ones() * 200.0;
   _cartesian_stiffness.diagonal().segment<3>(3) = Eigen::Matrix<double, 3, 1>::Ones() * 10.0;
+  _nullspace_stiffness = 0.5;
+  _nullspace_damping = 2.0 * sqrt(_nullspace_stiffness);
   _cartesian_damping = 2.0 * _cartesian_stiffness.array().sqrt().matrix();
   return true;
 }
