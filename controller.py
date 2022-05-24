@@ -167,7 +167,7 @@ class Controller:
                 desired_pose.pose.position.x = max(self._range_x[0], min(self._range_x[1], desired_pose.pose.position.x))
                 desired_pose.pose.position.y = max(self._range_y[0], min(self._range_y[1], desired_pose.pose.position.y))
                 desired_pose.pose.position.z = max(self._range_z[0], min(self._range_z[1], desired_pose.pose.position.z))
-                self._equilibrium_pose_publisher.publish(desired_pose)
+                self._cartesian_target_publisher.publish(desired_pose)
             elif self._type == "velocity":
                 pass
             elif self._type == "torque":
@@ -233,7 +233,7 @@ class Controller:
 
         # Starting controller
         if self._type == "position":
-            self._equilibrium_pose_publisher = rospy.Publisher("/cartesian_impedance_example_controller/equilibrium_pose", PoseStamped, queue_size=10)
+            self._cartesian_target_publisher = rospy.Publisher("/franka_pole/cartesian_target", PoseStamped, queue_size=10)
         elif self._type == "velocity":
             pass
         elif self._type == "torque":
