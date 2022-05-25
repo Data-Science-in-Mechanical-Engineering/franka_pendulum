@@ -120,10 +120,10 @@ add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/franka_pole.urdf" DEPENDS "${PR
 add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/franka_pole.urdf")
 
 ## Declare a C++ library
-add_library(franka_pole_controllers franka_pole_cartesian_controller.cpp)
-target_link_libraries(franka_pole_controllers PUBLIC pinocchio)
-target_link_directories(franka_pole_controllers PUBLIC "/opt/ros/noetic/lib/")
-target_compile_options(franka_pole_controllers PUBLIC -O3)
+add_library(franka_pole_controller franka_pole_controller.cpp)
+target_link_libraries(franka_pole_controller PUBLIC pinocchio)
+target_link_directories(franka_pole_controller PUBLIC "/opt/ros/noetic/lib/")
+target_compile_options(franka_pole_controller PUBLIC -O3)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

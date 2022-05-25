@@ -1,0 +1,8 @@
+# Motion generators PID gains
+motion_generators:
+  position:
+    gains:
+      panda_lower_upper: { p: 1, d: 0, i: 0 }
+  velocity:
+    gains:
+      panda_lower_upper: { p: 1, d: 0, i: 0 }
