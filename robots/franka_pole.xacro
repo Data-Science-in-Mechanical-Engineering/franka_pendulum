@@ -57,7 +57,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://franka_pole/visual/lower_bearing.dae"/>
+        <mesh filename="package://franka_pole/meshes/visual/lower_bearing.dae"/>
       </geometry>
     </visual>
 
@@ -90,7 +90,7 @@
     </visual>
     <visual>
       <geometry>
-        <mesh filename="package://franka_pole/visual/upper_bearing.dae"/>
+        <mesh filename="package://franka_pole/meshes/visual/upper_bearing.dae"/>
       </geometry>
     </visual>
     

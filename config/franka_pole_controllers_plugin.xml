@@ -1,0 +1,7 @@
+<library path="/lib/libfranka_pole_controllers">
+  <class name="franka_pole/IntegratedPositionController" type="franka_pole::IntegratedPositionController" base_class_type="controller_interface::ControllerBase">
+  <description>
+    Low-level controllers for Franka Pole
+  </description>
+  </class>
+</library>

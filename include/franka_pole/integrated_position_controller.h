@@ -23,7 +23,7 @@
 namespace franka_pole
 {
 
-class CartesianController;
+class IntegratedPositionController;
 
 //Configuration
 enum class ControlType
@@ -36,7 +36,7 @@ enum class ControlType
 class FrankaState
 {
 private:
-  CartesianController *_controller;
+  IntegratedPositionController *_controller;
   double _time = 0.0;
 
   Eigen::Vector3d _effector_position;
@@ -50,7 +50,7 @@ private:
   Eigen::Matrix<double, 7, 1> _coriolis;
 
 public:
-  FrankaState(CartesianController *controller, ros::NodeHandle &node_handle);
+  FrankaState(IntegratedPositionController *controller, ros::NodeHandle &node_handle);
   void update(double time); //Must be called in update()
   double get_time();
   
@@ -69,7 +69,7 @@ public:
 class PoleState
 {
 private:
-  CartesianController *_controller;
+  IntegratedPositionController *_controller;
   double _time = 0.0;
   double _angle = 0.0;
   double _dangle = 0.0;
@@ -77,7 +77,7 @@ private:
   void _update(const geometry_msgs::PoseStamped::ConstPtr &msg); //Must be called by ROS if not simulated
 
 public:
-  PoleState(CartesianController *controller, ros::NodeHandle &node_handle);
+  PoleState(IntegratedPositionController *controller, ros::NodeHandle &node_handle);
   void update(double time); //Must be called in update() if simulated
   double get_time();
   double get_angle();
@@ -88,15 +88,15 @@ public:
 class Sampler
 {
 private:
-  CartesianController *_controller;
+  IntegratedPositionController *_controller;
   ros::Publisher _debug_sample_publisher;
   ros::Timer _debug_sample_timer;
   void _debug_sample_callback(const ros::TimerEvent &event);
 public:
-  Sampler(CartesianController *controller, ros::NodeHandle &node_handle);
+  Sampler(IntegratedPositionController *controller, ros::NodeHandle &node_handle);
 };
 
-class CartesianController : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface, hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface, franka_hw::FrankaStateInterface>
+class IntegratedPositionController : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface, hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface, franka_hw::FrankaStateInterface>
 {
 private:
   //Parameters

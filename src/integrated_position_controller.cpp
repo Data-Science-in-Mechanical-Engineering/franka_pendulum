@@ -1,4 +1,4 @@
-#include "franka_pole_cartesian_controller.h"
+#include "franka_pole/integrated_position_controller.h"
 
 #include <cmath>
 #include <memory>
@@ -22,7 +22,7 @@ template <int H, int W> Eigen::Matrix<double, W, H> pseudo_inverse(const Eigen::
 
 //================================================================== FrankaState ==================================================================
 
-franka_pole::FrankaState::FrankaState(CartesianController *controller, ros::NodeHandle &)
+franka_pole::FrankaState::FrankaState(IntegratedPositionController *controller, ros::NodeHandle &)
 {
   _controller = controller;
 }
@@ -96,7 +96,7 @@ void franka_pole::PoleState::_update(const geometry_msgs::PoseStamped::ConstPtr 
   //todo
 }
 
-franka_pole::PoleState::PoleState(CartesianController *controller, ros::NodeHandle &node_handle)
+franka_pole::PoleState::PoleState(IntegratedPositionController *controller, ros::NodeHandle &node_handle)
 {
   _controller = controller;
   if (_controller->is_simulated()) _pose_stamped_subscriber = node_handle.subscribe("/vicon/Pole_1/Pole_1", 20, &PoleState::_update, this, ros::TransportHints().reliable().tcpNoDelay());
@@ -144,50 +144,50 @@ void franka_pole::Sampler::_debug_sample_callback(const ros::TimerEvent &event)
   _debug_sample_publisher.publish(sample);
 }
 
-franka_pole::Sampler::Sampler(CartesianController *controller, ros::NodeHandle &node_handle)
+franka_pole::Sampler::Sampler(IntegratedPositionController *controller, ros::NodeHandle &node_handle)
 {
   _controller = controller;
   _debug_sample_publisher = node_handle.advertise<franka_pole::DebugSample>("/franka_pole/samples", 20);
   _debug_sample_timer = node_handle.createTimer(ros::Duration(0.01), &franka_pole::Sampler::_debug_sample_callback, this);
 }
 
-//================================================================== CartesianController ==================================================================
+//================================================================== IntegratedPositionController ==================================================================
 
-bool franka_pole::CartesianController::is_simulated()
+bool franka_pole::IntegratedPositionController::is_simulated()
 {
   return _simulated;
 }
 
-franka_pole::ControlType franka_pole::CartesianController::control_type()
+franka_pole::ControlType franka_pole::IntegratedPositionController::control_type()
 {
   return _control_type;
 }
 
-double franka_pole::CartesianController::get_desired_acceleration()
+double franka_pole::IntegratedPositionController::get_desired_acceleration()
 {
   return _desired_acceleration;
 }
 
-bool franka_pole::CartesianController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+bool franka_pole::IntegratedPositionController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id))
   {
-    ROS_ERROR_STREAM("CartesianController: Could not read parameter arm_id");
+    ROS_ERROR_STREAM("IntegratedPositionController: Could not read parameter arm_id");
     return false;
   }
   
   std::vector<std::string> joint_names;
   if (!node_handle.getParam("joint_names", joint_names) || joint_names.size() != 7)
   {
-    ROS_ERROR("CartesianController: Invalid or no joint_names parameters provided, aborting controller init!");
+    ROS_ERROR("IntegratedPositionController: Invalid or no joint_names parameters provided, aborting controller init!");
     return false;
   }
 
   auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
   if (model_interface == nullptr)
   {
-    ROS_ERROR_STREAM("CartesianController: Error getting model interface from hardware");
+    ROS_ERROR_STREAM("IntegratedPositionController: Error getting model interface from hardware");
     return false;
   }
   try
@@ -196,14 +196,14 @@ bool franka_pole::CartesianController::init(hardware_interface::RobotHW *robot_h
   }
   catch (hardware_interface::HardwareInterfaceException& ex)
   {
-    ROS_ERROR_STREAM("CartesianController: Exception getting model handle from interface: " << ex.what());
+    ROS_ERROR_STREAM("IntegratedPositionController: Exception getting model handle from interface: " << ex.what());
     return false;
   }
 
   auto* state_interface = robot_hw->get<franka_hw::FrankaStateInterface>();
   if (state_interface == nullptr)
   {
-    ROS_ERROR_STREAM("CartesianController: Error getting state interface from hardware");
+    ROS_ERROR_STREAM("IntegratedPositionController: Error getting state interface from hardware");
     return false;
   }
   try
@@ -212,14 +212,14 @@ bool franka_pole::CartesianController::init(hardware_interface::RobotHW *robot_h
   }
   catch (hardware_interface::HardwareInterfaceException &ex)
   {
-    ROS_ERROR_STREAM("CartesianController: Exception getting state handle from interface: " << ex.what());
+    ROS_ERROR_STREAM("IntegratedPositionController: Exception getting state handle from interface: " << ex.what());
     return false;
   }
 
   auto* effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
   if (effort_joint_interface == nullptr)
   {
-    ROS_ERROR_STREAM("CartesianController: Error getting effort joint interface from hardware");
+    ROS_ERROR_STREAM("IntegratedPositionController: Error getting effort joint interface from hardware");
     return false;
   }
   for (size_t i = 0; i < 7; ++i)
@@ -230,7 +230,7 @@ bool franka_pole::CartesianController::init(hardware_interface::RobotHW *robot_h
     }
     catch (const hardware_interface::HardwareInterfaceException &ex)
     {
-      ROS_ERROR_STREAM("CartesianController: Exception getting joint handles: " << ex.what());
+      ROS_ERROR_STREAM("IntegratedPositionController: Exception getting joint handles: " << ex.what());
       return false;
     }
   }
@@ -241,7 +241,7 @@ bool franka_pole::CartesianController::init(hardware_interface::RobotHW *robot_h
   }
   catch (const hardware_interface::HardwareInterfaceException &ex)
   {
-    ROS_ERROR_STREAM("CartesianController: Exception getting joint handles: " << ex.what());
+    ROS_ERROR_STREAM("IntegratedPositionController: Exception getting joint handles: " << ex.what());
     return false;
   }
 
@@ -258,11 +258,11 @@ bool franka_pole::CartesianController::init(hardware_interface::RobotHW *robot_h
   return true;
 }
 
-void franka_pole::CartesianController::starting(const ros::Time &)
+void franka_pole::IntegratedPositionController::starting(const ros::Time &)
 {
 }
 
-void franka_pole::CartesianController::update(const ros::Time &, const ros::Duration &)
+void franka_pole::IntegratedPositionController::update(const ros::Time &, const ros::Duration &)
 {
   franka_state->update(0.0);
   pole_state->update(0.0);
@@ -296,4 +296,4 @@ void franka_pole::CartesianController::update(const ros::Time &, const ros::Dura
   for (size_t i = 0; i < 7; ++i) joint_handles[i].setCommand(torque(i));
 }
 
-PLUGINLIB_EXPORT_CLASS(franka_pole::CartesianController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(franka_pole::IntegratedPositionController, controller_interface::ControllerBase)

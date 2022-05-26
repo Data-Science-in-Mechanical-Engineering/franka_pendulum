@@ -1,7 +1,0 @@
-<library path="/lib/libfranka_pole_controllers">
-  <class name="franka_pole/CartesianController" type="franka_pole::CartesianController" base_class_type="controller_interface::ControllerBase">
-  <description>
-  Low-level controllers for Franka Pole
-  </description>
-  </class>
-</library>
