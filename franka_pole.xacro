@@ -129,14 +129,13 @@
     </inertial>
   </link>
   
-  <transmission name="$(arg arm_id)_pole_transmission">
+  <transmission name="$(arg arm_id)_lower_upper_transmission">
     <type>transmission_interface/SimpleTransmission</type>
     <joint name="$(arg arm_id)_lower_upper">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
     <actuator name="$(arg arm_id)_lower_upper_motor">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-      <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
 </robot>

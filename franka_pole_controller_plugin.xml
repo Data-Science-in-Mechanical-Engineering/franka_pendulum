@@ -1,7 +1,0 @@
-<library path="/lib/libfranka_pole_controller">
-  <class name="franka_pole/Controller" type="franka_pole::Controller" base_class_type="controller_interface::ControllerBase">
-  <description>
-  Low-level controller for Franka Pole
-  </description>
-  </class>
-</library>

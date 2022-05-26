@@ -1,30 +1,29 @@
 #pragma once
 
-#pragma once
-
-#include <controller_interface/multi_interface_controller.h>
-#include <hardware_interface/joint_command_interface.h>
-#include <hardware_interface/robot_hw.h>
-#include <franka_hw/franka_model_interface.h>
-#include <franka_hw/franka_state_interface.h>
-
-#include <geometry_msgs/PoseStamped.h>
-#include <franka_pole/ControllerParameters.h>
-#include <franka_pole/DebugSample.h>
-
 #include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
-#include <Eigen/Dense>
 
+#include <controller_interface/multi_interface_controller.h>
+#include <dynamic_reconfigure/server.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/robot_hw.h>
 #include <ros/node_handle.h>
 #include <ros/time.h>
+#include <Eigen/Dense>
+
+#include <franka_hw/franka_model_interface.h>
+#include <franka_hw/franka_state_interface.h>
+
+#include <franka_pole/ControllerParameters.h>
+#include <franka_pole/DebugSample.h>
 
 namespace franka_pole
 {
 
-class Controller;
+class CartesianController;
 
 //Configuration
 enum class ControlType
@@ -37,26 +36,40 @@ enum class ControlType
 class FrankaState
 {
 private:
-  Controller *_controller;
+  CartesianController *_controller;
   double _time = 0.0;
-  Eigen::Matrix<double, 3, 1> _effector_position = Eigen::Matrix<double, 3, 1>::Zero();
-  Eigen::Matrix<double, 3, 1> _effector_velocity = Eigen::Matrix<double, 3, 1>::Zero();
-  Eigen::Quaterniond _effector_orientation = Eigen::Quaterniond(0.0, 1.0, 0.0, 0.0);
+
+  Eigen::Vector3d _effector_position;
+  Eigen::Matrix<double, 6, 1> _effector_velocity;
+  Eigen::Quaterniond _effector_orientation;
+  Eigen::Affine3d _effector_transform;
+  Eigen::Matrix<double, 6, 7> _effector_jacobian;
+
+  Eigen::Matrix<double, 7, 1> _joint_positions;
+  Eigen::Matrix<double, 7, 1> _joint_velocities;
+  Eigen::Matrix<double, 7, 1> _coriolis;
 
 public:
-  FrankaState(Controller *controller, ros::NodeHandle &node_handle);
+  FrankaState(CartesianController *controller, ros::NodeHandle &node_handle);
   void update(double time); //Must be called in update()
   double get_time();
-  Eigen::Matrix<double, 3, 1> get_effector_position();
-  Eigen::Matrix<double, 3, 1> get_effector_velocity();
+  
+  Eigen::Vector3d get_effector_position();
+  Eigen::Matrix<double, 6, 1> get_effector_velocity();
   Eigen::Quaterniond get_effector_orientation();
+  Eigen::Affine3d get_effector_transform();
+  Eigen::Matrix<double, 6, 7> get_effector_jacobian();
+
+  Eigen::Matrix<double, 7, 1> get_joint_positions();
+  Eigen::Matrix<double, 7, 1> get_joint_velocities();
+  Eigen::Matrix<double, 7, 1> get_coriolis();
 };
 
 //Provides pole states
 class PoleState
 {
 private:
-  Controller *_controller;
+  CartesianController *_controller;
   double _time = 0.0;
   double _angle = 0.0;
   double _dangle = 0.0;
@@ -64,7 +77,7 @@ private:
   void _update(const geometry_msgs::PoseStamped::ConstPtr &msg); //Must be called by ROS if not simulated
 
 public:
-  PoleState(Controller *controller, ros::NodeHandle &node_handle);
+  PoleState(CartesianController *controller, ros::NodeHandle &node_handle);
   void update(double time); //Must be called in update() if simulated
   double get_time();
   double get_angle();
@@ -75,15 +88,15 @@ public:
 class Sampler
 {
 private:
-  Controller *_controller;
+  CartesianController *_controller;
   ros::Publisher _debug_sample_publisher;
   ros::Timer _debug_sample_timer;
   void _debug_sample_callback(const ros::TimerEvent &event);
 public:
-  Sampler(Controller *controller, ros::NodeHandle &node_handle);
+  Sampler(CartesianController *controller, ros::NodeHandle &node_handle);
 };
 
-class Controller : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface, franka_hw::FrankaStateInterface, hardware_interface::PositionJointInterface, hardware_interface::EffortJointInterface>
+class CartesianController : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface, hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface, franka_hw::FrankaStateInterface>
 {
 private:
   //Parameters
@@ -92,10 +105,10 @@ private:
   bool _simulated = true;
 
   //Control
-  double _a = 16.363880157470703 / 4;
-  double _b = 9.875003814697266 / 4;
-  double _c = 7.015979766845703 / 4;
-  double _d = 11.86760425567627 / 4;
+  double _a = 16.363880157470703 / 30;
+  double _b = 9.875003814697266 / 30;
+  double _c = 7.015979766845703 / 30;
+  double _d = 11.86760425567627 / 30;
   double _desired_acceleration = 0.0;
   double _nullspace_stiffness = 0.0;                                                      //Used if _type == Cartesian
   double _nullspace_damping = 0.0;                                                        //Used if _type == Cartesian

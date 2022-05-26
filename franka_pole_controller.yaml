@@ -1,3 +1,0 @@
-franka_pole_controller:
-  type: franka_pole/Controller
-  arm_id: $(arg arm_id)
