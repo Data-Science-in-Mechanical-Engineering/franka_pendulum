@@ -49,7 +49,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
     FILES
     ControllerParameters.msg
-    DebugSample.msg
+    Sample.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -120,7 +120,13 @@ add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf" DEPEND
 add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf")
 
 ## Declare a C++ library
-add_library(franka_pole_controllers src/integrated_position_controller.cpp)
+add_library(franka_pole_controllers
+src/franka_state.cpp
+src/pole_state.cpp
+src/publisher.cpp
+src/controller.cpp
+src/integrated_position_controller.cpp
+src/integrated_acceleration_controller.cpp)
 target_include_directories(franka_pole_controllers PUBLIC include)
 target_compile_options(franka_pole_controllers PUBLIC -O3)
 

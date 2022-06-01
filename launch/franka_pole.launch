@@ -2,11 +2,10 @@
 <launch>
 
   <!-- Customization -->
-  <arg name="gazebo"      default="true"     doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
+  <arg name="simulated"   default="true"     doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
   <arg name="headless"    default="false"    doc="Should the gazebo GUI be launched?" />
   <arg name="paused"      default="false"    doc="Should the simulation directly be stopped at 0s?" />
-  <arg name="arm_id"  	   default="panda"    doc="Name of the arm" />
-  <arg name="controller"  default="position" doc="Controller type, position/velocity/torque" />
+  <arg name="arm_id"  	  default="panda"    doc="Name of the arm" />
   <arg name="initial_joint_positions"
        doc="Initial joint configuration of the panda. Specify as a list of name/value pairs in form of '-J [name-of-joint] [value-in-rad]'. Default is a 90 degree bend in the elbow"
        default="-J $(arg arm_id)_joint1 0
@@ -21,10 +20,10 @@
        />
 
   <!-- Launch gazebo -->
-  <group if="$(arg gazebo)">
+  <group if="$(arg simulated)">
   
     <!-- Load world -->
-    <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg gazebo)">
+    <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg simulated)">
       <arg name="world_name" value="worlds/empty.world"/>
       <!-- Always start in paused mode, and only unpause when spawning the model -->
       <arg name="paused" value="true"/>
@@ -52,20 +51,18 @@
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
-    args="franka_pole_integrated_position_controller"
-  />
+    args="franka_pole_integrated_position_controller"/>
+  
   <node name="$(arg arm_id)_gripper_controller_spawner"
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
-    args="franka_gripper"
-  />
+    args="franka_gripper"/>
       
   <!-- Start plotter -->
-  <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen" >
-    <param name="controller" value="$(arg controller)" />
-    <param name="gazebo" value="$(arg gazebo)" />
+  <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen">
     <param name="arm_id" value="$(arg arm_id)" />
+    <param name="simulated" value="TRUE" />
   </node>
 
 </launch>

@@ -1,4 +1,4 @@
-#include <franka_pole/integrated_position_controller.h>
+#include <franka_pole/integrated_acceleration_controller.h>
 #include <franka_pole/controller.h>
 #include <franka_pole/franka_state.h>
 #include <franka_pole/pole_state.h>
@@ -6,7 +6,7 @@
 #include <franka_pole/pseudo_inverse.h>
 #include <pluginlib/class_list_macros.h>
 
-bool franka_pole::IntegratedPositionController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+bool franka_pole::IntegratedAccelerationController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     if (!_controller_init(robot_hw, node_handle)) return false;
 
@@ -19,12 +19,12 @@ bool franka_pole::IntegratedPositionController::init(hardware_interface::RobotHW
     return true;
 }
 
-void franka_pole::IntegratedPositionController::starting(const ros::Time &time)
+void franka_pole::IntegratedAccelerationController::starting(const ros::Time &time)
 {
     _controller_starting(time);
 }
 
-void franka_pole::IntegratedPositionController::update(const ros::Time &time, const ros::Duration &period)
+void franka_pole::IntegratedAccelerationController::update(const ros::Time &time, const ros::Duration &period)
 {
     _controller_pre_update(time, period);
 
@@ -65,4 +65,4 @@ void franka_pole::IntegratedPositionController::update(const ros::Time &time, co
     _controller_post_update(time, period);
 }
 
-PLUGINLIB_EXPORT_CLASS(franka_pole::IntegratedPositionController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(franka_pole::IntegratedAccelerationController, controller_interface::ControllerBase)

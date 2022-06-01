@@ -10,7 +10,7 @@
 
 namespace franka_pole
 {
-    class IntegratedPositionController : public Controller
+    class IntegratedAccelerationController : public Controller
     {
     private:
         //Control
@@ -18,7 +18,6 @@ namespace franka_pole
         double _b = 9.875003814697266 / 30;
         double _c = 7.015979766845703 / 30;
         double _d = 11.86760425567627 / 30;
-        double _desired_acceleration = 0.0;
         double _nullspace_stiffness = 0.0;
         double _nullspace_damping = 0.0;
         Eigen::Matrix<double, 6, 6> _cartesian_stiffness = Eigen::Matrix<double, 6, 6>::Zero();
