@@ -51,7 +51,7 @@
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
-    args="franka_pole_integrated_position_controller"/>
+    args="franka_pole_integrated_acceleration_controller"/>
   
   <node name="$(arg arm_id)_gripper_controller_spawner"
     pkg="controller_manager"

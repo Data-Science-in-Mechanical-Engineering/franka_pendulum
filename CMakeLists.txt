@@ -129,6 +129,8 @@ src/integrated_position_controller.cpp
 src/integrated_acceleration_controller.cpp)
 target_include_directories(franka_pole_controllers PUBLIC include)
 target_compile_options(franka_pole_controllers PUBLIC -O3)
+target_link_directories(franka_pole_controllers PUBLIC "/opt/ros/noetic/lib/")
+target_link_libraries(franka_pole_controllers PUBLIC pinocchio)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
