@@ -60,7 +60,7 @@ void franka_pole::IntegratedAccelerationController::update(const ros::Time &time
     publisher->set_control_timestamp(time);
     publisher->set_control_effector_position(position_target);
     publisher->set_control_effector_velocity(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
-    publisher->set_control_effector_acceleration(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
+    publisher->set_control_effector_acceleration(Eigen::Matrix<double, 3, 1>(0.0, desired_acceleration, 0.0));
 
     _controller_post_update(time, period);
 }

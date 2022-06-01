@@ -1,11 +1,22 @@
 #!/usr/bin/python3
 import rospy
 import numpy as np
-from franka_pole.msg import DebugSample
+from franka_pole.msg import Sample
 from matplotlib import pyplot as plt
 from matplotlib import animation
 
 sample_frequency = 20
+
+# Listens all relevant topics
+class Subscriber:
+    # Sets current sample data
+    def _sample_callback(self, sample):
+        self.sample = sample
+
+    # Starts subscriber
+    def __init__(self):
+        self.sample = Sample()
+        self.sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, lambda sample: self._sample_callback(sample))
 
 class Signal:
     # Creates signal
@@ -41,17 +52,6 @@ class Plot:
             self.axes.append(None)
             self.lines.append(None)
             self.buffers.append(np.zeros(self.time * sample_frequency))
-
-# Samples data with given frequency    
-class Sampler:
-    # Sets current sample data
-    def _sample_callback(self, sample):
-        self.sample = sample
-
-    # Starts sampler
-    def __init__(self):
-        self.sample = DebugSample()
-        self.sample_subscriber = rospy.Subscriber("/franka_pole/samples", DebugSample, lambda sample: self._sample_callback(sample))
 
 # Pltos data with given frequency
 class Plotter:
@@ -120,15 +120,15 @@ class Plotter:
 if __name__ == '__main__':
     rospy.init_node('plotter')
     
-    sampler = Sampler()
+    subscriber = Subscriber()
     
-    pole_angle = Signal("Pole angle", lambda: sampler.sample.pole_angle)
-    pole_dangle = Signal("Pole rotaion velocity", lambda: sampler.sample.pole_dangle)
-    franka_effector_y = Signal("Effector Y", lambda: sampler.sample.franka_effector_y)
-    franka_effector_dy = Signal("Effector Y velocity", lambda: sampler.sample.franka_effector_dy)
-    desired_acceleration = Signal("Desired Acceleration", lambda: sampler.sample.desired_acceleration)
+    pole_angle = Signal("Pole angle", lambda: subscriber.sample.pole_angle)
+    pole_dangle = Signal("Pole rotaion velocity", lambda: subscriber.sample.pole_dangle)
+    franka_effector_y = Signal("Effector Y", lambda: subscriber.sample.franka_effector_y)
+    franka_effector_dy = Signal("Effector Y velocity", lambda: subscriber.sample.franka_effector_dy)
+    control_effector_ddy = Signal("Desired Y acceleration", lambda: subscriber.sample.control_effector_ddy)
     
-    plot = Plot("All", 0, 0, [ pole_angle, pole_dangle, franka_effector_y, franka_effector_dy, desired_acceleration ], -10, 10, 10)
+    plot = Plot("All", 0, 0, [ pole_angle, pole_dangle, franka_effector_y, franka_effector_dy, control_effector_ddy ], -10, 10, 10)
     
     plotter = Plotter("Plotter", [ plot ])
     
