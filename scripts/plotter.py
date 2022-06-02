@@ -58,28 +58,52 @@ class Plot:
         self.upper = upper
         self.time = time
 
-        self.axes = []                                                      # matplotlib axes object, one for plot
+        self.axes = None                                                    # matplotlib axes object, one for plot
         self.time_buffer = np.linspace(-time, 0, time * sample_frequency)   # numpy buffer for time, one for plot
         self.lines = []                                                     # matplotlib line object, one for plot and signal
         self.buffers = []                                                   # numpy buffer, one for plot and signal
         for signal in signals:
-            self.axes.append(None)
             self.lines.append(None)
             self.buffers.append(np.zeros(self.time * sample_frequency))
+
+class BarChart:
+    # Creates bar chart
+    # title - Title of the bar chart
+    # line - Vertical position on screen
+    # column - Horizontal position on screen
+    # signals - List of Signal objects
+    # lower - Lower limit of the plot
+    # upper - Upper limit of the plot
+    def __init__(self, title, line, column, signals, lower, upper):
+        self.title = title
+        self.line = line
+        self.column = column
+        self.signals = signals
+        self.lower = lower
+        self.upper = upper
+
+        self.axes = None    # matplotlib axes object, one for plot
+        self.bars = None    # matplotlib bar container object, one for plot
 
 # Pltos data with given frequency
 class Plotter:
     # Shifts buffers and returns lines
     def _animate_callback(self):
-        lines = []
+        objects = []
         for plot in self.plots:
-            for i in range(len(plot.signals)):
-                plot.buffers[i] = np.roll(plot.buffers[i], -1)
-                plot.signals[i].value = plot.signals[i].filter_factor * plot.signals[i].value + (1.0 - plot.signals[i].filter_factor) * plot.signals[i].source()
-                plot.buffers[i][-1] = plot.signals[i].value
-                plot.lines[i].set_data(plot.time_buffer, plot.buffers[i])
-                lines.append(plot.lines[i])
-        return lines
+            if type(plot) is BarChart:
+                for i in range(len(plot.signals)):
+                    plot.signals[i].value = plot.signals[i].filter_factor * plot.signals[i].value + (1.0 - plot.signals[i].filter_factor) * plot.signals[i].source()
+                    plot.bars[i].set_height(plot.signals[i].value)
+                    objects.append(plot.bars[i])
+            else:
+                for i in range(len(plot.signals)):
+                    plot.buffers[i] = np.roll(plot.buffers[i], -1)
+                    plot.signals[i].value = plot.signals[i].filter_factor * plot.signals[i].value + (1.0 - plot.signals[i].filter_factor) * plot.signals[i].source()
+                    plot.buffers[i][-1] = plot.signals[i].value
+                    plot.lines[i].set_data(plot.time_buffer, plot.buffers[i])
+                    objects.append(plot.lines[i])
+        return objects
 
     # Creates Plotter
     def __init__(self, caption, plots):
@@ -112,18 +136,24 @@ class Plotter:
 
         # Set limits and titles
         for plot in plots:
-            plot.axes.set_xlim([-plot.time, 0])
+            if not type(plot) is BarChart: plot.axes.set_xlim([-plot.time, 0])
             plot.axes.set_ylim([plot.lower, plot.upper])
             plot.axes.set_title(plot.title)
 
-        # Create lines
+        # Create lines/bars
         for plot in plots:
-            for i in range(len(plot.signals)):
-                plot.lines[i], = plot.axes.plot([], [], label = plot.signals[i].label)
+            if type(plot) is BarChart:
+                labels = []
+                for i in range(len(plot.signals)):
+                    labels.append(plot.signals[i].label)
+                plot.bars = plot.axes.bar(labels, np.ones(len(plot.signals)))
+            else:
+                for i in range(len(plot.signals)):
+                    plot.lines[i], = plot.axes.plot([], [], label = plot.signals[i].label)
 
         # Set legend positions
         for plot in plots:
-            plot.axes.legend(loc = "upper left")
+            if not type(plot) is BarChart: plot.axes.legend(loc = "upper left")
 
         self.animation = animation.FuncAnimation(self.figure, lambda i: self._animate_callback(), interval=1000/sample_frequency, blit=True)
 
