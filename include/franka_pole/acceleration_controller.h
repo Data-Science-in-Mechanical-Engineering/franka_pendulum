@@ -1,31 +1,36 @@
 #pragma once
 
+#include <pinocchio/multibody/model.hpp>
+#include <pinocchio/multibody/data.hpp>
+
 #include <franka_pole/controller.h>
-#include <franka_pole/CommandParameters.h>
+#include <franka_pole/CommandAcceleration.h>
 
 #include <ros/node_handle.h>
 #include <ros/time.h>
 #include <Eigen/Dense>
-#include <memory>
 
 namespace franka_pole
 {
-    class IntegratedPositionController : public Controller
+    class AccelerationController : public Controller
     {
     private:
+        // Pinocchio technical
+        size_t _pinocchio_joint_ids[10];
+        pinocchio::Model _pinocchio_model;
+        pinocchio::Data _pinocchio_data;
+
         // Basic control
+        double _desired_acceleration = 0.0;
         double _nullspace_stiffness = 0.0;
         double _nullspace_damping = 0.0;
         Eigen::Matrix<double, 6, 6> _cartesian_stiffness = Eigen::Matrix<double, 6, 6>::Zero();
         Eigen::Matrix<double, 6, 6> _cartesian_damping = Eigen::Matrix<double, 6, 6>::Zero();
-
+        
         // Commanded control
-        double _a = 16.363880157470703 / 30;
-        double _b = 9.875003814697266 / 30;
-        double _c = 7.015979766845703 / 30;
-        double _d = 11.86760425567627 / 30;
+        Eigen::Matrix<double, 3, 1> _acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
         ros::Subscriber _command_subscriber;
-        void _command_callback(const franka_pole::CommandParameters::ConstPtr &msg);
+        void _command_callback(const franka_pole::CommandAcceleration::ConstPtr &msg);
 
     public:
         // Overridden from MultiInterfaceController

@@ -10,7 +10,7 @@
 
 namespace franka_pole
 {
-    class IntegratedPositionController : public Controller
+    class IntegratedTestPositionController : public Controller
     {
     private:
         // Basic control
@@ -18,14 +18,6 @@ namespace franka_pole
         double _nullspace_damping = 0.0;
         Eigen::Matrix<double, 6, 6> _cartesian_stiffness = Eigen::Matrix<double, 6, 6>::Zero();
         Eigen::Matrix<double, 6, 6> _cartesian_damping = Eigen::Matrix<double, 6, 6>::Zero();
-
-        // Commanded control
-        double _a = 16.363880157470703 / 30;
-        double _b = 9.875003814697266 / 30;
-        double _c = 7.015979766845703 / 30;
-        double _d = 11.86760425567627 / 30;
-        ros::Subscriber _command_subscriber;
-        void _command_callback(const franka_pole::CommandParameters::ConstPtr &msg);
 
     public:
         // Overridden from MultiInterfaceController

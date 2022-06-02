@@ -1,0 +1,6 @@
+float64 franka_effector_x
+float64 franka_effector_y
+float64 franka_effector_z
+float64 franka_effector_dx
+float64 franka_effector_dy
+float64 franka_effector_dz

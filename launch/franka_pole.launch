@@ -51,18 +51,23 @@
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
-    args="franka_pole_integrated_acceleration_controller"/>
+    args="franka_pole_position_controller"/>
   
   <node name="$(arg arm_id)_gripper_controller_spawner"
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
     args="franka_gripper"/>
-      
+
+  <node name="position_controller" pkg="franka_pole" type="position_controller.py" required="true" output="screen">
+    <param name="arm_id" value="$(arg arm_id)" />
+    <param name="simulated" value="$(arg simulated)" />
+  </node>
+
   <!-- Start plotter -->
   <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen">
     <param name="arm_id" value="$(arg arm_id)" />
-    <param name="simulated" value="TRUE" />
+    <param name="simulated" value="$(arg simulated)" />
   </node>
 
 </launch>

@@ -1,3 +1,13 @@
+franka_pole_position_controller:
+  type: franka_pole/PositionController
+  arm_id: "$(arg arm_id)"
+  simulated: "$(arg simulated)"
+  
+franka_pole_acceleration_controller:
+  type: franka_pole/AccelerationController
+  arm_id: "$(arg arm_id)"
+  simulated: "$(arg simulated)"
+
 franka_pole_integrated_position_controller:
   type: franka_pole/IntegratedPositionController
   arm_id: "$(arg arm_id)"
@@ -5,6 +15,16 @@ franka_pole_integrated_position_controller:
 
 franka_pole_integrated_acceleration_controller:
   type: franka_pole/IntegratedAccelerationController
+  arm_id: "$(arg arm_id)"
+  simulated: "$(arg simulated)"
+
+franka_pole_test_integrated_position_controller:
+  type: franka_pole/IntegratedTestPositionController
+  arm_id: "$(arg arm_id)"
+  simulated: "$(arg simulated)"
+
+franka_pole_test_integrated_acceleration_controller:
+  type: franka_pole/IntegratedTestAccelerationController
   arm_id: "$(arg arm_id)"
   simulated: "$(arg simulated)"
 

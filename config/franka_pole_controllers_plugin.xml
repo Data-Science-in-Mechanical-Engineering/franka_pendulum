@@ -1,4 +1,16 @@
 <library path="/lib/libfranka_pole_controllers">
+  <class name="franka_pole/PositionController" type="franka_pole::PositionController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pole
+    </description>
+  </class>
+
+  <class name="franka_pole/AccelerationController" type="franka_pole::AccelerationController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pole
+    </description>
+  </class>
+
   <class name="franka_pole/IntegratedPositionController" type="franka_pole::IntegratedPositionController" base_class_type="controller_interface::ControllerBase">
   <description>
     Low-level controller for Franka Pole
@@ -6,8 +18,20 @@
   </class>
   
   <class name="franka_pole/IntegratedAccelerationController" type="franka_pole::IntegratedAccelerationController" base_class_type="controller_interface::ControllerBase">
-  <description>
-    Low-level controller for Franka Pole
-  </description>
+    <description>
+      Low-level controller for Franka Pole
+    </description>
+  </class>
+
+  <class name="franka_pole/IntegratedTestPositionController" type="franka_pole::IntegratedTestPositionController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pole
+    </description>
+  </class>
+  
+  <class name="franka_pole/IntegratedTestAccelerationController" type="franka_pole::IntegratedTestAccelerationController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pole
+    </description>
   </class>
 </library>

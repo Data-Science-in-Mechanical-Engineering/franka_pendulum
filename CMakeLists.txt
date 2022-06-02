@@ -48,8 +48,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
     FILES
-    ControllerParameters.msg
     Sample.msg
+    CommandParameters.msg
+    CommandPosition.msg
+    CommandAcceleration.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -125,8 +127,12 @@ src/franka_state.cpp
 src/pole_state.cpp
 src/publisher.cpp
 src/controller.cpp
+src/position_controller.cpp
+src/acceleration_controller.cpp
 src/integrated_position_controller.cpp
-src/integrated_acceleration_controller.cpp)
+src/integrated_acceleration_controller.cpp
+src/integrated_test_position_controller.cpp
+src/integrated_test_acceleration_controller.cpp)
 target_include_directories(franka_pole_controllers PUBLIC include)
 target_compile_options(franka_pole_controllers PUBLIC -O3)
 target_link_directories(franka_pole_controllers PUBLIC "/opt/ros/noetic/lib/")
