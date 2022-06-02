@@ -126,13 +126,19 @@ add_library(franka_pole_controllers
 src/franka_state.cpp
 src/pole_state.cpp
 src/publisher.cpp
+
 src/controller.cpp
 src/position_controller.cpp
 src/acceleration_controller.cpp
-src/integrated_position_controller.cpp
-src/integrated_acceleration_controller.cpp
-src/integrated_test_position_controller.cpp
-src/integrated_test_acceleration_controller.cpp)
+
+src/external_position_controller.cpp
+src/simple_position_controller.cpp
+src/test_position_controller.cpp
+
+src/external_acceleration_controller.cpp
+src/simple_acceleration_controller.cpp
+src/test_acceleration_controller.cpp)
+
 target_include_directories(franka_pole_controllers PUBLIC include)
 target_compile_options(franka_pole_controllers PUBLIC -O3)
 target_link_directories(franka_pole_controllers PUBLIC "/opt/ros/noetic/lib/")

@@ -40,7 +40,7 @@
   <xacro:property name="lower_mass" value="0.5" />
   <xacro:property name="upper_mass" value="0.1" />
   <xacro:property name="ball_mass" value="0.1" />
-  <xacro:property name="beam_mass" value="0.5" />
+  <xacro:property name="beam_mass" value="0.05" />
   <xacro:property name="beam_length" value="0.6" />
   <xacro:property name="beam_radius" value="0.01" />
   <xacro:property name="ball_radius" value="0.05" />

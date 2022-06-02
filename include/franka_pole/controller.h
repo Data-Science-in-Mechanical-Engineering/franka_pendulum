@@ -1,7 +1,10 @@
 #pragma once
 
-#include <controller_interface/multi_interface_controller.h>
+#include <franka_pole/franka_state.h>
+#include <franka_pole/pole_state.h>
+#include <franka_pole/publisher.h>
 
+#include <controller_interface/multi_interface_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <franka_hw/franka_model_interface.h>
@@ -15,16 +18,14 @@
 
 namespace franka_pole
 {
-    class FrankaState;
-    class PoleState;
-    class Publisher;
-
+    //Basic controller, responsible for getting technical ROS staff, initializing and updating components, reading parameters
     class Controller : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface, hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface, franka_hw::FrankaStateInterface>
     {
     private:
         //Parameters
         std::string _arm_id = "panda";
         bool _simulated = true;
+        bool _two_dimensional = true;
 
     protected:
         //Essential functions for child classes
@@ -42,5 +43,6 @@ namespace franka_pole
         //Functions
         std::string get_arm_id() const;
         bool is_simulated() const;
+        bool is_two_dimensional() const;
     };
 }

@@ -1,5 +1,4 @@
 #include <franka_pole/acceleration_controller.h>
-#include <franka_pole/controller.h>
 #include <franka_pole/franka_state.h>
 #include <franka_pole/pole_state.h>
 #include <franka_pole/publisher.h>
@@ -8,24 +7,18 @@
 #include <pinocchio/parsers/urdf.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
 #include <ros/package.h>
-#include <pluginlib/class_list_macros.h>
 
-void franka_pole::AccelerationController::_command_callback(const franka_pole::CommandAcceleration::ConstPtr &msg)
+bool franka_pole::AccelerationController::_controller_init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
-    _acceleration_target = Eigen::Matrix<double, 3, 1>(msg->franka_effector_ddx, msg->franka_effector_ddy, msg->franka_effector_ddz);
-}
-
-bool franka_pole::AccelerationController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
-{
-    if (!_controller_init(robot_hw, node_handle)) return false;
+    if (!Controller::_controller_init(robot_hw, node_handle)) return false;
 
     _cartesian_stiffness.setZero();
     _cartesian_stiffness.diagonal().segment<3>(0) = Eigen::Vector3d::Ones() * 200.0;
-    _cartesian_stiffness.diagonal().segment<3>(3) = Eigen::Vector3d::Ones() * 10.0;
-    _nullspace_stiffness = 0.5;
-    _nullspace_damping = 2.0 * sqrt(_nullspace_stiffness);
+    _cartesian_stiffness.diagonal().segment<3>(3) = Eigen::Vector3d::Ones() * 100.0;
     _cartesian_damping = 2.0 * _cartesian_stiffness.array().sqrt().matrix();
 
+    _nullspace_stiffness = 10.0;
+    _nullspace_damping = 2.0 * sqrt(_nullspace_stiffness);
 
     std::string package_path = ros::package::getPath("franka_pole");
     try { pinocchio::urdf::buildModel(package_path + "/robots/franka_pole.urdf", _pinocchio_model); }
@@ -47,20 +40,21 @@ bool franka_pole::AccelerationController::init(hardware_interface::RobotHW *robo
     _pinocchio_joint_ids[9] = _pinocchio_model.getJointId(get_arm_id() + "_lower_upper");
     _pinocchio_model.gravity = pinocchio::Motion::Zero();
 
-    _command_subscriber = node_handle.subscribe("/franka_pole/acceleration_command", 10, &AccelerationController::_command_callback, this);
-
     return true;
 }
 
-void franka_pole::AccelerationController::starting(const ros::Time &time)
+void franka_pole::AccelerationController::_controller_starting(const ros::Time &time)
 {
-    _controller_starting(time);
+    Controller::_controller_starting(time);
 }
 
-void franka_pole::AccelerationController::update(const ros::Time &time, const ros::Duration &period)
+void franka_pole::AccelerationController::_controller_pre_update(const ros::Time &time, const ros::Duration &period)
 {
-    _controller_pre_update(time, period);
+    Controller::_controller_pre_update(time, period);
+}
 
+void franka_pole::AccelerationController::_controller_post_update(const ros::Time &time, const ros::Duration &period, const Eigen::Matrix<double, 3, 1> &acceleration_target)
+{
     // compute target
     Eigen::Vector3d position_target(0.5, 0.0, 0.5);
     Eigen::Quaterniond orientation_target(0.0, 1.0, 0.0, 0.0);
@@ -104,7 +98,7 @@ void franka_pole::AccelerationController::update(const ros::Time &time, const ro
     v10.segment<7>(0) = franka_state->get_joint_velocities();
     v10(9) = pole_state->get_dangle();
     Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
-    a6.segment<3>(0) = _acceleration_target;
+    a6.segment<3>(0) = acceleration_target;
     Eigen::Matrix<double, 10, 1> a10 = Eigen::Matrix<double, 10, 1>::Zero();
     a10.segment<7>(0) = jacobian_transpose * a6;
     //a10(9) = ???
@@ -118,9 +112,7 @@ void franka_pole::AccelerationController::update(const ros::Time &time, const ro
     publisher->set_control_timestamp(time);
     publisher->set_control_effector_position(position_target);
     publisher->set_control_effector_velocity(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
-    publisher->set_control_effector_acceleration(_acceleration_target);
+    publisher->set_control_effector_acceleration(acceleration_target);
 
-    _controller_post_update(time, period);
+    Controller::_controller_post_update(time, period);
 }
-
-PLUGINLIB_EXPORT_CLASS(franka_pole::AccelerationController, controller_interface::ControllerBase)

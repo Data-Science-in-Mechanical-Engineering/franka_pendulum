@@ -5,26 +5,40 @@ from franka_pole.msg import Sample
 from matplotlib import pyplot as plt
 from matplotlib import animation
 
-sample_frequency = 20
+sample_frequency = 50
 
 # Listens all relevant topics
 class Subscriber:
     # Sets current sample data
     def _sample_callback(self, sample):
+        # Shift franka variables
+        if sample.franka_timestamp != self.previous_sample.franka_timestamp:
+            self.previous_sample.franka_timestamp = self.sample.franka_timestamp
+            self.previous_sample.franka_effector_y = self.sample.franka_effector_y
+            self.previous_sample.franka_effector_dy = self.sample.franka_effector_dy
+
+        # Getting sample
         self.sample = sample
+
 
     # Starts subscriber
     def __init__(self):
         self.sample = Sample()
+        self.previous_sample = Sample()
+        self.previous_sample.franka_timestamp = -np.Inf
+        self.previous_sample.pole_timestamp = -np.Inf
+        self.previous_sample.control_timestamp = -np.Inf
         self.sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, lambda sample: self._sample_callback(sample))
 
 class Signal:
     # Creates signal
     # label - Label on the plot
     # source - Function that returns float value
-    def __init__(self, label, source):
+    def __init__(self, label, source, filter_factor = 0.0):
         self.label = label
         self.source = source
+        self.filter_factor = filter_factor
+        self.value = 0.0
 
 class Plot:
     # Creates plot
@@ -61,7 +75,8 @@ class Plotter:
         for plot in self.plots:
             for i in range(len(plot.signals)):
                 plot.buffers[i] = np.roll(plot.buffers[i], -1)
-                plot.buffers[i][-1] = plot.signals[i].source()
+                plot.signals[i].value = plot.signals[i].filter_factor * plot.signals[i].value + (1.0 - plot.signals[i].filter_factor) * plot.signals[i].source()
+                plot.buffers[i][-1] = plot.signals[i].value
                 plot.lines[i].set_data(plot.time_buffer, plot.buffers[i])
                 lines.append(plot.lines[i])
         return lines
@@ -126,10 +141,13 @@ if __name__ == '__main__':
     pole_dangle = Signal("Pole rotaion velocity", lambda: subscriber.sample.pole_dangle)
     franka_effector_y = Signal("Effector Y", lambda: subscriber.sample.franka_effector_y)
     franka_effector_dy = Signal("Effector Y velocity", lambda: subscriber.sample.franka_effector_dy)
+    franka_effector_ddy = Signal("Effector Y acceleration", lambda: (subscriber.sample.franka_effector_dy - subscriber.previous_sample.franka_effector_dy) / (subscriber.sample.franka_timestamp - subscriber.previous_sample.franka_timestamp), 0.8)
     control_effector_ddy = Signal("Desired Y acceleration", lambda: subscriber.sample.control_effector_ddy)
     
-    plot = Plot("All", 0, 0, [ pole_angle, pole_dangle, franka_effector_y, franka_effector_dy, control_effector_ddy ], -10, 10, 10)
+    position_plot = Plot("Position", 0, 0, [ pole_angle, franka_effector_y ], -1, 1, 3)
+    velocity_plot = Plot("Velocity", 0, 1, [ pole_dangle, franka_effector_dy ], -5, 5, 3)
+    acceleration_plot = Plot("Acceleration", 0, 2, [ franka_effector_ddy, control_effector_ddy ], -50, 50, 3)
     
-    plotter = Plotter("Plotter", [ plot ])
+    plotter = Plotter("Plotter", [ position_plot, velocity_plot, acceleration_plot ])
     
     plotter.start()
