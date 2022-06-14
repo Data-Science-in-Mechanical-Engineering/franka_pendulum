@@ -8,6 +8,7 @@
 
 #include <ros/node_handle.h>
 #include <ros/time.h>
+#include <Eigen/Dense>
 
 namespace franka_pole
 {
@@ -26,8 +27,8 @@ namespace franka_pole
         double _timestamp = 0.0;
 
         //Angles
-        double _angle = 0.0;
-        double _dangle = 0.0;
+        Eigen::Matrix<double, 2, 1> _angle;
+        Eigen::Matrix<double, 2, 1> _dangle;
 
         //Callback for ROS, used if simulated
         ros::Subscriber _pose_stamped_subscriber;
@@ -35,11 +36,11 @@ namespace franka_pole
 
     public:
         PoleState(Controller *controller, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
-        bool ok();
+        bool ok() const;
         void update(const ros::Time &time);
-        double get_timestamp();
-
-        double get_angle();
-        double get_dangle();
+        
+        double get_timestamp() const;
+        Eigen::Matrix<double, 2, 1> get_angle() const;
+        Eigen::Matrix<double, 2, 1> get_dangle() const;
     };
 }

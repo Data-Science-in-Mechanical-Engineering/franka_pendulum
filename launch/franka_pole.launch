@@ -34,7 +34,12 @@
     </include>
     
     <!-- Define robot -->
-    <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole.xacro arm_id:=$(arg arm_id)" />
+    <group unless="$(arg two_dimensional)">
+      <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole.xacro arm_id:=$(arg arm_id)" />
+    </group>
+    <group if="$(arg two_dimensional)">
+      <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2D.xacro arm_id:=$(arg arm_id)" />
+    </group>
 
     <!-- Load controllers -->
     <rosparam file="$(find franka_gazebo)/config/franka_hw_sim.yaml" subst_value="true" />

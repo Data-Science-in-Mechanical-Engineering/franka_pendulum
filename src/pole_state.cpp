@@ -13,7 +13,8 @@ franka_pole::PoleState::PoleState(Controller *controller, hardware_interface::Ro
     auto* position_joint_interface = robot_hw->get<hardware_interface::PositionJointInterface>();
     try
     {
-        _joint_handles.push_back(position_joint_interface->getHandle("panda_lower_upper"));
+        if (_controller->is_two_dimensional()) _joint_handles.push_back(position_joint_interface->getHandle(controller->get_arm_id() + "_pole_joint_y")); //Y comes first (if comes)
+        _joint_handles.push_back(position_joint_interface->getHandle(controller->get_arm_id() + "_pole_joint_x"));
     }
     catch (const hardware_interface::HardwareInterfaceException &ex)
     {
@@ -26,7 +27,7 @@ franka_pole::PoleState::PoleState(Controller *controller, hardware_interface::Ro
     _ok = true;
 }
 
-bool franka_pole::PoleState::ok()
+bool franka_pole::PoleState::ok() const
 {
     return _ok;
 }
@@ -37,8 +38,10 @@ void franka_pole::PoleState::update(const ros::Time &time)
     _timestamp = time.toSec();
 
     //Angles
-    _angle = _joint_handles[0].getPosition();
-    _dangle = _joint_handles[0].getVelocity();
+    _angle(0) = -_joint_handles[0].getPosition();
+    _dangle(0) = -_joint_handles[0].getVelocity();
+    _angle(1) = _controller->is_two_dimensional() ? -_joint_handles[1].getPosition() : 0.0;
+    _dangle(1) = _controller->is_two_dimensional() ? -_joint_handles[1].getVelocity() : 0.0;
 
     //Publish
     _controller->publisher->set_pole_timestamp(time);
@@ -46,17 +49,17 @@ void franka_pole::PoleState::update(const ros::Time &time)
     _controller->publisher->set_pole_dangle(_dangle);
 }
 
-double franka_pole::PoleState::get_timestamp()
+double franka_pole::PoleState::get_timestamp() const
 {
     return _timestamp;
 }
 
-double franka_pole::PoleState::get_angle()
+Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_angle() const
 {
     return _angle;
 }
 
-double franka_pole::PoleState::get_dangle()
+Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_dangle() const
 {
     return _dangle;
 }

@@ -12,6 +12,8 @@ class Subscriber:
         """Sets current sample
          - sample - received sample"""
 
+        self.previous_filtered_effector_dx = self.filtered_effector_dx
+        self.filtered_effector_dx = 0.95 * self.filtered_effector_dx + 0.05 * sample.franka_effector_dx
         self.previous_filtered_effector_dy = self.filtered_effector_dy
         self.filtered_effector_dy = 0.95 * self.filtered_effector_dy + 0.05 * sample.franka_effector_dy
 
@@ -22,8 +24,10 @@ class Subscriber:
     def __init__(self):
         """Initializes subscriber"""
         self.sample = Sample()
+        self.filtered_effector_dx = 0.0
         self.filtered_effector_dy = 0.0
         self.previous_franka_timestamp = -np.Inf
+        self.previous_filtered_effector_dx = 0.0
         self.previous_filtered_effector_dy = 0.0
         self.sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, lambda sample: self._sample_callback(sample))
 
@@ -165,10 +169,14 @@ class Plotter:
 
         # Create figure and axes
         self.figure, axes = plt.subplots(max_line+1, max_column+1, num = caption)
-        if len(plots) == 1:
+        if max_line == 0 and max_column == 0:
             plots[0]._axes = axes
+        elif max_line != 0 and max_column == 0:
+            for i in range(len(plots)): plots[i]._axes = axes[plots[i].line]
+        elif max_line == 0 and max_column != 0:
+            for i in range(len(plots)): plots[i]._axes = axes[plots[i].column]
         else:
-            for i in range(len(plots)): plots[i]._axes = axes[i]
+            for i in range(len(plots)): plots[i]._axes = axes[plots[i].line, plots[i].column]
 
         # Fully initialize plots
         for plot in plots: plot._init(frequency)
@@ -185,17 +193,24 @@ if __name__ == '__main__':
     
     subscriber = Subscriber()
     
-    pole_angle = Signal("Pole angle", lambda: subscriber.sample.pole_angle)
-    pole_dangle = Signal("Pole rotaion velocity", lambda: subscriber.sample.pole_dangle)
+    pole_angle_x = Signal("Pole angle around X", lambda: subscriber.sample.pole_angle_x)
+    pole_angle_y = Signal("Pole angle around Y", lambda: subscriber.sample.pole_angle_y)
+    pole_dangle_x = Signal("Pole rotation around X", lambda: subscriber.sample.pole_dangle_x)
+    pole_dangle_y = Signal("Pole rotation around Y", lambda: subscriber.sample.pole_dangle_y)
+    franka_effector_x = Signal("Effector X", lambda: subscriber.sample.franka_effector_x)
     franka_effector_y = Signal("Effector Y", lambda: subscriber.sample.franka_effector_y)
+    franka_effector_dx = Signal("Effector X velocity", lambda: subscriber.sample.franka_effector_dy)
     franka_effector_dy = Signal("Effector Y velocity", lambda: subscriber.sample.franka_effector_dy)
+    franka_effector_ddx = Signal("Effector X acceleration", lambda: (subscriber.filtered_effector_dx - subscriber.previous_filtered_effector_dx) / (subscriber.sample.franka_timestamp - subscriber.previous_franka_timestamp))
     franka_effector_ddy = Signal("Effector Y acceleration", lambda: (subscriber.filtered_effector_dy - subscriber.previous_filtered_effector_dy) / (subscriber.sample.franka_timestamp - subscriber.previous_franka_timestamp))
+    control_effector_ddx = Signal("Desired X acceleration", lambda: subscriber.sample.control_effector_ddx)
     control_effector_ddy = Signal("Desired Y acceleration", lambda: subscriber.sample.control_effector_ddy)
     
-    position_plot = Plot("Position", 0, 0, [ pole_angle, franka_effector_y ], -1, 1, 3)
-    velocity_plot = Plot("Velocity", 0, 1, [ pole_dangle, franka_effector_dy ], -5, 5, 3)
-    acceleration_plot = Plot("Acceleration", 0, 2, [ franka_effector_ddy, control_effector_ddy ], -50, 50, 3)
+    position_plot_x = Plot("Position X", 0, 0, [ pole_angle_y, franka_effector_x ], -1, 1, 3)
+    position_plot_y = Plot("Position Y", 0, 1, [ pole_angle_x, franka_effector_y ], -1, 1, 3)
+    acceleration_plot_x = Plot("Acceleration X", 1, 0, [ franka_effector_ddx, control_effector_ddx ], -50, 50, 3)
+    acceleration_plot_y = Plot("Acceleration Y", 1, 1, [ franka_effector_ddy, control_effector_ddy ], -50, 50, 3)
     
-    plotter = Plotter("Plotter", [ position_plot, velocity_plot, acceleration_plot ], 50)
+    plotter = Plotter("Plotter", [ position_plot_x, position_plot_y, acceleration_plot_x, acceleration_plot_y ], 50)
     
     plotter.start()

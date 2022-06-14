@@ -37,4 +37,5 @@ franka_pole_test_acceleration_controller:
 motion_generators:
   position:
     gains:
-      panda_lower_upper: { p: 0, d: 0, i: 0 }
+      panda_pole_joint_x: { p: 0, d: 0, i: 0 }
+      panda_pole_joint_y: { p: 0, d: 0, i: 0 }

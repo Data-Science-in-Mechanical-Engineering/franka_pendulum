@@ -17,7 +17,9 @@ void franka_pole::TestPositionController::update(const ros::Time &time, const ro
 {
     PositionController::_controller_pre_update(time, period);
     
-    Eigen::Matrix<double, 3, 1> position_target(0.5, 0.5 * sin(2 * M_PI * time.toSec()), 0.5);
+    Eigen::Matrix<double, 3, 1> position_target = get_box_center();
+    position_target(1) += 0.5 * sin(2 * M_PI * time.toSec());
+    if (is_two_dimensional()) position_target(0) += 0.5 * cos(2 * M_PI * time.toSec());
 
     PositionController::_controller_post_update(time, period, position_target, Eigen::Matrix<double, 3, 1>::Zero());
 }

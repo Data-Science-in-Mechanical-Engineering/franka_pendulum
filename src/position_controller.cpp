@@ -9,11 +9,11 @@ bool franka_pole::PositionController::_controller_init(hardware_interface::Robot
     if (!Controller::_controller_init(robot_hw, node_handle)) return false;
 
     _cartesian_stiffness.setZero();
-    _cartesian_stiffness.diagonal().segment<3>(0) = Eigen::Vector3d::Ones() * 200.0;
-    _cartesian_stiffness.diagonal().segment<3>(3) = Eigen::Vector3d::Ones() * 100.0;
+    _cartesian_stiffness.diagonal().segment<3>(0) = get_translation_stiffness() * Eigen::Vector3d::Ones();
+    _cartesian_stiffness.diagonal().segment<3>(3) = get_rotation_stiffness() * Eigen::Vector3d::Ones();
     _cartesian_damping = 2.0 * _cartesian_stiffness.array().sqrt().matrix();
 
-    _nullspace_stiffness = 10.0;
+    _nullspace_stiffness = get_nullspace_stiffness();
     _nullspace_damping = 2.0 * sqrt(_nullspace_stiffness);
 
     return true;

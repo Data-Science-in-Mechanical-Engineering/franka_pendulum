@@ -15,7 +15,7 @@ namespace franka_pole
     {
     private:
         // Pinocchio technical
-        size_t _pinocchio_joint_ids[10];
+        size_t _pinocchio_joint_ids[11];
         pinocchio::Model _pinocchio_model;
         pinocchio::Data _pinocchio_data;
 

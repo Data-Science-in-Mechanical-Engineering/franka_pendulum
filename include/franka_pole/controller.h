@@ -25,7 +25,7 @@ namespace franka_pole
         //Parameters
         std::string _arm_id = "panda";
         bool _simulated = true;
-        bool _two_dimensional = true;
+        bool _two_dimensional = false;
 
     protected:
         //Essential functions for child classes
@@ -40,9 +40,15 @@ namespace franka_pole
         std::unique_ptr<PoleState> pole_state;
         std::unique_ptr<Publisher> publisher;
 
-        //Functions
+        //Parameters
         std::string get_arm_id() const;
         bool is_simulated() const;
         bool is_two_dimensional() const;
+        double get_translation_stiffness() const;
+        double get_rotation_stiffness() const;
+        double get_nullspace_stiffness() const;
+        Eigen::Matrix<double, 3, 1> get_box_center() const;
+        Eigen::Matrix<double, 3, 1> get_box_min() const;
+        Eigen::Matrix<double, 3, 1> get_box_max() const;
     };
 }

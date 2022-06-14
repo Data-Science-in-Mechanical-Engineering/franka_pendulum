@@ -3,16 +3,6 @@
 #include <franka_pole/pole_state.h>
 #include <franka_pole/publisher.h>
 
-std::string franka_pole::Controller::get_arm_id() const
-{
-    return _arm_id;
-}
-
-bool franka_pole::Controller::is_simulated() const
-{
-    return _simulated;
-}
-
 bool franka_pole::Controller::_controller_init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     std::string arm_id;
@@ -28,6 +18,15 @@ bool franka_pole::Controller::_controller_init(hardware_interface::RobotHW *robo
         ROS_ERROR_STREAM("franka_pole::Controller: Could not read parameter simulated");
         return false;
     }
+    _simulated = simulated_str == "true";
+
+    std::string two_dimensional_str;
+    if (!node_handle.getParam("two_dimensional", two_dimensional_str))
+    {
+        ROS_ERROR_STREAM("franka_pole::Controller: Could not read parameter two_dimensional");
+        return false;
+    }
+    _two_dimensional = two_dimensional_str == "true";
 
     franka_state = std::make_unique<FrankaState>(this, robot_hw, node_handle);
     pole_state = std::make_unique<PoleState>(this, robot_hw, node_handle);
@@ -50,4 +49,49 @@ void franka_pole::Controller::_controller_pre_update(const ros::Time &time, cons
 void franka_pole::Controller::_controller_post_update(const ros::Time &time, const ros::Duration &period)
 {
     publisher->publish();
+}
+
+std::string franka_pole::Controller::get_arm_id() const
+{
+    return _arm_id;
+}
+
+bool franka_pole::Controller::is_simulated() const
+{
+    return _simulated;
+}
+
+bool franka_pole::Controller::is_two_dimensional() const
+{
+    return _two_dimensional;
+}
+
+double franka_pole::Controller::get_translation_stiffness() const
+{
+    return 200.0;
+}
+
+double franka_pole::Controller::get_rotation_stiffness() const
+{
+    return 100.0;
+}
+
+double franka_pole::Controller::get_nullspace_stiffness() const
+{
+    return 10.0;
+}
+
+Eigen::Matrix<double, 3, 1> franka_pole::Controller::get_box_center() const
+{
+    return Eigen::Matrix<double, 3, 1>(0.5, 0.0, 0.5);
+}
+
+Eigen::Matrix<double, 3, 1> franka_pole::Controller::get_box_min() const
+{
+    return Eigen::Matrix<double, 3, 1>(0.25, -0.6, 0.5);
+}
+
+Eigen::Matrix<double, 3, 1> franka_pole::Controller::get_box_max() const
+{
+    return Eigen::Matrix<double, 3, 1>(0.75, 0.6, 0.5);
 }

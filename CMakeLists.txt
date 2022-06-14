@@ -120,6 +120,8 @@ include_directories(${catkin_INCLUDE_DIRS})
 
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf")
 add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf")
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
+add_custom_target(franka_pole_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
 
 ## Declare a C++ library
 add_library(franka_pole_controllers
