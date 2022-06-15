@@ -38,10 +38,10 @@ void franka_pole::PoleState::update(const ros::Time &time)
     _timestamp = time.toSec();
 
     //Angles
-    _angle(0) = -_joint_handles[0].getPosition();
-    _dangle(0) = -_joint_handles[0].getVelocity();
-    _angle(1) = _controller->is_two_dimensional() ? -_joint_handles[1].getPosition() : 0.0;
-    _dangle(1) = _controller->is_two_dimensional() ? -_joint_handles[1].getVelocity() : 0.0;
+    _angle(0) = _controller->is_two_dimensional() ? -_joint_handles[1].getPosition() : -_joint_handles[0].getPosition(); //Around X
+    _dangle(0) = _controller->is_two_dimensional() ? -_joint_handles[1].getVelocity() : -_joint_handles[0].getVelocity();
+    _angle(1) = _controller->is_two_dimensional() ? _joint_handles[0].getPosition() : 0.0; //Around Y
+    _dangle(1) = _controller->is_two_dimensional() ? _joint_handles[0].getVelocity() : 0.0;
 
     //Publish
     _controller->publisher->set_pole_timestamp(time);

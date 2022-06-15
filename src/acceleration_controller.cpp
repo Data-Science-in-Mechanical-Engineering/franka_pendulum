@@ -103,13 +103,14 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
     error.segment<3>(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
     error.segment<3>(3) = -franka_state->get_effector_transform().linear() * error.segment<3>(3);
 
-    //compute desired q
+    // compute desired q
     double q_target_raw[] = { 0.0, 0.0, 0.0, -M_PI/2, 0.0, M_PI/2, M_PI/4 };
     Eigen::Matrix<double, 7, 1> q_target = Eigen::Matrix<double, 7, 1>::Map(q_target_raw);
 
     // compute control
     Eigen::Matrix<double, 7, 1> torque = franka_state->get_coriolis();
-    Eigen::Matrix<double, 7, 6> jacobian_transpose = franka_state->get_effector_jacobian().transpose();
+    Eigen::Matrix<double, 6, 7> jacobian = franka_state->get_effector_jacobian();
+    Eigen::Matrix<double, 7, 6> jacobian_transpose = jacobian.transpose();
     torque += jacobian_transpose * (-_cartesian_stiffness * error - _cartesian_damping * franka_state->get_effector_velocity());
     torque += (Eigen::Matrix<double, 7, 7>::Identity() - jacobian_transpose * pseudo_inverse(jacobian_transpose, true)) *
       (_nullspace_stiffness * (q_target - franka_state->get_joint_positions()) - _nullspace_damping * franka_state->get_joint_velocities());
@@ -128,7 +129,7 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
         Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
         a6.segment<3>(0) = acceleration_target;
         Eigen::Matrix<double, 11, 1> a11 = Eigen::Matrix<double, 11, 1>::Zero();
-        a11.segment<7>(0) = jacobian_transpose * a6;
+        a11.segment<7>(0) = pseudo_inverse(jacobian, true) * a6;
         //a11(9) = ???
         //a11(10) = ???
         pinocchio::rnea(_pinocchio_model, _pinocchio_data, q11, v11, a11);
@@ -145,7 +146,7 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
         Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
         a6.segment<3>(0) = acceleration_target;
         Eigen::Matrix<double, 10, 1> a10 = Eigen::Matrix<double, 10, 1>::Zero();
-        a10.segment<7>(0) = jacobian_transpose * a6;
+        a10.segment<7>(0) = pseudo_inverse(jacobian, true) * a6;
         //a10(9) = ???
         pinocchio::rnea(_pinocchio_model, _pinocchio_data, q10, v10, a10);
         torque += _pinocchio_data.tau.segment<7>(0);
