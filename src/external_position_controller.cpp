@@ -3,8 +3,8 @@
 
 void franka_pole::ExternalPositionController::_command_callback(const franka_pole::CommandPosition::ConstPtr &msg)
 {
-    _position_target = Eigen::Matrix<double, 3, 1>(msg->franka_effector_x, msg->franka_effector_y, msg->franka_effector_z);
-    _velocity_target = Eigen::Matrix<double, 3, 1>(msg->franka_effector_dx, msg->franka_effector_dy, msg->franka_effector_dz);
+    _position_target = Eigen::Matrix<double, 3, 1>::Map(&msg->command_effector_position[0]);
+    _velocity_target = Eigen::Matrix<double, 3, 1>::Map(&msg->command_effector_velocity[0]);
 }
 
 bool franka_pole::ExternalPositionController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)

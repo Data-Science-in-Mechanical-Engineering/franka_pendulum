@@ -1,24 +1,14 @@
 float64 pole_timestamp
-float64 pole_angle_x
-float64 pole_angle_y
-float64 pole_dangle_x
-float64 pole_dangle_y
+float64[2] pole_angle
+float64[2] pole_dangle
 
 float64 franka_timestamp
-float64 franka_effector_x
-float64 franka_effector_y
-float64 franka_effector_z
-float64 franka_effector_dx
-float64 franka_effector_dy
-float64 franka_effector_dz
+float64[3] franka_effector_position
+float64[3] franka_effector_velocity
 
 float64 control_timestamp
-float64 control_effector_x
-float64 control_effector_y
-float64 control_effector_z
-float64 control_effector_dx
-float64 control_effector_dy
-float64 control_effector_dz
-float64 control_effector_ddx
-float64 control_effector_ddy
-float64 control_effector_ddz
+float64[3] control_effector_position
+float64[3] control_effector_velocity
+float64[3] control_effector_acceleration
+
+bool reset

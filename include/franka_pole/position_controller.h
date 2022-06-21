@@ -14,8 +14,6 @@ namespace franka_pole
         // Basic control
         Eigen::Matrix<double, 6, 6> _cartesian_stiffness = Eigen::Matrix<double, 6, 6>::Zero();
         Eigen::Matrix<double, 6, 6> _cartesian_damping = Eigen::Matrix<double, 6, 6>::Zero();
-        double _nullspace_stiffness = 0.0;
-        double _nullspace_damping = 0.0;
 
     protected:
         //Essential functions for child classes

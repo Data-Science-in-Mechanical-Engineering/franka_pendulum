@@ -35,6 +35,9 @@ namespace franka_pole
         Eigen::Matrix<double, 3, 1> _control_effector_velocity = Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0);
         Eigen::Matrix<double, 3, 1> _control_effector_acceleration = Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0);
 
+        //Reset
+        bool _reset = false;
+
     public:
         Publisher(Controller *controller, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
         bool ok() const;
@@ -56,5 +59,8 @@ namespace franka_pole
         void set_control_effector_position(const Eigen::Matrix<double, 3, 1> &position);
         void set_control_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity);
         void set_control_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration);
+
+        //Reset
+        void set_reset(bool reset);
     };
 }

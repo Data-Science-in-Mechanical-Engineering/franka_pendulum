@@ -5,16 +5,16 @@ from franka_pole.msg import Sample, CommandAcceleration
 class AccelerationController:
     def _sample_callback(self, sample):
         if self._two_dimensional: ddx_target = (
-            self._a * sample.pole_angle_y +
-            self._b * sample.pole_dangle_y +
-            self._c * sample.franka_effector_x +
-            self._d * sample.franka_effector_dx)
+            self._a * sample.pole_angle[1] +
+            self._b * sample.pole_dangle[1] +
+            self._c * sample.franka_effector_position[0] +
+            self._d * sample.franka_effector_velocity[0])
 
         ddy_target = (
-            self._a * sample.pole_angle_x +
-            self._b * sample.pole_dangle_x +
-            self._c * sample.franka_effector_y +
-            self._d * sample.franka_effector_dy)
+            self._a * sample.pole_angle[0] +
+            self._b * sample.pole_dangle[0] +
+            self._c * sample.franka_effector_position[1] +
+            self._d * sample.franka_effector_velocity[1])
 
         command = CommandAcceleration()
         command.franka_effector_ddx = ddx_target if self._two_dimensional else 0.0

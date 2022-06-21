@@ -5,24 +5,24 @@ from franka_pole.msg import Sample, CommandPosition
 class PositionController:
     def _sample_callback(self, sample):
         if self._two_dimensional: ddx_target = (
-            self._a * sample.pole_angle_y +
-            self._b * sample.pole_dangle_y +
-            self._c * sample.franka_effector_x +
+            self._a * sample.pole_angle[1] +
+            self._b * sample.pole_dangle[1] +
+            self._c * sample.franka_effector[0] +
             self._d * sample.franka_effector_dx)
 
         ddy_target = (
-            self._a * sample.pole_angle_x +
-            self._b * sample.pole_dangle_x +
-            self._c * sample.franka_effector_y +
-            self._d * sample.franka_effector_dy)
+            self._a * sample.pole_angle[0] +
+            self._b * sample.pole_dangle[0] +
+            self._c * sample.franka_effector_position[1] +
+            self._d * sample.franka_effector_velcoity[1])
 
         command = CommandPosition()
-        command.franka_effector_x = max(0.25, min(sample.franka_effector_x + ddx_target, 0.75)) if self._two_dimensional else 0.5
-        command.franka_effector_y = max(-0.6, min(sample.franka_effector_y + ddy_target, 0.6))
-        command.franka_effector_z = 0.5
-        command.franka_effector_dx = 0
-        command.franka_effector_dy = 0
-        command.franka_effector_dz = 0
+        command.franka_effector_position[0] = max(0.25, min(sample.franka_effector_position[0] + ddx_target, 0.75)) if self._two_dimensional else 0.5
+        command.franka_effector_position[1] = max(-0.6, min(sample.franka_effector_position[1] + ddy_target, 0.6))
+        command.franka_effector_position[2] = 0.5
+        command.franka_effector_velcoity[0] = 0
+        command.franka_effector_velcoity[1] = 0
+        command.franka_effector_velcoity[2] = 0
         self._command_publisher.publish(command)
 
     def __init__(self):

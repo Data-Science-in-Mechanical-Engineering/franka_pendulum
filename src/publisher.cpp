@@ -17,29 +17,19 @@ void franka_pole::Publisher::publish()
     Sample sample;
 
     sample.pole_timestamp = _pole_timestamp;
-    sample.pole_angle_x = _pole_angle(0);
-    sample.pole_angle_y = _pole_angle(1);
-    sample.pole_dangle_x = _pole_dangle(0);
-    sample.pole_dangle_y = _pole_dangle(1);
+    for (size_t i = 0; i < 2; i++) sample.pole_angle[i] = _pole_angle(i);
+    for (size_t i = 0; i < 2; i++) sample.pole_dangle[i] = _pole_dangle(i);
 
     sample.franka_timestamp = _franka_timestamp;
-    sample.franka_effector_x = _franka_effector_position(0);
-    sample.franka_effector_y = _franka_effector_position(1);
-    sample.franka_effector_z = _franka_effector_position(2);
-    sample.franka_effector_dx = _franka_effector_velocity(0);
-    sample.franka_effector_dy = _franka_effector_velocity(1);
-    sample.franka_effector_dz = _franka_effector_velocity(2);
+    for (size_t i = 0; i < 3; i++) sample.franka_effector_position[i] = _franka_effector_position(i);
+    for (size_t i = 0; i < 3; i++) sample.franka_effector_velocity[i] = _franka_effector_velocity(i);
 
     sample.control_timestamp = _control_timestamp;
-    sample.control_effector_x = _control_effector_position(0);
-    sample.control_effector_y = _control_effector_position(1);
-    sample.control_effector_z = _control_effector_position(2);
-    sample.control_effector_dx = _control_effector_velocity(0);
-    sample.control_effector_dy = _control_effector_velocity(1);
-    sample.control_effector_dz = _control_effector_velocity(2);
-    sample.control_effector_ddx = _control_effector_acceleration(0);
-    sample.control_effector_ddy = _control_effector_acceleration(1);
-    sample.control_effector_ddz = _control_effector_acceleration(2);
+    for (size_t i = 0; i < 3; i++) sample.control_effector_position[i] = _control_effector_position(i);
+    for (size_t i = 0; i < 3; i++) sample.control_effector_velocity[i] = _control_effector_velocity(i);
+    for (size_t i = 0; i < 3; i++) sample.control_effector_acceleration[i] = _control_effector_acceleration(i);
+
+    sample.reset = _reset;
 
     _publisher.publish(sample);
 }
@@ -96,4 +86,9 @@ void franka_pole::Publisher::set_control_effector_velocity(const Eigen::Matrix<d
 void franka_pole::Publisher::set_control_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration)
 {
     _control_effector_acceleration = acceleration;
+}
+
+void franka_pole::Publisher::set_reset(bool reset)
+{
+    _reset = reset;
 }

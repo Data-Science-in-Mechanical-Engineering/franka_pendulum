@@ -28,9 +28,19 @@ void franka_pole::SimpleAccelerationController::update(const ros::Time &time, co
     AccelerationController::_controller_pre_update(time, period);
 
     Eigen::Matrix<double, 3, 1> acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
-    acceleration_target(1) = -_a * pole_state->get_angle()(0) + -_b * pole_state->get_dangle()(0) + _c * franka_state->get_effector_position()(1) + _d * franka_state->get_effector_velocity()(1);
-    if (is_two_dimensional()) acceleration_target(0) = -_a * pole_state->get_angle()(1) + -_b * pole_state->get_dangle()(1) + _c * franka_state->get_effector_position()(0) + _d * franka_state->get_effector_velocity()(0);
     
+    acceleration_target(1) =
+        _a * pole_state->get_angle()(0) +
+        _b * pole_state->get_dangle()(0) +
+        _c * franka_state->get_effector_position()(1) +
+        _d * franka_state->get_effector_velocity()(1);
+    
+    if (is_two_dimensional()) acceleration_target(0) =
+        _a * pole_state->get_angle()(1) +
+        _b * pole_state->get_dangle()(1) +
+        _c * franka_state->get_effector_position()(0) +
+        _d * franka_state->get_effector_velocity()(0);
+
     AccelerationController::_controller_post_update(time, period, acceleration_target);
 }
 

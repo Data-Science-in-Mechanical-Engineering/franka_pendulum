@@ -9,12 +9,9 @@ bool franka_pole::PositionController::_controller_init(hardware_interface::Robot
     if (!Controller::_controller_init(robot_hw, node_handle)) return false;
 
     _cartesian_stiffness.setZero();
-    _cartesian_stiffness.diagonal().segment<3>(0) = get_translation_stiffness() * Eigen::Vector3d::Ones();
-    _cartesian_stiffness.diagonal().segment<3>(3) = get_rotation_stiffness() * Eigen::Vector3d::Ones();
+    _cartesian_stiffness.diagonal().segment<3>(0) = get_translation_stiffness();
+    _cartesian_stiffness.diagonal().segment<3>(3) = get_rotation_stiffness();
     _cartesian_damping = 2.0 * _cartesian_stiffness.array().sqrt().matrix();
-
-    _nullspace_stiffness = get_nullspace_stiffness();
-    _nullspace_damping = 2.0 * sqrt(_nullspace_stiffness);
 
     return true;
 }
@@ -33,7 +30,14 @@ void franka_pole::PositionController::_controller_post_update(const ros::Time &t
 {
     Controller::_controller_pre_update(time, period);
 
-    //compute target
+    // publish
+    publisher->set_control_timestamp(time);
+    publisher->set_control_effector_position(position_target);
+    publisher->set_control_effector_velocity(velocity_target);
+    publisher->set_control_effector_acceleration(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
+
+    // conventional control:
+    // compute target
     Eigen::Quaterniond orientation_target(0.0, 1.0, 0.0, 0.0);
     Eigen::Matrix<double, 6, 1> velocity_target6 = Eigen::Matrix<double, 6, 1>::Zero();
     velocity_target6.segment<3>(0) = velocity_target;
@@ -47,25 +51,12 @@ void franka_pole::PositionController::_controller_post_update(const ros::Time &t
     error.segment<3>(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
     error.segment<3>(3) = -franka_state->get_effector_transform().linear() * error.segment<3>(3);
 
-    //compute desired q
-    double q_target_raw[] = { 0.0, 0.0, 0.0, -M_PI/2, 0.0, M_PI/2, M_PI/4 };
-    Eigen::Matrix<double, 7, 1> q_target = Eigen::Matrix<double, 7, 1>::Map(q_target_raw);
-
-    // compute control
+    // compute torque
     Eigen::Matrix<double, 7, 1> torque = franka_state->get_coriolis();
     Eigen::Matrix<double, 7, 6> jacobian_transpose = franka_state->get_effector_jacobian().transpose();
     torque += jacobian_transpose * (-_cartesian_stiffness * error - _cartesian_damping * (franka_state->get_effector_velocity() - velocity_target6));
     torque += (Eigen::Matrix<double, 7, 7>::Identity() - jacobian_transpose * pseudo_inverse(jacobian_transpose, true)) *
-      (_nullspace_stiffness * (q_target - franka_state->get_joint_positions()) - _nullspace_damping * franka_state->get_joint_velocities());
+    (get_nullspace_stiffness().array() * (get_initial_joint_positions().segment<7>(0) - franka_state->get_joint_positions()).array() - 2 * get_nullspace_stiffness().array().sqrt() * franka_state->get_joint_velocities().array()).matrix();
 
-    // set control
-    franka_state->set_torque(torque);
-
-    // publish
-    publisher->set_control_timestamp(time);
-    publisher->set_control_effector_position(position_target);
-    publisher->set_control_effector_velocity(velocity_target);
-    publisher->set_control_effector_acceleration(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
-
-    Controller::_controller_post_update(time, period);
+    Controller::_controller_post_update(time, period, torque);
 }

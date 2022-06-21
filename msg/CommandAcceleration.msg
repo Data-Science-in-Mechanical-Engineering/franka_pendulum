@@ -1,3 +1,1 @@
-float64 franka_effector_ddx
-float64 franka_effector_ddy
-float64 franka_effector_ddz
+float64[3] command_effector_acceleration

@@ -3,7 +3,7 @@
 
 void franka_pole::ExternalAccelerationController::_command_callback(const franka_pole::CommandAcceleration::ConstPtr &msg)
 {
-    _acceleration_target = Eigen::Matrix<double, 3, 1>(msg->franka_effector_ddx, msg->franka_effector_ddy, msg->franka_effector_ddz);
+    _acceleration_target = Eigen::Matrix<double, 3, 1>::Map(&msg->command_effector_acceleration[0]);
 }
 
 bool franka_pole::ExternalAccelerationController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)

@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   franka_gazebo
   message_generation
 )
+find_package(pinocchio REQUIRED)
+find_package(gazebo REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -52,6 +54,7 @@ add_message_files(
     CommandParameters.msg
     CommandPosition.msg
     CommandAcceleration.msg
+    CommandReset.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -124,7 +127,7 @@ add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf" DEP
 add_custom_target(franka_pole_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
 
 ## Declare a C++ library
-add_library(franka_pole_controllers
+add_library(franka_pole_controllers SHARED
 src/franka_state.cpp
 src/pole_state.cpp
 src/publisher.cpp
@@ -143,8 +146,18 @@ src/test_acceleration_controller.cpp)
 
 target_include_directories(franka_pole_controllers PUBLIC include)
 target_compile_options(franka_pole_controllers PUBLIC -O3)
-target_link_directories(franka_pole_controllers PUBLIC "/opt/ros/noetic/lib/")
-target_link_libraries(franka_pole_controllers PUBLIC pinocchio)
+target_include_directories(franka_pole_controllers PUBLIC ${pinocchio_INCLUDE_DIRS})
+target_link_libraries(franka_pole_controllers PUBLIC ${pinocchio_LIBRARIES})
+
+
+
+add_library(franka_pole_plugin SHARED
+src/plugin.cpp)
+
+target_include_directories(franka_pole_plugin PRIVATE ${GAZEBO_INCLUDE_DIRS})
+target_link_directories(franka_pole_plugin PRIVATE ${GAZEBO_LIBRARY_DIRS})
+target_link_libraries(franka_pole_plugin PRIVATE ${GAZEBO_LIBRARIES})
+target_compile_options(franka_pole_plugin PRIVATE ${GAZEBO_CXX_FLAGS})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

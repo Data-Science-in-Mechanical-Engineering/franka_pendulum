@@ -13,9 +13,9 @@ class Subscriber:
          - sample - received sample"""
 
         self.previous_filtered_effector_dx = self.filtered_effector_dx
-        self.filtered_effector_dx = 0.95 * self.filtered_effector_dx + 0.05 * sample.franka_effector_dx
+        self.filtered_effector_dx = 0.95 * self.filtered_effector_dx + 0.05 * sample.franka_effector_velocity[0]
         self.previous_filtered_effector_dy = self.filtered_effector_dy
-        self.filtered_effector_dy = 0.95 * self.filtered_effector_dy + 0.05 * sample.franka_effector_dy
+        self.filtered_effector_dy = 0.95 * self.filtered_effector_dy + 0.05 * sample.franka_effector_velocity[1]
 
         self.previous_franka_timestamp = self.sample.franka_timestamp
         self.sample = sample
@@ -193,18 +193,18 @@ if __name__ == '__main__':
     
     subscriber = Subscriber()
     
-    pole_angle_x = Signal("Pole angle around X", lambda: subscriber.sample.pole_angle_x)
-    pole_angle_y = Signal("Pole angle around Y", lambda: subscriber.sample.pole_angle_y)
-    pole_dangle_x = Signal("Pole rotation around X", lambda: subscriber.sample.pole_dangle_x)
-    pole_dangle_y = Signal("Pole rotation around Y", lambda: subscriber.sample.pole_dangle_y)
-    franka_effector_x = Signal("Effector X", lambda: subscriber.sample.franka_effector_x)
-    franka_effector_y = Signal("Effector Y", lambda: subscriber.sample.franka_effector_y)
-    franka_effector_dx = Signal("Effector X velocity", lambda: subscriber.sample.franka_effector_dy)
-    franka_effector_dy = Signal("Effector Y velocity", lambda: subscriber.sample.franka_effector_dy)
+    pole_angle_x = Signal("Pole angle around X", lambda: subscriber.sample.pole_angle[0])
+    pole_angle_y = Signal("Pole angle around Y", lambda: subscriber.sample.pole_angle[1])
+    pole_dangle_x = Signal("Pole rotation around X", lambda: subscriber.sample.pole_dangle[0])
+    pole_dangle_y = Signal("Pole rotation around Y", lambda: subscriber.sample.pole_dangle[1])
+    franka_effector_x = Signal("Effector X", lambda: subscriber.sample.franka_effector_position[0])
+    franka_effector_y = Signal("Effector Y", lambda: subscriber.sample.franka_effector_position[1])
+    franka_effector_dx = Signal("Effector X velocity", lambda: subscriber.sample.franka_effector_velocity[0])
+    franka_effector_dy = Signal("Effector Y velocity", lambda: subscriber.sample.franka_effector_velocity[1])
     franka_effector_ddx = Signal("Effector X acceleration", lambda: (subscriber.filtered_effector_dx - subscriber.previous_filtered_effector_dx) / (subscriber.sample.franka_timestamp - subscriber.previous_franka_timestamp))
     franka_effector_ddy = Signal("Effector Y acceleration", lambda: (subscriber.filtered_effector_dy - subscriber.previous_filtered_effector_dy) / (subscriber.sample.franka_timestamp - subscriber.previous_franka_timestamp))
-    control_effector_ddx = Signal("Desired X acceleration", lambda: subscriber.sample.control_effector_ddx)
-    control_effector_ddy = Signal("Desired Y acceleration", lambda: subscriber.sample.control_effector_ddy)
+    control_effector_ddx = Signal("Desired X acceleration", lambda: subscriber.sample.control_effector_acceleration[0])
+    control_effector_ddy = Signal("Desired Y acceleration", lambda: subscriber.sample.control_effector_acceleration[1])
     
     position_plot_x = Plot("Position X", 0, 0, [ pole_angle_y, franka_effector_x ], -1, 1, 3)
     position_plot_y = Plot("Position Y", 0, 1, [ pole_angle_x, franka_effector_y ], -1, 1, 3)
