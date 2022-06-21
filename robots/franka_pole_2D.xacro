@@ -32,6 +32,8 @@
       <controlPeriod>0.001</controlPeriod>
       <robotSimType>franka_gazebo/FrankaHWSim</robotSimType>
     </plugin>
+    <plugin name="franka_pole_plugin" filename="libfranka_pole_plugin.so">
+    </plugin>
     <self_collide>true</self_collide>
   </gazebo>
 
