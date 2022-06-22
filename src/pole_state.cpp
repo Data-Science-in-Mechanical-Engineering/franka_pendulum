@@ -43,6 +43,14 @@ void franka_pole::PoleState::update(const ros::Time &time)
     _angle(1) = _controller->is_two_dimensional() ? _joint_handles[0].getPosition() : 0.0; //Around Y
     _dangle(1) = _controller->is_two_dimensional() ? _joint_handles[0].getVelocity() : 0.0;
 
+    Eigen::Matrix<double, 3, 3> rotation = _controller->franka_state->get_effector_orientation().toRotationMatrix();
+    rotation = Eigen::AngleAxisd(M_PI, rotation.col(0)) * rotation; //180 around X
+    rotation = Eigen::AngleAxisd(_angle(1), rotation.col(1)) * rotation; //Around Y
+    rotation = Eigen::AngleAxisd(-_angle(0), rotation.col(0)) * rotation; //Around X
+    Eigen::Matrix<double, 3, 1> up = rotation * Eigen::Vector3d::UnitZ();
+    _angle(0) = atan2(up(1), up(2));
+    _angle(1) = atan2(up(0), up(2));
+
     //Publish
     _controller->publisher->set_pole_timestamp(time);
     _controller->publisher->set_pole_angle(_angle);

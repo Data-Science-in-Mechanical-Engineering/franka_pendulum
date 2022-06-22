@@ -203,13 +203,13 @@ if __name__ == '__main__':
     franka_effector_dy = Signal("Effector Y velocity", lambda: subscriber.sample.franka_effector_velocity[1])
     franka_effector_ddx = Signal("Effector X acceleration", lambda: (subscriber.filtered_effector_dx - subscriber.previous_filtered_effector_dx) / (subscriber.sample.franka_timestamp - subscriber.previous_franka_timestamp))
     franka_effector_ddy = Signal("Effector Y acceleration", lambda: (subscriber.filtered_effector_dy - subscriber.previous_filtered_effector_dy) / (subscriber.sample.franka_timestamp - subscriber.previous_franka_timestamp))
-    control_effector_ddx = Signal("Desired X acceleration", lambda: subscriber.sample.control_effector_acceleration[0])
-    control_effector_ddy = Signal("Desired Y acceleration", lambda: subscriber.sample.control_effector_acceleration[1])
+    command_effector_ddx = Signal("Desired X acceleration", lambda: subscriber.sample.command_effector_acceleration[0])
+    command_effector_ddy = Signal("Desired Y acceleration", lambda: subscriber.sample.command_effector_acceleration[1])
     
     position_plot_x = Plot("Position X", 0, 0, [ pole_angle_y, franka_effector_x ], -1, 1, 3)
     position_plot_y = Plot("Position Y", 0, 1, [ pole_angle_x, franka_effector_y ], -1, 1, 3)
-    acceleration_plot_x = Plot("Acceleration X", 1, 0, [ franka_effector_ddx, control_effector_ddx ], -50, 50, 3)
-    acceleration_plot_y = Plot("Acceleration Y", 1, 1, [ franka_effector_ddy, control_effector_ddy ], -50, 50, 3)
+    acceleration_plot_x = Plot("Acceleration X", 1, 0, [ franka_effector_ddx, command_effector_ddx ], -50, 50, 3)
+    acceleration_plot_y = Plot("Acceleration Y", 1, 1, [ franka_effector_ddy, command_effector_ddy ], -50, 50, 3)
     
     plotter = Plotter("Plotter", [ position_plot_x, position_plot_y, acceleration_plot_x, acceleration_plot_y ], 50)
     

@@ -24,10 +24,10 @@ void franka_pole::Publisher::publish()
     for (size_t i = 0; i < 3; i++) sample.franka_effector_position[i] = _franka_effector_position(i);
     for (size_t i = 0; i < 3; i++) sample.franka_effector_velocity[i] = _franka_effector_velocity(i);
 
-    sample.control_timestamp = _control_timestamp;
-    for (size_t i = 0; i < 3; i++) sample.control_effector_position[i] = _control_effector_position(i);
-    for (size_t i = 0; i < 3; i++) sample.control_effector_velocity[i] = _control_effector_velocity(i);
-    for (size_t i = 0; i < 3; i++) sample.control_effector_acceleration[i] = _control_effector_acceleration(i);
+    sample.command_timestamp = _command_timestamp;
+    for (size_t i = 0; i < 3; i++) sample.command_effector_position[i] = _command_effector_position(i);
+    for (size_t i = 0; i < 3; i++) sample.command_effector_velocity[i] = _command_effector_velocity(i);
+    for (size_t i = 0; i < 3; i++) sample.command_effector_acceleration[i] = _command_effector_acceleration(i);
 
     sample.reset = _reset;
 
@@ -69,23 +69,23 @@ void franka_pole::Publisher::set_pole_dangle(const Eigen::Matrix<double, 2, 1> &
     _pole_dangle = dangle;
 }
 
-void franka_pole::Publisher::set_control_timestamp(const ros::Time &timestamp)
+void franka_pole::Publisher::set_command_timestamp(const ros::Time &timestamp)
 {
-    _control_timestamp = timestamp.toSec();
+    _command_timestamp = timestamp.toSec();
 }
 
-void franka_pole::Publisher::set_control_effector_position(const Eigen::Matrix<double, 3, 1> &position)
+void franka_pole::Publisher::set_command_effector_position(const Eigen::Matrix<double, 3, 1> &position)
 {
-    _control_effector_position = position;
+    _command_effector_position = position;
 }
 
-void franka_pole::Publisher::set_control_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity)
+void franka_pole::Publisher::set_command_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity)
 {
-    _control_effector_velocity = velocity;
+    _command_effector_velocity = velocity;
 }
-void franka_pole::Publisher::set_control_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration)
+void franka_pole::Publisher::set_command_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration)
 {
-    _control_effector_acceleration = acceleration;
+    _command_effector_acceleration = acceleration;
 }
 
 void franka_pole::Publisher::set_reset(bool reset)

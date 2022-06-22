@@ -30,10 +30,10 @@ namespace franka_pole
         Eigen::Matrix<double, 2, 1> _pole_dangle = Eigen::Matrix<double, 2, 1>::Zero();
 
         //Controller
-        double _control_timestamp = 0.0;
-        Eigen::Matrix<double, 3, 1> _control_effector_position = Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0);
-        Eigen::Matrix<double, 3, 1> _control_effector_velocity = Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0);
-        Eigen::Matrix<double, 3, 1> _control_effector_acceleration = Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0);
+        double _command_timestamp = 0.0;
+        Eigen::Matrix<double, 3, 1> _command_effector_position = Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0);
+        Eigen::Matrix<double, 3, 1> _command_effector_velocity = Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0);
+        Eigen::Matrix<double, 3, 1> _command_effector_acceleration = Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0);
 
         //Reset
         bool _reset = false;
@@ -55,10 +55,10 @@ namespace franka_pole
         void set_pole_dangle(const Eigen::Matrix<double, 2, 1> &pole_dangle);
 
         //Controller
-        void set_control_timestamp(const ros::Time &timestamp);
-        void set_control_effector_position(const Eigen::Matrix<double, 3, 1> &position);
-        void set_control_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity);
-        void set_control_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration);
+        void set_command_timestamp(const ros::Time &timestamp);
+        void set_command_effector_position(const Eigen::Matrix<double, 3, 1> &position);
+        void set_command_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity);
+        void set_command_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration);
 
         //Reset
         void set_reset(bool reset);

@@ -31,10 +31,10 @@ void franka_pole::PositionController::_controller_post_update(const ros::Time &t
     Controller::_controller_pre_update(time, period);
 
     // publish
-    publisher->set_control_timestamp(time);
-    publisher->set_control_effector_position(position_target);
-    publisher->set_control_effector_velocity(velocity_target);
-    publisher->set_control_effector_acceleration(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
+    publisher->set_command_timestamp(time);
+    publisher->set_command_effector_position(position_target);
+    publisher->set_command_effector_velocity(velocity_target);
+    publisher->set_command_effector_acceleration(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
 
     // conventional control:
     // compute target

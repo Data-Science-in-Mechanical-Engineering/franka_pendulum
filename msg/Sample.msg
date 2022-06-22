@@ -6,9 +6,9 @@ float64 franka_timestamp
 float64[3] franka_effector_position
 float64[3] franka_effector_velocity
 
-float64 control_timestamp
-float64[3] control_effector_position
-float64[3] control_effector_velocity
-float64[3] control_effector_acceleration
+float64 command_timestamp
+float64[3] command_effector_position
+float64[3] command_effector_velocity
+float64[3] command_effector_acceleration
 
 bool reset

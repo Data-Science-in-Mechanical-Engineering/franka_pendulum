@@ -148,10 +148,10 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
     }
 
     // publish
-    publisher->set_control_timestamp(time);
-    publisher->set_control_effector_position(position_target);
-    publisher->set_control_effector_velocity(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
-    publisher->set_control_effector_acceleration(acceleration_target);
+    publisher->set_command_timestamp(time);
+    publisher->set_command_effector_position(position_target);
+    publisher->set_command_effector_velocity(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
+    publisher->set_command_effector_acceleration(acceleration_target);
 
     Controller::_controller_post_update(time, period, torque);
 }
