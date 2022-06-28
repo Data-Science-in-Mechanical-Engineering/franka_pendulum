@@ -50,7 +50,7 @@
 
   <!-- Connection -->   
   <joint name="$(arg arm_id)_pole_joint_connection" type="fixed">
-    <origin xyz="0.071 -0.071 0.0" rpy="${pi} 0 ${-pi/4}" />
+    <origin xyz="${0.110/sqrt(2)} -${0.110/sqrt(2)} 0.03" rpy="${pi} 0 ${-pi/4}" />
     <parent link="$(arg arm_id)_link8" />
     <child  link="$(arg arm_id)_pole_link_lower" />
   </joint>
@@ -79,14 +79,14 @@
     <child link="$(arg arm_id)_pole_link_middle"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
-    <limit velocity="1000000" lower="${-20*pi/180}" effort="0" upper="${20*pi/180}" />
+    <limit velocity="1000000" lower="${15*pi/180}" effort="0" upper="${45*pi/180}" />
     <dynamics damping="0.0"/>
   </joint>
 
   <!-- Middle bearing -->
   <link name="$(arg arm_id)_pole_link_middle">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="0 ${-pi/6} 0"/>
       <geometry>
         <mesh filename="package://franka_pole/meshes/visual/2D_middle.dae"/>
       </geometry>
@@ -107,7 +107,7 @@
     <child link="$(arg arm_id)_pole_link_upper"/>
     <origin xyz="0 0 0.012" rpy="0 0 0"/>
     <axis xyz="1 0 0"/>
-    <limit velocity="1000000" lower="${-20*pi/180}" effort="0" upper="${20*pi/180}" />
+    <limit velocity="1000000" lower="${-15*pi/180}" effort="0" upper="${15*pi/180}" />
     <dynamics damping="0.0"/>
   </joint>
   
@@ -120,7 +120,7 @@
       </geometry>
     </visual>
     <visual>
-      <origin xyz="0 0 -0.012" rpy="0 0 0"/>
+      <origin xyz="0 0 -0.012" rpy="0 ${-pi/6} 0"/>
       <geometry>
         <mesh filename="package://franka_pole/meshes/visual/2D_upper.dae"/>
       </geometry>
