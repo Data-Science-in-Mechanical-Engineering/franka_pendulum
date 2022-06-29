@@ -1,3 +1,4 @@
+#include <franka_pole/parameters.h>
 #include <ros/ros.h>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/World.hh>
@@ -18,6 +19,9 @@ namespace franka_pole
         gazebo::physics::JointPtr _fingers[2];
         gazebo::physics::JointPtr _pole[2];
         gazebo::event::ConnectionPtr _connection;
+
+        //Parameters
+        std::unique_ptr<Parameters> param;
 
         //Reset flag
         sem_t *_software_reset_semaphore;
@@ -41,6 +45,10 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
 {
     try
     {
+        //Read parameters
+        ros::NodeHandle node_handle;
+        param = std::make_unique<Parameters>(nullptr, nullptr, node_handle);
+
         //Init semaphore
         _software_reset_semaphore = sem_open("/franka_pole_software_reset", O_CREAT, 0644, 0);
         if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_emulator::emulator::Semaphore::Semaphore: sem_open failed");
@@ -78,19 +86,11 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
 
 void franka_pole::Plugin::SetDefault()
 {
-    _joints[0]->SetPosition(0, 0.0);
-    _joints[1]->SetPosition(0, 0.0);
-    _joints[2]->SetPosition(0, 0.0);
-    _joints[3]->SetPosition(0, -M_PI / 2);
-    _joints[4]->SetPosition(0, 0.0);
-    _joints[5]->SetPosition(0, M_PI / 2);
-    _joints[6]->SetPosition(0, M_PI / 4);
+    for (size_t i = 0; i < 7; i++) _joints[i]->SetPosition(0, param->initial_joint_positions()[i]);
+    for (size_t i = 0; i < 2; i++) _fingers[i]->SetPosition(0, 0.0);
 
-    _fingers[0]->SetPosition(0, 0.0);
-    _fingers[1]->SetPosition(0, 0.0);
-
-    _pole[0]->SetPosition(0, 0.0);
-    if (_pole[1] != nullptr) _pole[1]->SetPosition(0, 0.0);
+    _pole[0]->SetPosition(0, param->initial_pole_positions()[1]);
+    if (_pole[1] != nullptr) _pole[1]->SetPosition(0, param->initial_pole_positions()[1]);
 }
 
 void franka_pole::Plugin::Update(const gazebo::common::UpdateInfo &info)

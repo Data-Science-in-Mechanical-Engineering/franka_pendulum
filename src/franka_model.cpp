@@ -12,49 +12,36 @@ franka_pole::FrankaModel::FrankaModel(Controller *controller, hardware_interface
 
     //ROS Model
     auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
-    if (model_interface == nullptr)
-    {
-        ROS_ERROR_STREAM("FrankaModel: Error getting model interface from hardware");
-        return;
-    }
-    try
-    {
-        _model_handle = std::make_unique<franka_hw::FrankaModelHandle>(model_interface->getHandle(controller->get_arm_id() + "_model"));
-    }
-    catch (hardware_interface::HardwareInterfaceException& ex)
-    {
-        ROS_ERROR_STREAM("FrankaModel: Exception getting model handle from interface: " << ex.what());
-        return;
-    }
-
+    if (model_interface == nullptr) throw std::runtime_error("FrankaModel: Error getting model interface from hardware");
+    _model_handle = std::make_unique<franka_hw::FrankaModelHandle>(model_interface->getHandle(controller->param->arm_id() + "_model"));
+    
     //Pinocchio model
     std::string package_path = ros::package::getPath("franka_pole");
-    try { pinocchio::urdf::buildModel(package_path + (controller->is_two_dimensional() ? "/robots/franka_pole_2D.urdf" : "/robots/franka_pole.urdf"), _pinocchio_model); }
-    catch (const std::exception &ex) { ROS_ERROR_STREAM("FrankaModel: Exception building pinocchio model: " << ex.what()); return; }
+    pinocchio::urdf::buildModel(package_path + (controller->param->two_dimensional() ? "/robots/franka_pole_2D.urdf" : "/robots/franka_pole.urdf"), _pinocchio_model);
     _pinocchio_data = pinocchio::Data(_pinocchio_model);
     for (size_t i = 0; i < 7; i++)
     {
-        std::string name = controller->get_arm_id() + "_joint" + std::to_string(i + 1);
-        if (!_pinocchio_model.existJointName(name)) { ROS_ERROR_STREAM("FrankaModel: Joint " + controller->get_arm_id() + "_joint" + std::to_string(i + 1) + " not found"); return; }
+        std::string name = controller->param->arm_id() + "_joint" + std::to_string(i + 1);
+        if (!_pinocchio_model.existJointName(name)) throw std::runtime_error("FrankaModel: Joint " + controller->param->arm_id() + "_joint" + std::to_string(i + 1) + " not found");
         _pinocchio_joint_ids[i] = _pinocchio_model.getJointId(name);
     }
     for (size_t i = 0; i < 2; i++)
     {
-        std::string name = controller->get_arm_id() + "_finger_joint" + std::to_string(i + 1);
-        if (!_pinocchio_model.existJointName(name)) { ROS_ERROR_STREAM("FrankaModel: Joint " + controller->get_arm_id() + "_finger_joint" + std::to_string(i + 1) + " not found"); return; }
+        std::string name = controller->param->arm_id() + "_finger_joint" + std::to_string(i + 1);
+        if (!_pinocchio_model.existJointName(name)) throw std::runtime_error("FrankaModel: Joint " + controller->param->arm_id() + "_finger_joint" + std::to_string(i + 1) + " not found");
         _pinocchio_joint_ids[i+7] = _pinocchio_model.getJointId(name);
     }
-    if (controller->is_two_dimensional())
+    if (controller->param->two_dimensional())
     {
-        if (!_pinocchio_model.existJointName(controller->get_arm_id() + "_pole_joint_y")) { ROS_ERROR_STREAM("FrankaModel: Joint " + controller->get_arm_id() + "_pole_joint_y not found"); return; }
-        _pinocchio_joint_ids[9] = _pinocchio_model.getJointId(controller->get_arm_id() + "_pole_joint_y");
-        if (!_pinocchio_model.existJointName(controller->get_arm_id() + "_pole_joint_x")) { ROS_ERROR_STREAM("FrankaModel: Joint " + controller->get_arm_id() + "_pole_joint_x not found"); return; }
-        _pinocchio_joint_ids[10] = _pinocchio_model.getJointId(controller->get_arm_id() + "_pole_joint_x");
+        if (!_pinocchio_model.existJointName(controller->param->arm_id() + "_pole_joint_y")) throw std::runtime_error("FrankaModel: Joint " + controller->param->arm_id() + "_pole_joint_y not found");
+        _pinocchio_joint_ids[9] = _pinocchio_model.getJointId(controller->param->arm_id() + "_pole_joint_y");
+        if (!_pinocchio_model.existJointName(controller->param->arm_id() + "_pole_joint_x")) throw std::runtime_error("FrankaModel: Joint " + controller->param->arm_id() + "_pole_joint_x not found");
+        _pinocchio_joint_ids[10] = _pinocchio_model.getJointId(controller->param->arm_id() + "_pole_joint_x");
     }
     else
     {
-        if (!_pinocchio_model.existJointName(controller->get_arm_id() + "_pole_joint_x")) { ROS_ERROR_STREAM("FrankaModel: Joint " + controller->get_arm_id() + "_pole_joint_x not found"); return; }
-        _pinocchio_joint_ids[9] = _pinocchio_model.getJointId(controller->get_arm_id() + "_pole_joint_x");
+        if (!_pinocchio_model.existJointName(controller->param->arm_id() + "_pole_joint_x")) throw std::runtime_error("FrankaModel: Joint " + controller->param->arm_id() + "_pole_joint_x not found");
+        _pinocchio_joint_ids[9] = _pinocchio_model.getJointId(controller->param->arm_id() + "_pole_joint_x");
     }
     _pinocchio_model.gravity = pinocchio::Motion::Zero();
     
@@ -68,7 +55,7 @@ bool franka_pole::FrankaModel::ok() const
 
 Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_gravity(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pole_positions)
 {
-    if (_controller->is_two_dimensional())
+    if (_controller->param->two_dimensional())
     {
         Eigen::Matrix<double, 11, 1> q = Eigen::Matrix<double, 11, 1>::Zero();
         q.segment<7>(0) = joint_positions;
@@ -86,7 +73,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_gravity(const Eigen::M
 
 Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_coriolis(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities, const Eigen::Matrix<double, 2, 1> &pole_positions, const Eigen::Matrix<double, 2, 1> &pole_velocities)
 {
-    if (_controller->is_two_dimensional())
+    if (_controller->param->two_dimensional())
     {
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
         q11.segment<7>(0) = joint_positions;
@@ -128,7 +115,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_torques(const Eigen::M
 {
     Eigen::Matrix<double, 6, 7> jacobian = get_effector_jacobian(joint_positions);
 
-    if (_controller->is_two_dimensional())
+    if (_controller->param->two_dimensional())
     {
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
         q11.segment<7>(0) = joint_positions;

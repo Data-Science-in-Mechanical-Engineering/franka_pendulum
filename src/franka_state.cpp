@@ -15,7 +15,7 @@ franka_pole::FrankaState::FrankaState(Controller *controller, hardware_interface
     }
     try
     {
-        _state_handle = std::make_unique<franka_hw::FrankaStateHandle>(state_interface->getHandle(controller->get_arm_id() + "_robot"));
+        _state_handle = std::make_unique<franka_hw::FrankaStateHandle>(state_interface->getHandle(controller->param->arm_id() + "_robot"));
     }
     catch (hardware_interface::HardwareInterfaceException &ex)
     {
@@ -33,7 +33,7 @@ franka_pole::FrankaState::FrankaState(Controller *controller, hardware_interface
     {
         try
         {
-            _joint_handles.push_back(effort_joint_interface->getHandle(controller->get_arm_id() + "_joint" + std::to_string(i + 1)));
+            _joint_handles.push_back(effort_joint_interface->getHandle(controller->param->arm_id() + "_joint" + std::to_string(i + 1)));
         }
         catch (const hardware_interface::HardwareInterfaceException &ex)
         {

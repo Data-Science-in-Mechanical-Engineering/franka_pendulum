@@ -18,7 +18,7 @@ void franka_pole::TestAccelerationController::update(const ros::Time &time, cons
     AccelerationController::_controller_pre_update(time, period);
 
     Eigen::Matrix<double, 3, 1> acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
-    if (is_two_dimensional()) acceleration_target(0) = 0.25 * (2*M_PI) * (2*M_PI) * cos(2 * M_PI * time.toSec());
+    if (param->two_dimensional()) acceleration_target(0) = 0.25 * (2*M_PI) * (2*M_PI) * cos(2 * M_PI * time.toSec());
     else acceleration_target(1) = 0.5 * (2*M_PI) * (2*M_PI) * cos(2 * M_PI * time.toSec());
     
     AccelerationController::_controller_post_update(time, period, acceleration_target);

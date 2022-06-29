@@ -1,5 +1,6 @@
 #pragma once
 
+#include <franka_pole/parameters.h>
 #include <franka_pole/franka_model.h>
 #include <franka_pole/franka_state.h>
 #include <franka_pole/pole_state.h>
@@ -21,15 +22,11 @@
 
 namespace franka_pole
 {
-    //Basic controller, responsible for getting technical ROS staff, initializing and updating components, reading parameters, setting torque and reset mechanismus
+    //Basic controller, responsible for getting technical ROS staff, initializing and updating components, setting torque and reset mechanismus
     class Controller : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface, hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface, franka_hw::FrankaStateInterface>
     {
     private:
-        //Parameters
-        std::string _arm_id = "panda";
-        bool _simulated = true;
-        bool _two_dimensional = false;
-        
+        //Reset       
         ros::Subscriber _reset_subscriber;
         bool _software_reset = false;
         bool _hardware_reset = false;
@@ -48,25 +45,11 @@ namespace franka_pole
 
     public:
         //Components
+        std::unique_ptr<Parameters> param;
         std::unique_ptr<FrankaModel> franka_model;
         std::unique_ptr<FrankaState> franka_state;
         std::unique_ptr<PoleState> pole_state;
         std::unique_ptr<Publisher> publisher;
-
-        //Parameters
-        std::string get_arm_id() const;
-        bool is_simulated() const;
-        bool is_two_dimensional() const;
-
-        Eigen::Matrix<double, 3, 1> get_translation_stiffness() const;
-        Eigen::Matrix<double, 3, 1> get_rotation_stiffness() const;
-        Eigen::Matrix<double, 7, 1> get_nullspace_stiffness() const;
-        Eigen::Matrix<double, 7, 1> get_joint_stiffness() const;
-        
-        Eigen::Matrix<double, 3, 1> get_box_center() const;
-        Eigen::Matrix<double, 3, 1> get_box_min() const;
-        Eigen::Matrix<double, 3, 1> get_box_max() const;
-        Eigen::Matrix<double, 11, 1> get_initial_joint_positions() const;
 
         //Reset
         bool is_reset() const;

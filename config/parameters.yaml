@@ -1,0 +1,10 @@
+franka_pole:
+  translation_stiffness: [ 200.0, 200.0, 200.0 ]
+  rotation_stiffness: [ 100.0, 100.0, 100.0 ]
+  nullspace_stiffness: [ 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0 ]
+  joint_stiffness: [ 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0 ]
+  box_center: [ 0.5, 0.0, 0.5 ]
+  box_min: [ 0.25, -0.6, 0.5 ]
+  box_max: [ 0.75, 0.6, 0.5 ]
+  initial_joint_positions: [ 0.0, 0.0, 0.0, -1.57079632679, 0.0, 1.57079632679, 0.78539816339 ]
+  initial_pole_positions: [ 0.0, 0.0 ]

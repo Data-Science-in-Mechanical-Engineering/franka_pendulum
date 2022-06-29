@@ -1,38 +1,38 @@
 franka_pole_external_position_controller:
   type: franka_pole/ExternalPositionController
   arm_id: "$(arg arm_id)"
-  simulated: "$(arg simulated)"
-  two_dimensional: "$(arg two_dimensional)"
+  simulated: $(arg simulated)
+  two_dimensional: $(arg two_dimensional)
 
 franka_pole_simple_position_controller:
   type: franka_pole/SimplePositionController
   arm_id: "$(arg arm_id)"
-  simulated: "$(arg simulated)"
-  two_dimensional: "$(arg two_dimensional)"
+  simulated: $(arg simulated)
+  two_dimensional: $(arg two_dimensional)
 
 franka_pole_test_position_controller:
   type: franka_pole/TestPositionController
   arm_id: "$(arg arm_id)"
-  simulated: "$(arg simulated)"
-  two_dimensional: "$(arg two_dimensional)"
+  simulated: $(arg simulated)
+  two_dimensional: $(arg two_dimensional)
 
 franka_pole_external_acceleration_controller:
   type: franka_pole/ExternalAccelerationController
   arm_id: "$(arg arm_id)"
-  simulated: "$(arg simulated)"
-  two_dimensional: "$(arg two_dimensional)"
+  simulated: $(arg simulated)
+  two_dimensional: $(arg two_dimensional)
 
 franka_pole_simple_acceleration_controller:
   type: franka_pole/SimpleAccelerationController
   arm_id: "$(arg arm_id)"
-  simulated: "$(arg simulated)"
-  two_dimensional: "$(arg two_dimensional)"
+  simulated: $(arg simulated)
+  two_dimensional: $(arg two_dimensional)
 
 franka_pole_test_acceleration_controller:
   type: franka_pole/TestAccelerationController
   arm_id: "$(arg arm_id)"
-  simulated: "$(arg simulated)"
-  two_dimensional: "$(arg two_dimensional)"
+  simulated: $(arg simulated)
+  two_dimensional: $(arg two_dimensional)
 
 motion_generators:
   position:

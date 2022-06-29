@@ -1,3 +1,4 @@
+#include <pinocchio/fwd.hpp>
 #include <franka_pole/position_controller.h>
 #include <franka_pole/franka_state.h>
 #include <franka_pole/pole_state.h>
@@ -9,8 +10,8 @@ bool franka_pole::PositionController::_controller_init(hardware_interface::Robot
     if (!Controller::_controller_init(robot_hw, node_handle)) return false;
 
     _cartesian_stiffness.setZero();
-    _cartesian_stiffness.diagonal().segment<3>(0) = get_translation_stiffness();
-    _cartesian_stiffness.diagonal().segment<3>(3) = get_rotation_stiffness();
+    _cartesian_stiffness.diagonal().segment<3>(0) = param->translation_stiffness();
+    _cartesian_stiffness.diagonal().segment<3>(3) = param->rotation_stiffness();
     _cartesian_damping = 2.0 * _cartesian_stiffness.array().sqrt().matrix();
 
     return true;
@@ -57,7 +58,7 @@ void franka_pole::PositionController::_controller_post_update(const ros::Time &t
     Eigen::Matrix<double, 7, 6> jacobian_transpose = jacobian.transpose();
     torque += jacobian_transpose * (-_cartesian_stiffness * error - _cartesian_damping * (franka_state->get_effector_velocity() - velocity_target6));
     torque += (Eigen::Matrix<double, 7, 7>::Identity() - jacobian_transpose * pseudo_inverse(jacobian_transpose, true)) *
-    (get_nullspace_stiffness().array() * (get_initial_joint_positions().segment<7>(0) - franka_state->get_joint_positions()).array() - 2 * get_nullspace_stiffness().array().sqrt() * franka_state->get_joint_velocities().array()).matrix();
+    (param->nullspace_stiffness().array() * (param->initial_joint_positions().segment<7>(0) - franka_state->get_joint_positions()).array() - 2 * param->nullspace_stiffness().array().sqrt() * franka_state->get_joint_velocities().array()).matrix();
 
     Controller::_controller_post_update(time, period, torque);
 }

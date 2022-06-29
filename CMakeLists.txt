@@ -128,6 +128,7 @@ add_custom_target(franka_pole_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots
 
 ## Declare a C++ library
 add_library(franka_pole_controllers SHARED
+src/parameters.cpp
 src/franka_model.cpp
 src/franka_state.cpp
 src/pole_state.cpp
@@ -153,8 +154,10 @@ target_link_libraries(franka_pole_controllers PUBLIC ${pinocchio_LIBRARIES})
 
 
 add_library(franka_pole_plugin SHARED
+src/parameters.cpp
 src/plugin.cpp)
 
+target_include_directories(franka_pole_plugin PUBLIC include)
 target_include_directories(franka_pole_plugin PRIVATE ${GAZEBO_INCLUDE_DIRS})
 target_link_directories(franka_pole_plugin PRIVATE ${GAZEBO_LIBRARY_DIRS})
 target_link_libraries(franka_pole_plugin PRIVATE ${GAZEBO_LIBRARIES})

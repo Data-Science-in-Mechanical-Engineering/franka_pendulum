@@ -1,3 +1,4 @@
+#include <pinocchio/fwd.hpp>
 #include <franka_pole/external_position_controller.h>
 #include <pluginlib/class_list_macros.h>
 

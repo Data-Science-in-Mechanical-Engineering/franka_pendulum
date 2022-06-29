@@ -14,11 +14,6 @@ namespace franka_pole
     class AccelerationController : public Controller
     {
     private:
-        // Pinocchio technical
-        size_t _pinocchio_joint_ids[11];
-        pinocchio::Model _pinocchio_model;
-        pinocchio::Data _pinocchio_data;
-
         // Basic control
         Eigen::Matrix<double, 6, 6> _cartesian_stiffness = Eigen::Matrix<double, 6, 6>::Zero();
         Eigen::Matrix<double, 6, 6> _cartesian_damping = Eigen::Matrix<double, 6, 6>::Zero();
