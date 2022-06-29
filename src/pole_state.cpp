@@ -1,3 +1,4 @@
+#include <pinocchio/fwd.hpp>
 #include <franka_pole/pole_state.h>
 #include <franka_pole/controller.h>
 #include <franka_pole/publisher.h>

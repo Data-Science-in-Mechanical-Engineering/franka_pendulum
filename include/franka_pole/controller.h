@@ -1,5 +1,6 @@
 #pragma once
 
+#include <franka_pole/franka_model.h>
 #include <franka_pole/franka_state.h>
 #include <franka_pole/pole_state.h>
 #include <franka_pole/publisher.h>
@@ -47,6 +48,7 @@ namespace franka_pole
 
     public:
         //Components
+        std::unique_ptr<FrankaModel> franka_model;
         std::unique_ptr<FrankaState> franka_state;
         std::unique_ptr<PoleState> pole_state;
         std::unique_ptr<Publisher> publisher;

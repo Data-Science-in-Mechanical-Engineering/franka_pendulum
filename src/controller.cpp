@@ -46,6 +46,7 @@ bool franka_pole::Controller::_controller_init(hardware_interface::RobotHW *robo
     _two_dimensional = two_dimensional_str == "true";
 
     //Creating components
+    franka_model = std::make_unique<FrankaModel>(this, robot_hw, node_handle);
     franka_state = std::make_unique<FrankaState>(this, robot_hw, node_handle);
     pole_state = std::make_unique<PoleState>(this, robot_hw, node_handle);
     publisher = std::make_unique<Publisher>(this, robot_hw, node_handle);

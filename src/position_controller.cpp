@@ -52,8 +52,9 @@ void franka_pole::PositionController::_controller_post_update(const ros::Time &t
     error.segment<3>(3) = -franka_state->get_effector_transform().linear() * error.segment<3>(3);
 
     // compute torque
-    Eigen::Matrix<double, 7, 1> torque = franka_state->get_coriolis();
-    Eigen::Matrix<double, 7, 6> jacobian_transpose = franka_state->get_effector_jacobian().transpose();
+    Eigen::Matrix<double, 7, 1> torque = franka_model->get_coriolis(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_angle(), pole_state->get_dangle());
+    Eigen::Matrix<double, 6, 7> jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
+    Eigen::Matrix<double, 7, 6> jacobian_transpose = jacobian.transpose();
     torque += jacobian_transpose * (-_cartesian_stiffness * error - _cartesian_damping * (franka_state->get_effector_velocity() - velocity_target6));
     torque += (Eigen::Matrix<double, 7, 7>::Identity() - jacobian_transpose * pseudo_inverse(jacobian_transpose, true)) *
     (get_nullspace_stiffness().array() * (get_initial_joint_positions().segment<7>(0) - franka_state->get_joint_positions()).array() - 2 * get_nullspace_stiffness().array().sqrt() * franka_state->get_joint_velocities().array()).matrix();

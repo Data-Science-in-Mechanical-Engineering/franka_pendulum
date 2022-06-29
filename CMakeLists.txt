@@ -128,6 +128,7 @@ add_custom_target(franka_pole_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots
 
 ## Declare a C++ library
 add_library(franka_pole_controllers SHARED
+src/franka_model.cpp
 src/franka_state.cpp
 src/pole_state.cpp
 src/publisher.cpp
