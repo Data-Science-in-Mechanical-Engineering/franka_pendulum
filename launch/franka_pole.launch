@@ -2,7 +2,7 @@
 <launch>
 
   <!-- Customization -->
-  <arg name="controller"      default="test_position" doc="Used controller. Can be external_position/simple_position/test_position/external_acceleration/simple_acceleration/test_acceleration" />
+  <arg name="controller"      default="test_position" doc="Used controller. Can be [simple/test/python/external]_[position/acceleration]" />
   <arg name="simulated"       default="true"          doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
   <arg name="two_dimensional" default="false"         doc="Use two-dimensional pole" />
   <arg name="headless"        default="false"         doc="Should the gazebo GUI be launched?" />
@@ -42,43 +42,43 @@
      args="-param robot_description -urdf -model $(arg arm_id) $(arg unpause)"/>
   </group>
 
-  <!-- Start controllers -->
+  <!-- Main controller -->
+  <node name="$(arg arm_id)_controller_spawner"
+    pkg="controller_manager"
+    type="spawner"
+    respawn="false" output="screen"
+    args="franka_pole_$(arg controller)_controller"
+    if="$(eval arg('controller') != 'python_position' and arg('controller') != 'python_acceleration')"/>
+
+  <node name="$(arg arm_id)_controller_spawner"
+    pkg="controller_manager"
+    type="spawner"
+    respawn="false" output="screen"
+    args="franka_pole_external_position_controller"
+    if="$(eval arg('controller') == 'python_position')"/>
+
+  <node name="$(arg arm_id)_controller_spawner"
+    pkg="controller_manager"
+    type="spawner"
+    respawn="false" output="screen"
+    args="franka_pole_external_acceleration_controller"
+    if="$(eval arg('controller') == 'python_acceleration')"/>
+  
+  <!-- Gripper controller -->
   <node name="$(arg arm_id)_gripper_controller_spawner"
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
     args="franka_gripper"/>
 
-  <node name="$(arg arm_id)_controller_spawner"
-    pkg="controller_manager"
-    type="spawner"
-    respawn="false" output="screen"
-    args="franka_pole_$(arg controller)_controller"/>
+  <!-- Python controllers -->
+  <node name="python_position_controller" pkg="franka_pole" type="position_controller.py" required="true" output="screen" if="$(eval arg('controller') == 'python_position')"/>
+  <node name="python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" required="true" output="screen" if="$(eval arg('controller') == 'python_acceleration')"/>
 
-  <node name="external_position_controller" pkg="franka_pole" type="position_controller.py" required="true" output="screen" if="$(eval arg('controller') == 'external_position')">
-    <param name="arm_id" value="$(arg arm_id)" />
-    <param name="simulated" value="$(arg simulated)" />
-    <param name="two_dimensional" value="$(arg two_dimensional)" />
-  </node>
-
-  <node name="external_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" required="true" output="screen" if="$(eval arg('controller') == 'external_acceleration')">
-    <param name="arm_id" value="$(arg arm_id)" />
-    <param name="simulated" value="$(arg simulated)" />
-    <param name="two_dimensional" value="$(arg two_dimensional)" />
-  </node>
-
-  <!-- Start plotter -->
-  <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen">
-    <param name="arm_id" value="$(arg arm_id)" />
-    <param name="simulated" value="$(arg simulated)" />
-    <param name="two_dimensional" value="$(arg two_dimensional)" />
-  </node>
+  <!-- Plotter -->
+  <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen"/>
 
   <!-- Resetter -->
-  <node name="resetter" pkg="franka_pole" type="resetter.py" required="true" output="screen">
-    <param name="arm_id" value="$(arg arm_id)" />
-    <param name="simulated" value="$(arg simulated)" />
-    <param name="two_dimensional" value="$(arg two_dimensional)" />
-  </node>
+  <node name="resetter" pkg="franka_pole" type="resetter.py" required="true" output="screen"/>
 
 </launch>

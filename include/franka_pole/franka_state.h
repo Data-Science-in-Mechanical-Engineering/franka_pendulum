@@ -45,12 +45,10 @@ namespace franka_pole
         Eigen::Matrix<double, 6, 1> get_effector_velocity();
         Eigen::Quaterniond get_effector_orientation();
         Eigen::Affine3d get_effector_transform();
-        Eigen::Matrix<double, 6, 7> get_effector_jacobian();
 
         //Joints
         Eigen::Matrix<double, 7, 1> get_joint_positions();
         Eigen::Matrix<double, 7, 1> get_joint_velocities();
-        Eigen::Matrix<double, 7, 1> get_coriolis();
         void set_torque(const Eigen::Matrix<double, 7, 1> &torque);
     };
 }

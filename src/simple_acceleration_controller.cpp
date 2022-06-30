@@ -13,7 +13,7 @@ bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW
 {
     if (!AccelerationController::_controller_init(robot_hw, node_handle)) return false;
 
-    _command_subscriber = node_handle.subscribe("/franka_pole/parameters_command", 10, &SimpleAccelerationController::_command_callback, this);
+    _command_subscriber = node_handle.subscribe("/franka_pole/command_parameters", 10, &SimpleAccelerationController::_command_callback, this);
 
     return true;
 }

@@ -16,7 +16,7 @@ bool franka_pole::SimplePositionController::init(hardware_interface::RobotHW *ro
 {
     if (!PositionController::_controller_init(robot_hw, node_handle)) return false;
 
-    _command_subscriber = node_handle.subscribe("/franka_pole/parameters_command", 10, &SimplePositionController::_command_callback, this);
+    _command_subscriber = node_handle.subscribe("/franka_pole/command_parameters", 10, &SimplePositionController::_command_callback, this);
 
     return true;
 }

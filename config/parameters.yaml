@@ -1,4 +1,7 @@
 franka_pole:
+  arm_id: "$(arg arm_id)"
+  simulated: $(arg simulated)
+  two_dimensional: $(arg two_dimensional)
   translation_stiffness: [ 200.0, 200.0, 200.0 ]
   rotation_stiffness: [ 100.0, 100.0, 100.0 ]
   nullspace_stiffness: [ 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0 ]
@@ -8,3 +11,9 @@ franka_pole:
   box_max: [ 0.75, 0.6, 0.5 ]
   initial_joint_positions: [ 0.0, 0.0, 0.0, -1.57079632679, 0.0, 1.57079632679, 0.78539816339 ]
   initial_pole_positions: [ 0.0, 0.0 ]
+
+motion_generators:
+  position:
+    gains:
+      panda_pole_joint_x: { p: 0, d: 0, i: 0 }
+      panda_pole_joint_y: { p: 0, d: 0, i: 0 }

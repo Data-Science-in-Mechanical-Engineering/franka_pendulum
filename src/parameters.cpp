@@ -1,11 +1,11 @@
 #include <franka_pole/parameters.h>
 
-franka_pole::Parameters::Parameters(Controller *, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+franka_pole::Parameters::Parameters(Controller *controller, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     //Reading parameters
-    if (!node_handle.getParam("arm_id", _arm_id)) throw std::runtime_error("franka_pole::Parameters: Could not read parameter arm_id");
-    if (!node_handle.getParam("simulated", _simulated)) throw std::runtime_error("franka_pole::Parameters: Could not read parameter simulated");
-    if (!node_handle.getParam("two_dimensional", _two_dimensional)) throw std::runtime_error("franka_pole::Parameters: Could not read parameter two_dimensional");
+    if (!node_handle.getParam("/franka_pole/arm_id", _arm_id)) throw std::runtime_error("franka_pole::Parameters: Could not read parameter arm_id");
+    if (!node_handle.getParam("/franka_pole/simulated", _simulated)) throw std::runtime_error("franka_pole::Parameters: Could not read parameter simulated");
+    if (!node_handle.getParam("/franka_pole/two_dimensional", _two_dimensional)) throw std::runtime_error("franka_pole::Parameters: Could not read parameter two_dimensional");
     
     std::vector<double> translation_stiffness;
     if (!node_handle.getParam("/franka_pole/translation_stiffness", translation_stiffness)) throw std::runtime_error("franka_pole::Parameters: Could not read parameter translation_stiffness");

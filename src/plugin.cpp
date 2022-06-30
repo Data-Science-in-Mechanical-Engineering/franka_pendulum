@@ -79,7 +79,7 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
     }
     catch (const std::exception &e)
     {
-        ROS_WARN_STREAM("Failed to load franka_pole_plugin: " << e.what());
+        ROS_ERROR_STREAM("Failed to load franka_pole_plugin: " << e.what());
     }
     ROS_INFO_STREAM("Loaded franka_pole_plugin.");
 }
