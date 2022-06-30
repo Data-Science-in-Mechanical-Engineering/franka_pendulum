@@ -26,8 +26,9 @@ namespace franka_pole
         
         //Pole
         double _pole_timestamp = 0.0;
+        Eigen::Matrix<double, 2, 1> _pole_joint_angle = Eigen::Matrix<double, 2, 1>::Zero();
+        Eigen::Matrix<double, 2, 1> _pole_joint_dangle = Eigen::Matrix<double, 2, 1>::Zero();
         Eigen::Matrix<double, 2, 1> _pole_angle = Eigen::Matrix<double, 2, 1>::Zero();
-        Eigen::Matrix<double, 2, 1> _pole_dangle = Eigen::Matrix<double, 2, 1>::Zero();
 
         //Controller
         double _command_timestamp = 0.0;
@@ -51,8 +52,9 @@ namespace franka_pole
         
         //Pole
         void set_pole_timestamp(const ros::Time &timestamp);
-        void set_pole_angle(const Eigen::Matrix<double, 2, 1> &pole_angle);
-        void set_pole_dangle(const Eigen::Matrix<double, 2, 1> &pole_dangle);
+        void set_pole_joint_angle(const Eigen::Matrix<double, 2, 1> &angle);
+        void set_pole_joint_dangle(const Eigen::Matrix<double, 2, 1> &dangle);
+        void set_pole_angle(const Eigen::Matrix<double, 2, 1> &angle);
 
         //Controller
         void set_command_timestamp(const ros::Time &timestamp);

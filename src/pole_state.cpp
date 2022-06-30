@@ -31,23 +31,24 @@ void franka_pole::PoleState::update(const ros::Time &time)
     _timestamp = time.toSec();
 
     //Angles
-    _angle(0) = _controller->param->two_dimensional() ? -_joint_handles[1].getPosition() : -_joint_handles[0].getPosition(); //Around X
-    _dangle(0) = _controller->param->two_dimensional() ? -_joint_handles[1].getVelocity() : -_joint_handles[0].getVelocity();
-    _angle(1) = _controller->param->two_dimensional() ? _joint_handles[0].getPosition() : 0.0; //Around Y
-    _dangle(1) = _controller->param->two_dimensional() ? _joint_handles[0].getVelocity() : 0.0;
+    _joint_angle(0) = _controller->param->two_dimensional() ? -_joint_handles[1].getPosition() : -_joint_handles[0].getPosition(); //Around X
+    _joint_dangle(0) = _controller->param->two_dimensional() ? -_joint_handles[1].getVelocity() : -_joint_handles[0].getVelocity();
+    _joint_angle(1) = _controller->param->two_dimensional() ? _joint_handles[0].getPosition() : 0.0; //Around Y
+    _joint_dangle(1) = _controller->param->two_dimensional() ? _joint_handles[0].getVelocity() : 0.0;
 
     Eigen::Matrix<double, 3, 3> rotation = _controller->franka_state->get_effector_orientation().toRotationMatrix();
     rotation = Eigen::AngleAxisd(M_PI, rotation.col(0)) * rotation; //180 around X
-    rotation = Eigen::AngleAxisd(_angle(1), rotation.col(1)) * rotation; //Around Y
-    rotation = Eigen::AngleAxisd(-_angle(0), rotation.col(0)) * rotation; //Around X
+    rotation = Eigen::AngleAxisd(_joint_angle(1), rotation.col(1)) * rotation; //Around Y
+    rotation = Eigen::AngleAxisd(-_joint_angle(0), rotation.col(0)) * rotation; //Around X
     Eigen::Matrix<double, 3, 1> up = rotation * Eigen::Vector3d::UnitZ();
     _angle(0) = atan2(up(1), up(2));
     _angle(1) = atan2(up(0), up(2));
 
     //Publish
     _controller->publisher->set_pole_timestamp(time);
+    _controller->publisher->set_pole_joint_angle(_joint_angle);
+    _controller->publisher->set_pole_joint_dangle(_joint_dangle);
     _controller->publisher->set_pole_angle(_angle);
-    _controller->publisher->set_pole_dangle(_dangle);
 }
 
 double franka_pole::PoleState::get_timestamp() const
@@ -55,12 +56,17 @@ double franka_pole::PoleState::get_timestamp() const
     return _timestamp;
 }
 
+Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_joint_angle() const
+{
+    return _joint_angle;
+}
+
+Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_joint_dangle() const
+{
+    return _joint_dangle;
+}
+
 Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_angle() const
 {
     return _angle;
-}
-
-Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_dangle() const
-{
-    return _dangle;
 }

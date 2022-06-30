@@ -31,13 +31,13 @@ void franka_pole::SimpleAccelerationController::update(const ros::Time &time, co
     
     acceleration_target(1) =
         _a * pole_state->get_angle()(0) +
-        _b * pole_state->get_dangle()(0) +
+        _b * pole_state->get_joint_dangle()(0) +
         _c * franka_state->get_effector_position()(1) +
         _d * franka_state->get_effector_velocity()(1);
     
     if (param->two_dimensional()) acceleration_target(0) =
         _a * pole_state->get_angle()(1) +
-        _b * pole_state->get_dangle()(1) +
+        _b * pole_state->get_joint_dangle()(1) +
         _c * franka_state->get_effector_position()(0) +
         _d * franka_state->get_effector_velocity()(0);
     

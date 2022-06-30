@@ -17,8 +17,9 @@ void franka_pole::Publisher::publish()
     Sample sample;
 
     sample.pole_timestamp = _pole_timestamp;
+    for (size_t i = 0; i < 2; i++) sample.pole_joint_angle[i] = _pole_joint_angle(i);
+    for (size_t i = 0; i < 2; i++) sample.pole_joint_dangle[i] = _pole_joint_dangle(i);
     for (size_t i = 0; i < 2; i++) sample.pole_angle[i] = _pole_angle(i);
-    for (size_t i = 0; i < 2; i++) sample.pole_dangle[i] = _pole_dangle(i);
 
     sample.franka_timestamp = _franka_timestamp;
     for (size_t i = 0; i < 3; i++) sample.franka_effector_position[i] = _franka_effector_position(i);
@@ -59,14 +60,19 @@ void franka_pole::Publisher::set_pole_timestamp(const ros::Time &timestamp)
     _pole_timestamp = timestamp.toSec();
 }
 
+void franka_pole::Publisher::set_pole_joint_angle(const Eigen::Matrix<double, 2, 1> &angle)
+{
+    _pole_joint_angle = angle;
+}
+
+void franka_pole::Publisher::set_pole_joint_dangle(const Eigen::Matrix<double, 2, 1> &dangle)
+{
+    _pole_joint_dangle = dangle;
+}
+
 void franka_pole::Publisher::set_pole_angle(const Eigen::Matrix<double, 2, 1> &angle)
 {
     _pole_angle = angle;
-}
-
-void franka_pole::Publisher::set_pole_dangle(const Eigen::Matrix<double, 2, 1> &dangle)
-{
-    _pole_dangle = dangle;
 }
 
 void franka_pole::Publisher::set_command_timestamp(const ros::Time &timestamp)

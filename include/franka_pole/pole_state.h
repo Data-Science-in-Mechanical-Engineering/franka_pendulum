@@ -27,8 +27,9 @@ namespace franka_pole
         double _timestamp = 0.0;
 
         //Angles
+        Eigen::Matrix<double, 2, 1> _joint_angle;
+        Eigen::Matrix<double, 2, 1> _joint_dangle;
         Eigen::Matrix<double, 2, 1> _angle;
-        Eigen::Matrix<double, 2, 1> _dangle;
 
         //Callback for ROS, used if simulated
         ros::Subscriber _pose_stamped_subscriber;
@@ -40,7 +41,8 @@ namespace franka_pole
         void update(const ros::Time &time);
         
         double get_timestamp() const;
+        Eigen::Matrix<double, 2, 1> get_joint_angle() const;
+        Eigen::Matrix<double, 2, 1> get_joint_dangle() const;
         Eigen::Matrix<double, 2, 1> get_angle() const;
-        Eigen::Matrix<double, 2, 1> get_dangle() const;
     };
 }
