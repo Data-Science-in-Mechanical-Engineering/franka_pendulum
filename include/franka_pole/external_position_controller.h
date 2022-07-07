@@ -2,7 +2,6 @@
 
 #include <franka_pole/position_controller.h>
 #include <franka_pole/CommandPosition.h>
-
 #include <ros/node_handle.h>
 #include <ros/time.h>
 #include <Eigen/Dense>

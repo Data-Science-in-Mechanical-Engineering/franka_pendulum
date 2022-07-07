@@ -1,100 +1,88 @@
 #include <franka_pole/publisher.h>
-#include <franka_pole/Sample.h>
 
-franka_pole::Publisher::Publisher(Controller *controller, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+franka_pole::Publisher::Publisher(ros::NodeHandle &node_handle)
 {
     _publisher = node_handle.advertise<franka_pole::Sample>("/franka_pole/sample", 10);
-    _ok = true;
-}
-
-bool franka_pole::Publisher::ok() const
-{
-    return _ok;
+    
+    set_franka_timestamp(ros::Time(0.0));
+    set_franka_effector_position(Eigen::Matrix<double, 3, 1>::Zero());
+    set_franka_effector_velocity(Eigen::Matrix<double, 3, 1>::Zero());
+    set_franka_effector_orientation(Eigen::Quaterniond(0.0, 1.0, 0.0, 0.0));
+    set_pole_timestamp(ros::Time(0.0));
+    set_pole_joint_angle(Eigen::Matrix<double, 2, 1>::Zero());
+    set_pole_joint_dangle(Eigen::Matrix<double, 2, 1>::Zero());
+    set_pole_angle(Eigen::Matrix<double, 2, 1>::Zero());
+    set_command_timestamp(ros::Time(0.0));
+    set_command_effector_position(Eigen::Matrix<double, 3, 1>::Zero());
+    set_command_effector_velocity(Eigen::Matrix<double, 3, 1>::Zero());
+    set_command_effector_acceleration(Eigen::Matrix<double, 3, 1>::Zero());
+    set_reset(false);
 }
 
 void franka_pole::Publisher::publish()
 {
-    Sample sample;
-
-    sample.pole_timestamp = _pole_timestamp;
-    for (size_t i = 0; i < 2; i++) sample.pole_joint_angle[i] = _pole_joint_angle(i);
-    for (size_t i = 0; i < 2; i++) sample.pole_joint_dangle[i] = _pole_joint_dangle(i);
-    for (size_t i = 0; i < 2; i++) sample.pole_angle[i] = _pole_angle(i);
-
-    sample.franka_timestamp = _franka_timestamp;
-    for (size_t i = 0; i < 3; i++) sample.franka_effector_position[i] = _franka_effector_position(i);
-    for (size_t i = 0; i < 3; i++) sample.franka_effector_velocity[i] = _franka_effector_velocity(i);
-
-    sample.command_timestamp = _command_timestamp;
-    for (size_t i = 0; i < 3; i++) sample.command_effector_position[i] = _command_effector_position(i);
-    for (size_t i = 0; i < 3; i++) sample.command_effector_velocity[i] = _command_effector_velocity(i);
-    for (size_t i = 0; i < 3; i++) sample.command_effector_acceleration[i] = _command_effector_acceleration(i);
-
-    sample.reset = _reset;
-
-    _publisher.publish(sample);
+    _publisher.publish(_sample);
 }
 
 void franka_pole::Publisher::set_franka_timestamp(const ros::Time &timestamp)
 {
-    _franka_timestamp = timestamp.toSec();
+    _sample.franka_timestamp = timestamp.toSec();
 }
 
 void franka_pole::Publisher::set_franka_effector_position(const Eigen::Matrix<double, 3, 1> &position)
 {
-    _franka_effector_position = position;
+    Eigen::Matrix<double, 3, 1>::Map(&_sample.franka_effector_position[0]) = position;
 }
 
 void franka_pole::Publisher::set_franka_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity)
 {
-    _franka_effector_velocity = velocity;
+    Eigen::Matrix<double, 3, 1>::Map(&_sample.franka_effector_velocity[0]) = velocity;
 }
 
 void franka_pole::Publisher::set_franka_effector_orientation(const Eigen::Quaterniond &orientation)
 {
-    _franka_effector_orientation = orientation;
 }
 
 void franka_pole::Publisher::set_pole_timestamp(const ros::Time &timestamp)
 {
-    _pole_timestamp = timestamp.toSec();
+    _sample.pole_timestamp = timestamp.toSec();
 }
 
 void franka_pole::Publisher::set_pole_joint_angle(const Eigen::Matrix<double, 2, 1> &angle)
 {
-    _pole_joint_angle = angle;
+    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_angle[0]) = angle;
 }
 
 void franka_pole::Publisher::set_pole_joint_dangle(const Eigen::Matrix<double, 2, 1> &dangle)
 {
-    _pole_joint_dangle = dangle;
+    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_dangle[0]) = dangle;
 }
 
 void franka_pole::Publisher::set_pole_angle(const Eigen::Matrix<double, 2, 1> &angle)
 {
-    _pole_angle = angle;
+    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_angle[0]) = angle;
 }
 
 void franka_pole::Publisher::set_command_timestamp(const ros::Time &timestamp)
 {
-    _command_timestamp = timestamp.toSec();
+    _sample.command_timestamp = timestamp.toSec();
 }
 
 void franka_pole::Publisher::set_command_effector_position(const Eigen::Matrix<double, 3, 1> &position)
 {
-    _command_effector_position = position;
+    Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_position[0]) = position;
 }
 
 void franka_pole::Publisher::set_command_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity)
 {
-    _command_effector_velocity = velocity;
+    Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_velocity[0]) = velocity;
 }
 void franka_pole::Publisher::set_command_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration)
 {
-    _command_effector_acceleration = acceleration;
+    Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_acceleration[0]) = acceleration;
 }
 
 void franka_pole::Publisher::set_reset(bool reset)
 {
-    _reset = reset;
+    _sample.reset = reset;
 }

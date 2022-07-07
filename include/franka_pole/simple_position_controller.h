@@ -3,20 +3,21 @@
 #include <franka_pole/position_controller.h>
 #include <franka_pole/CommandParameters.h>
 
-#include <ros/node_handle.h>
-#include <ros/time.h>
-
 namespace franka_pole
 {
     class SimplePositionController : public PositionController
     {
     private:
-        // Commanded control
-        double _a = 16.363880157470703 / 30;
-        double _b = 9.875003814697266 / 30;
-        double _c = 7.015979766845703 / 30;
-        double _d = 11.86760425567627 / 30;
+        bool _two_dimensional = false;
+        Eigen::Matrix<double, 3, 1> _target_position = Eigen::Matrix<double, 3, 1>::Zero();
+        Eigen::Matrix<double, 3, 1> _max_effector_position = Eigen::Matrix<double, 3, 1>::Zero();
+        Eigen::Matrix<double, 3, 1> _min_effector_position = Eigen::Matrix<double, 3, 1>::Zero();
+        std::array<double, 2> _a;
+        std::array<double, 2> _b;
+        std::array<double, 2> _c;
+        std::array<double, 2> _d;
         ros::Subscriber _command_subscriber;
+
         void _command_callback(const franka_pole::CommandParameters::ConstPtr &msg);
 
     public:

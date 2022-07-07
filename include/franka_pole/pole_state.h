@@ -2,13 +2,11 @@
 
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
-#include <franka_hw/franka_model_interface.h>
-#include <franka_hw/franka_state_interface.h>
 #include <geometry_msgs/PoseStamped.h>
-
 #include <ros/node_handle.h>
 #include <ros/time.h>
 #include <Eigen/Dense>
+#include <random>
 
 namespace franka_pole
 {
@@ -20,8 +18,10 @@ namespace franka_pole
     private:
         //Technical
         Controller *_controller = nullptr;
-        bool _ok = false;
+        bool _two_dimensional = false;
         std::vector<hardware_interface::JointHandle> _joint_handles;
+        std::vector<std::normal_distribution<double>> _random_angle_distributions;
+        std::default_random_engine _random_engine;
         
         //Timestamp
         double _timestamp = 0.0;
@@ -37,7 +37,6 @@ namespace franka_pole
 
     public:
         PoleState(Controller *controller, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
-        bool ok() const;
         void update(const ros::Time &time);
         
         double get_timestamp() const;

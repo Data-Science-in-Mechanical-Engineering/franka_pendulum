@@ -126,38 +126,33 @@ add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/fr
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
 add_custom_target(franka_pole_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
 
-## Declare a C++ library
-add_library(franka_pole_controllers SHARED
+## Declare a C++ libraries
+add_library(franka_pole_common SHARED
 src/parameters.cpp
-src/franka_model.cpp
+src/franka_model.cpp)
+target_include_directories(franka_pole_common PUBLIC include)
+target_compile_options(franka_pole_common PRIVATE -O3)
+target_include_directories(franka_pole_common PUBLIC ${pinocchio_INCLUDE_DIRS})
+target_link_libraries(franka_pole_common PUBLIC ${pinocchio_LIBRARIES})
+
+add_library(franka_pole_controllers SHARED
 src/franka_state.cpp
 src/pole_state.cpp
 src/publisher.cpp
-
 src/controller.cpp
 src/position_controller.cpp
 src/acceleration_controller.cpp
-
 src/external_position_controller.cpp
 src/simple_position_controller.cpp
 src/test_position_controller.cpp
-
 src/external_acceleration_controller.cpp
 src/simple_acceleration_controller.cpp
 src/test_acceleration_controller.cpp)
-
-target_include_directories(franka_pole_controllers PUBLIC include)
-target_compile_options(franka_pole_controllers PUBLIC -O3)
-target_include_directories(franka_pole_controllers PUBLIC ${pinocchio_INCLUDE_DIRS})
-target_link_libraries(franka_pole_controllers PUBLIC ${pinocchio_LIBRARIES})
-
-
+target_link_libraries(franka_pole_controllers PUBLIC franka_pole_common)
 
 add_library(franka_pole_plugin SHARED
-src/parameters.cpp
 src/plugin.cpp)
-
-target_include_directories(franka_pole_plugin PUBLIC include)
+target_link_libraries(franka_pole_plugin PUBLIC franka_pole_common)
 target_include_directories(franka_pole_plugin PRIVATE ${GAZEBO_INCLUDE_DIRS})
 target_link_directories(franka_pole_plugin PRIVATE ${GAZEBO_LIBRARY_DIRS})
 target_link_libraries(franka_pole_plugin PRIVATE ${GAZEBO_LIBRARIES})

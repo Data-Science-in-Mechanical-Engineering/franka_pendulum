@@ -3,8 +3,6 @@
 #include <franka_pole/acceleration_controller.h>
 #include <franka_pole/CommandAcceleration.h>
 
-#include <ros/node_handle.h>
-#include <ros/time.h>
 #include <Eigen/Dense>
 
 namespace franka_pole

@@ -1,4 +1,7 @@
+#include <pinocchio/fwd.hpp>
 #include <franka_pole/parameters.h>
+#include <franka_pole/franka_model.h>
+
 #include <ros/ros.h>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/World.hh>
@@ -21,7 +24,9 @@ namespace franka_pole
         gazebo::event::ConnectionPtr _connection;
 
         //Parameters
-        std::unique_ptr<Parameters> param;
+        Eigen::Matrix<double, 7, 1> _initial_joint_positions = Eigen::Matrix<double, 7, 1>::Zero();
+        Eigen::Matrix<double, 2, 1> _initial_pole_positions = Eigen::Matrix<double, 2, 1>::Zero();
+        Eigen::Matrix<double, 2, 1> _initial_pole_velocities = Eigen::Matrix<double, 2, 1>::Zero();
 
         //Reset flag
         sem_t *_software_reset_semaphore;
@@ -47,7 +52,11 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
     {
         //Read parameters
         ros::NodeHandle node_handle;
-        param = std::make_unique<Parameters>(nullptr, nullptr, node_handle);
+        Parameters parameters(node_handle);
+        FrankaModel franka_model(node_handle);
+        _initial_joint_positions = franka_model.inverse_kinematics(parameters.initial_effector_position(), parameters.initial_effector_orientation(), parameters.initial_joint0_position());
+        _initial_pole_positions = parameters.initial_pole_positions();
+        _initial_pole_velocities = parameters.initial_pole_velocities();
 
         //Init semaphore
         _software_reset_semaphore = sem_open("/franka_pole_software_reset", O_CREAT, 0644, 0);
@@ -86,11 +95,23 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
 
 void franka_pole::Plugin::SetDefault()
 {
-    for (size_t i = 0; i < 7; i++) _joints[i]->SetPosition(0, param->initial_joint_positions()[i]);
-    for (size_t i = 0; i < 2; i++) _fingers[i]->SetPosition(0, 0.0);
-
-    _pole[0]->SetPosition(0, param->initial_pole_positions()[1]);
-    if (_pole[1] != nullptr) _pole[1]->SetPosition(0, param->initial_pole_positions()[1]);
+    for (size_t i = 0; i < 7; i++)
+    {
+        _joints[i]->SetPosition(0, _initial_joint_positions(i));
+        _joints[i]->SetVelocity(0, 0.0);
+    }
+    for (size_t i = 0; i < 2; i++)
+    {
+        _fingers[i]->SetPosition(0, 0.0);
+        _fingers[i]->SetVelocity(0, 0.0);
+    }
+    _pole[0]->SetPosition(0, _initial_pole_positions(1));
+    _pole[0]->SetVelocity(0, _initial_pole_velocities(1));
+    if (_pole[1] != nullptr)
+    {
+        _pole[1]->SetPosition(0, _initial_pole_positions(0));
+        _pole[1]->SetVelocity(0, _initial_pole_velocities(0));
+    }
 }
 
 void franka_pole::Plugin::Update(const gazebo::common::UpdateInfo &info)
@@ -106,5 +127,5 @@ void franka_pole::Plugin::Update(const gazebo::common::UpdateInfo &info)
 
 franka_pole::Plugin::~Plugin()
 {
-    std::cerr << "franka_pole::Plugin unloaded" << std::endl;
+    ROS_INFO_STREAM("franka_pole::Plugin unloaded");
 }

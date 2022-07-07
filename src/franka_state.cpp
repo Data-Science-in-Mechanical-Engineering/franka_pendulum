@@ -1,70 +1,62 @@
 #include <pinocchio/fwd.hpp>
 #include <franka_pole/franka_state.h>
 #include <franka_pole/controller.h>
+#include <franka_pole/parameters.h>
 #include <franka_pole/publisher.h>
+#include <time.h>
 
-franka_pole::FrankaState::FrankaState(Controller *controller, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+franka_pole::FrankaState::FrankaState(Controller *controller, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) : _controller(controller)
 {
-    _controller = controller;
+    Parameters parameters(node_handle);
+    _simulated = parameters.simulated();
 
-    auto* state_interface = robot_hw->get<franka_hw::FrankaStateInterface>();
-    if (state_interface == nullptr)
+    //Joint handles
+    auto *effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
+    if (effort_joint_interface == nullptr) throw std::runtime_error("IntegratedAccelerationController: Error getting effort joint interface from hardware");
+    for (size_t i = 0; i < 7; i++)
     {
-        ROS_ERROR_STREAM("IntegratedAccelerationController: Error getting state interface from hardware");
-        return;
-    }
-    try
-    {
-        _state_handle = std::make_unique<franka_hw::FrankaStateHandle>(state_interface->getHandle(controller->param->arm_id() + "_robot"));
-    }
-    catch (hardware_interface::HardwareInterfaceException &ex)
-    {
-        ROS_ERROR_STREAM("IntegratedAccelerationController: Exception getting state handle from interface: " << ex.what());
-        return;
+        _joint_handles.push_back(effort_joint_interface->getHandle(parameters.arm_id() + "_joint" + std::to_string(i + 1)));
     }
 
-    auto* effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
-    if (effort_joint_interface == nullptr)
+    //Random
+    Eigen::Matrix<double, 7, 1> joint_position_standard_deviation = parameters.joint_position_standard_deviation();
+    Eigen::Matrix<double, 7, 1> joint_velocity_standard_deviation = parameters.joint_velocity_standard_deviation();
+    for (size_t i = 0; i < 7; i++)
     {
-        ROS_ERROR_STREAM("IntegratedAccelerationController: Error getting effort joint interface from hardware");
-        return;
+        _random_position_distributions.push_back(std::normal_distribution<double>(0.0, joint_position_standard_deviation(i)));
+        _random_velocity_distributions.push_back(std::normal_distribution<double>(0.0, joint_velocity_standard_deviation(i)));
     }
-    for (size_t i = 0; i < 7; ++i)
-    {
-        try
-        {
-            _joint_handles.push_back(effort_joint_interface->getHandle(controller->param->arm_id() + "_joint" + std::to_string(i + 1)));
-        }
-        catch (const hardware_interface::HardwareInterfaceException &ex)
-        {
-            ROS_ERROR_STREAM("IntegratedAccelerationController: Exception getting joint handles: " << ex.what());
-            return;
-        }
-    }
-
-    _ok = true;
-}
-
-bool franka_pole::FrankaState::ok() const
-{
-    return _ok;
+    _random_engine.seed(time(nullptr));
 }
 
 void franka_pole::FrankaState::update(const ros::Time &time)
 {
-    //Timestamp
+    //Measurement
     _timestamp = time.toSec();
+    for (size_t i = 0; i < 7; i++)
+    {
+        _raw_joint_positions(i) = _joint_handles[i].getPosition();
+        _joint_velocities(i) = _joint_handles[i].getVelocity();
+    }
 
-    //Joints
-    franka::RobotState robot_state = _state_handle->getRobotState();
-    _joint_positions = Eigen::Matrix<double, 7, 1>::Map(robot_state.q.data());
-    _joint_velocities = Eigen::Matrix<double, 7, 1>::Map(robot_state.dq.data());
+    //Adding noise
+    if (_simulated)
+    {
+        for (size_t i = 0; i < 7; i++)
+        {
+            _joint_positions(i) = _raw_joint_positions(i) + _random_position_distributions[i](_random_engine);
+            _joint_velocities(i) = _joint_velocities(i) + _random_velocity_distributions[i](_random_engine);
+        }
+    }
+    else
+    {
+        _joint_positions = _raw_joint_positions;
+    }
+   _joint_positions = _raw_joint_positions;
 
-    //Effector
-    _effector_transform = Eigen::Matrix4d::Map(robot_state.O_T_EE.data());
-    _effector_position = _effector_transform.translation();
-    _effector_velocity = (_controller->franka_model->get_effector_jacobian(_joint_positions) * _joint_velocities);
-    _effector_orientation = Eigen::Quaterniond(_effector_transform.linear());
+    //Basic computations
+    _effector_position = _controller->franka_model->effector_forward_kinematics(_joint_positions, &_effector_orientation);
+    _effector_velocity = _controller->franka_model->get_effector_jacobian(_joint_positions) * _joint_velocities;
 
     //Publish
     _controller->publisher->set_franka_timestamp(time);
@@ -72,39 +64,39 @@ void franka_pole::FrankaState::update(const ros::Time &time)
     _controller->publisher->set_franka_effector_velocity(_effector_velocity.segment<3>(0));
 }
 
-double franka_pole::FrankaState::get_timestamp()
+double franka_pole::FrankaState::get_timestamp() const
 {
     return _timestamp;
 }
 
-Eigen::Vector3d franka_pole::FrankaState::get_effector_position()
+Eigen::Matrix<double, 7, 1> franka_pole::FrankaState::get_raw_joint_positions() const
 {
-    return _effector_position;
+    return _raw_joint_positions;
 }
 
-Eigen::Matrix<double, 6, 1> franka_pole::FrankaState::get_effector_velocity()
-{
-    return _effector_velocity;
-}
-
-Eigen::Quaterniond franka_pole::FrankaState::get_effector_orientation()
-{
-    return _effector_orientation;
-}
-
-Eigen::Affine3d franka_pole::FrankaState::get_effector_transform()
-{
-    return _effector_transform;
-}
-
-Eigen::Matrix<double, 7, 1> franka_pole::FrankaState::get_joint_positions()
+Eigen::Matrix<double, 7, 1> franka_pole::FrankaState::get_joint_positions() const
 {
     return _joint_positions;
 }
 
-Eigen::Matrix<double, 7, 1> franka_pole::FrankaState::get_joint_velocities()
+Eigen::Matrix<double, 7, 1> franka_pole::FrankaState::get_joint_velocities() const
 {
     return _joint_velocities;
+}
+
+Eigen::Matrix<double, 3, 1> franka_pole::FrankaState::get_effector_position() const
+{
+    return _effector_position;
+}
+
+Eigen::Quaterniond franka_pole::FrankaState::get_effector_orientation() const
+{
+    return _effector_orientation;
+}
+
+Eigen::Matrix<double, 6, 1> franka_pole::FrankaState::get_effector_velocity() const
+{
+    return _effector_velocity;
 }
 
 void franka_pole::FrankaState::set_torque(const Eigen::Matrix<double, 7, 1> &torque)

@@ -1,19 +1,15 @@
 #pragma once
 
-#include <franka_pole/parameters.h>
 #include <franka_pole/franka_model.h>
 #include <franka_pole/franka_state.h>
 #include <franka_pole/pole_state.h>
 #include <franka_pole/publisher.h>
+#include <franka_pole/CommandReset.h>
 
 #include <controller_interface/multi_interface_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
-#include <franka_hw/franka_model_interface.h>
-#include <franka_hw/franka_state_interface.h>
-#include <franka_pole/CommandReset.h>
 
-#include <ros/node_handle.h>
 #include <ros/time.h>
 #include <Eigen/Dense>
 #include <semaphore.h>
@@ -23,16 +19,27 @@
 namespace franka_pole
 {
     //Basic controller, responsible for getting technical ROS staff, initializing and updating components, setting torque and reset mechanismus
-    class Controller : public controller_interface::MultiInterfaceController<franka_hw::FrankaModelInterface, hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface, franka_hw::FrankaStateInterface>
+    class Controller : public controller_interface::MultiInterfaceController<hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface>
     {
     private:
-        //Reset       
+        //Parameters
+        Eigen::Matrix<double, 7, 1> _initial_joint_positions;
+        Eigen::Matrix<double, 7, 1> _joint_stiffness;
+        size_t _pole_period = 0;
+        size_t _franka_period = 0;
+
+        //Software reset
         ros::Subscriber _reset_subscriber;
         bool _software_reset = false;
         bool _hardware_reset = false;
         sem_t *_software_reset_semaphore = nullptr;
-        Eigen::Matrix<double, 7, 1> _hardware_reset_initial;
-        size_t _hardware_reset_counter;
+        Eigen::Matrix<double, 7, 1> _hardware_reset_old_positions = Eigen::Matrix<double, 7, 1>::Zero();
+        size_t _hardware_reset_counter = 0;
+
+        //Period
+        Eigen::Matrix<double, 7, 1> _previous_torque = Eigen::Matrix<double, 7, 1>::Zero();
+        size_t _franka_period_counter = 0;
+        size_t _pole_period_counter = 0;
 
         void _command_reset(const franka_pole::CommandReset::ConstPtr &msg);
 
@@ -45,13 +52,13 @@ namespace franka_pole
 
     public:
         //Components
-        std::unique_ptr<Parameters> param;
         std::unique_ptr<FrankaModel> franka_model;
         std::unique_ptr<FrankaState> franka_state;
         std::unique_ptr<PoleState> pole_state;
         std::unique_ptr<Publisher> publisher;
 
-        //Reset
+        //State
         bool is_reset() const;
+        bool is_period() const;
     };
 }

@@ -1,4 +1,4 @@
-float64 a
-float64 b
-float64 c
-float64 d
+float64[2] a
+float64[2] b
+float64[2] c
+float64[2] d
