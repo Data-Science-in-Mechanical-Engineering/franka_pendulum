@@ -41,25 +41,29 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
 {
     // Conventional controller:
     // compute target
-    Eigen::Vector3d position_target = _position_target;
+    Eigen::Matrix<double, 3, 1> position_target = Eigen::Matrix<double, 3, 1>::Zero();
     Eigen::Matrix<double, 6, 6> cartesian_stiffness = Eigen::Matrix<double, 6, 6>::Zero();
     Eigen::Matrix<double, 6, 6> cartesian_damping = Eigen::Matrix<double, 6, 6>::Zero();
-    cartesian_stiffness.block<4,4>(2,2) = _cartesian_stiffness.block<4,4>(2,2);
-    cartesian_damping.block<4,4>(2,2) = _cartesian_damping.block<4,4>(2,2);
+    cartesian_stiffness.block<3,3>(3,3) = _cartesian_stiffness.block<3,3>(3,3); //Always care about rotation
+    cartesian_damping.block<3,3>(3,3) = _cartesian_damping.block<3,3>(3,3);
 
-    if (std::max(_min_effector_position(1), std::min(franka_state->get_effector_position()(1), _max_effector_position(1))) != franka_state->get_effector_position()(1))
+    //set boundaries
+    bool care_if_exeeded[3] = { true, true, true };
+    bool care_if_not_exeeded[3] = { !_two_dimensional, false, true };
+    for (size_t i = 0; i < 3; i++)
     {
-        position_target(1) = std::max(_min_effector_position(1), std::min(franka_state->get_effector_position()(1), _max_effector_position(1))); //We care about Y
-        cartesian_stiffness(1,1) = _cartesian_stiffness(1,1);
-        cartesian_damping(1,1) = _cartesian_damping(1,1);
-    }
-    if (_two_dimensional)
-    {
-        if (std::max(_min_effector_position(0), std::min(franka_state->get_effector_position()(0), _max_effector_position(0))) != franka_state->get_effector_position()(0))
+        double clipped = std::max(_min_effector_position(i), std::min(franka_state->get_effector_position()(i), _max_effector_position(i)));
+        if (clipped != franka_state->get_effector_position()(i) && care_if_exeeded[i])
         {
-            position_target(0) = std::max(_min_effector_position(0), std::min(franka_state->get_effector_position()(0), _max_effector_position(0))); //We care about X
-            cartesian_stiffness(2,2) = _cartesian_stiffness(2,2);
-            cartesian_damping(2,2) = _cartesian_damping(2,2);
+            position_target(i) = clipped;
+            cartesian_stiffness(i,i) = _cartesian_stiffness(i,i);
+            cartesian_damping(i,i) = _cartesian_damping(i,i);
+        }
+        else if (clipped == franka_state->get_effector_position()(i) && care_if_not_exeeded[i])
+        {
+            position_target(i) = _position_target(i);
+            cartesian_stiffness(i,i) = _cartesian_stiffness(i,i);
+            cartesian_damping(i,i) = _cartesian_damping(i,i);
         }
     }
     

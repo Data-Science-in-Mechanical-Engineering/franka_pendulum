@@ -43,20 +43,19 @@ void franka_pole::SimplePositionController::update(const ros::Time &time, const 
 {
     PositionController::_controller_pre_update(time, period);
 
-    Eigen::Matrix<double, 3, 1> position_target = franka_state->get_effector_position();
+    Eigen::Matrix<double, 3, 1> position_target = _target_position;
 
-    position_target(1) +=
-        (_a[1] * pole_state->get_angle()(0) +
-        _b[1] * pole_state->get_joint_dangle()(0) +
-        _c[1] * (franka_state->get_effector_position()(1) - _target_position(1)) +
-        _d[1] * franka_state->get_effector_velocity()(1));
-    
-
-    if (_two_dimensional) position_target(0) +=
-        (_a[0] * pole_state->get_angle()(1) +
+    if (_two_dimensional) position_target(0) = franka_state->get_effector_position()(0) + (
+        _a[0] * pole_state->get_angle()(1) +
         _b[0] * pole_state->get_joint_dangle()(1) +
         _c[0] * (franka_state->get_effector_position()(0) - _target_position(0)) +
         _d[0] * franka_state->get_effector_velocity()(0));
+        
+    position_target(1) = franka_state->get_effector_position()(1) + (
+        _a[1] * pole_state->get_angle()(0) +
+        _b[1] * pole_state->get_joint_dangle()(0) +
+        _c[1] * (franka_state->get_effector_position()(1) - _target_position(1)) +
+        _d[1] * franka_state->get_effector_velocity()(1));    
     
     for (size_t i = 0; i < 3; i++)
     {

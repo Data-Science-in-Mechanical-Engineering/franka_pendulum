@@ -131,7 +131,7 @@ add_library(franka_pole_common SHARED
 src/parameters.cpp
 src/franka_model.cpp)
 target_include_directories(franka_pole_common PUBLIC include)
-target_compile_options(franka_pole_common PRIVATE -O3)
+target_compile_options(franka_pole_common PUBLIC -O3)
 target_include_directories(franka_pole_common PUBLIC ${pinocchio_INCLUDE_DIRS})
 target_link_libraries(franka_pole_common PUBLIC ${pinocchio_LIBRARIES})
 

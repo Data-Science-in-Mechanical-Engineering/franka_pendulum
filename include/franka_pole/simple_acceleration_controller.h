@@ -9,6 +9,7 @@ namespace franka_pole
     {
     private:
         bool _two_dimensional = false;
+        Eigen::Matrix<double, 3, 1> _target_position = Eigen::Matrix<double, 3, 1>::Zero();
         std::array<double, 2> _a;
         std::array<double, 2> _b;
         std::array<double, 2> _c;

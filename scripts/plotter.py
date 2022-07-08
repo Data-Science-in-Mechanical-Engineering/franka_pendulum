@@ -4,6 +4,7 @@ import numpy as np
 from franka_pole.msg import Sample
 from matplotlib import pyplot as plt
 from matplotlib import animation
+from threading import Lock
 
 class Signal:
     """Represents one real value real-time signal"""
@@ -13,15 +14,30 @@ class Signal:
          - label - label to be placed on the plot
          - source - function that returns float value"""
         self.label = label
-        self.timestamps = np.zeros(0)
-        self.values = np.zeros(0)
+        self._timestamp = 0
+        self._timestamps = np.zeros(0)
+        self._values = np.zeros(0)
+        self._lock = Lock()
+
+        self._frequency = None
+
+    def _init(self, frequency):
+        """Fully initializes signal, internal use only"""
+        self._frequency = frequency
 
     def set(self, timestamp, value):
         """Sets new value to a signal
          - timestamp - time of the measurement
          - value - new value"""
-        self.timestamps = np.append(self.timestamps, timestamp)
-        self.values = np.append(self.values, value)
+        self._lock.acquire()
+        self._timestamp = timestamp
+        if len(self._timestamps) > 2 and (self._timestamps[-1] - self._timestamps[-2]) < 1.0/self._frequency:
+            self._timestamps[-1] = timestamp
+            self._values[-1] = value
+        else:
+            self._timestamps = np.append(self._timestamps, timestamp)
+            self._values = np.append(self._values, value)
+        self._lock.release()
 
 class Plot:
     """Represents real-time plot with time as X axis and signals as Y axis"""
@@ -44,16 +60,17 @@ class Plot:
         self.time = time
 
         self._frequency = None
+        self._lines = None          # matplotlib line object, one for plot/signal
+        self._buffers = None        # numpy buffer, one for plot/signal
+        self._time_buffers = None   # numpy buffer for time, one for plot/signal
         self._axes = None           # matplotlib axes object, one for plot
-        self._lines = None          # matplotlib line object, one for plot and signal
-        self._buffers = None        # numpy buffer, one for plot and signal
-        self._time_buffers = None   # numpy buffer for time, one for plot and signal
 
     def _init(self, frequency):
         """Fully initializes plot, internal use only"""
-        # Create buffers
         self._frequency = frequency
-        self._lines = [ None for signal in self.signals ]
+        for signal in self.signals: signal._init(frequency)
+
+        # Create buffers
         self._buffers = [ np.zeros(self.time * frequency) for signal in self.signals ]
         self._time_buffers = [ np.linspace(-self.time, 0, self.time * frequency) for signal in self.signals ]
 
@@ -63,6 +80,7 @@ class Plot:
         self._axes.set_title(self.title)
 
         # Create lines
+        self._lines = [ None for signal in self.signals ]
         for i in range(len(self.signals)): self._lines[i], = self._axes.plot([], [], label = self.signals[i].label)
 
         # Set legend position
@@ -72,20 +90,18 @@ class Plot:
         """Returns lines, internal use only"""
         latest = 0
         for signal in self.signals:
-            if len(signal.timestamps) != 0 and signal.timestamps[-1] > latest: latest = signal.timestamps[-1]
+            if signal._timestamp > latest: latest = signal._timestamp
 
         for i in range(len(self.signals)):
-            old_count = 0
-            while old_count < len(self._time_buffers[i]) and self._time_buffers[i][old_count] < (latest - self.time): old_count += 1
-            
-            if old_count != 0 or len(self.signals[i].timestamps) != 0:
-                print("11111111", self._time_buffers[i][old_count:].shape, self.signals[i].timestamps.shape)
-                self._time_buffers[i] = np.append(self._time_buffers[i][old_count:], self.signals[i].timestamps)
-                print("22222222", self._time_buffers[i].shape)
-                #self._buffers[i] = np.append(self._buffers[i][old_count:], self.signals[i].values)
-                #self._lines[i].set_data(self._time_buffers[i], self._buffers[i])
-                self.signals[i].timestamps = np.zeros(0)
-                self.signals[i].values = np.zeros(0)
+            self.signals[i]._lock.acquire() #Multithreading issues in Python, who could have thought?
+            count = len(self.signals[i]._timestamps)
+            if len(self.signals[i]._timestamps) != 0:
+                self._time_buffers[i] = np.concatenate((self._time_buffers[i][count:], self.signals[i]._timestamps))
+                self._buffers[i] = np.concatenate((self._buffers[i][count:], self.signals[i]._values))
+                self._lines[i].set_data(self._time_buffers[i] - latest, self._buffers[i])
+                self.signals[i]._timestamps = np.zeros(0)
+                self.signals[i]._values = np.zeros(0)
+            self.signals[i]._lock.release()
 
         return self._lines
 
@@ -114,6 +130,7 @@ class BarChart:
     def _init(self, frequency):
         """Fully initializes bar chart, internal use only"""
         self._frequency = frequency
+        for signal in self.signals: signal._init(frequency)
 
         # Set limits
         self._axes.set_ylim([self.lower, self.upper])
@@ -124,7 +141,13 @@ class BarChart:
 
     def _animate(self):
         """Returns bars, internal use only"""
-        for i in range(len(self.signals)): self._bars[i].set_height(self.signals[i].source())
+        for i in range(len(self.signals)):
+            self.signals[i]._lock.acquire()
+            if len(self.signals[i]._timestamps) != 0:
+                self._bars[i].set_height(self.signals[i]._values[-1])
+                self.signals[i]._timestamps = np.zeros(0)
+                self.signals[i]._values = np.zeros(0)
+            self.signals[i]._lock.release()
         return self._bars
 
 class Plotter:
@@ -143,6 +166,7 @@ class Plotter:
          - frequency - plotting frequency"""
         self.caption = caption
         self.plots = plots
+        self.frequency = frequency
 
         # Check plots
         max_line = 0
@@ -163,7 +187,7 @@ class Plotter:
                 if plot_matrix[line][column] == None: raise Exception("No plot on position: " + str(line) + ", " + str(column))
 
         # Create figure and axes
-        self.figure, axes = plt.subplots(max_line+1, max_column+1, num = caption)
+        self._figure, axes = plt.subplots(max_line+1, max_column+1, num = caption)
         if max_line == 0 and max_column == 0:
             plots[0]._axes = axes
         elif max_line != 0 and max_column == 0:
@@ -176,11 +200,9 @@ class Plotter:
         # Fully initialize plots
         for plot in plots: plot._init(frequency)
 
-        # Create animation
-        self.animation = animation.FuncAnimation(self.figure, lambda i: self._animate_callback(), interval=1000/frequency, blit=True)
-
     def start(self):
         """Runs plotter"""
+        self.animation = animation.FuncAnimation(self._figure, lambda i: self._animate_callback(), interval=1000/self.frequency, blit=True)
         plt.show()
 
 if __name__ == '__main__':
@@ -189,12 +211,8 @@ if __name__ == '__main__':
     # Plot structure
     pole_angle_x = Signal("Pole angle around X")
     pole_angle_y = Signal("Pole angle around Y")
-    pole_dangle_x = Signal("Pole rotation around X")
-    pole_dangle_y = Signal("Pole rotation around Y")
     franka_effector_x = Signal("Effector X")
     franka_effector_y = Signal("Effector Y")
-    franka_effector_dx = Signal("Effector X velocity")
-    franka_effector_dy = Signal("Effector Y velocity")
     franka_effector_ddx = Signal("Effector X acceleration")
     franka_effector_ddy = Signal("Effector Y acceleration")
     command_effector_ddx = Signal("Desired X acceleration")
@@ -209,21 +227,27 @@ if __name__ == '__main__':
 
     # Plot values
     previous_franka_timestamp = -np.Inf
-    previous_franka_dx = 0
-    previous_franka_dy = 0
+    filtered_effector_dx = 0.0
+    filtered_effector_dy = 0.0
+    previous_filtered_effector_dx = 0.0
+    previous_filtered_effector_dy = 0.0
     def callback(sample):
+        global previous_franka_timestamp, filtered_effector_dx, filtered_effector_dy, previous_filtered_effector_dx, previous_filtered_effector_dy
+        filtered_effector_dx = 0.95 * filtered_effector_dx + 0.05 * sample.franka_effector_velocity[0]
+        filtered_effector_dy = 0.95 * filtered_effector_dy + 0.05 * sample.franka_effector_velocity[1]
+
         pole_angle_x.set(sample.pole_timestamp, sample.pole_angle[0])
         pole_angle_y.set(sample.pole_timestamp, sample.pole_angle[1])
-        pole_dangle_x.set(sample.pole_timestamp, sample.pole_joint_dangle[0])
-        pole_dangle_y.set(sample.pole_timestamp, sample.pole_joint_dangle[1])
         franka_effector_x.set(sample.franka_timestamp, sample.franka_effector_position[0])
         franka_effector_y.set(sample.franka_timestamp, sample.franka_effector_position[1])
-        franka_effector_dx.set(sample.franka_timestamp, sample.franka_effector_velocity[0])
-        franka_effector_dy.set(sample.franka_timestamp, sample.franka_effector_velocity[1])
-        franka_effector_ddx.set(sample.franka_timestamp, (sample.franka_effector_velocity[0] - previous_franka_dx) / (sample.franka_timestamp - previous_franka_timestamp))
-        franka_effector_ddy.set(sample.franka_timestamp, (sample.franka_effector_velocity[1] - previous_franka_dy) / (sample.franka_timestamp - previous_franka_timestamp))
+        franka_effector_ddx.set(sample.franka_timestamp, (filtered_effector_dx - previous_filtered_effector_dx) / (sample.franka_timestamp - previous_franka_timestamp))
+        franka_effector_ddy.set(sample.franka_timestamp, (filtered_effector_dy - previous_filtered_effector_dy) / (sample.franka_timestamp - previous_franka_timestamp))
         command_effector_ddx.set(sample.command_timestamp, sample.command_effector_acceleration[0])
         command_effector_ddy.set(sample.command_timestamp, sample.command_effector_acceleration[1])
+
+        previous_filtered_effector_dx = filtered_effector_dx
+        previous_filtered_effector_dy = filtered_effector_dy
+        previous_franka_timestamp = sample.franka_timestamp
     
     sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, callback)        
     
