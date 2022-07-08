@@ -23,10 +23,10 @@ bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW
 
     _command_subscriber = node_handle.subscribe("/franka_pole/command_parameters", 10, &SimpleAccelerationController::_command_callback, this);
 
-    _a = std::array<double, 2>({{ 16.363880157470703 * 10, 16.363880157470703 * 10 }});
-    _b = std::array<double, 2>({{ 9.875003814697266 * 10, 9.875003814697266 * 10 }});
-    _c = std::array<double, 2>({{ 7.015979766845703 * 10, 7.015979766845703 * 10 }});
-    _d = std::array<double, 2>({{ 11.86760425567627 * 10, 11.86760425567627 * 10 }});
+    _a = std::array<double, 2>({{ 80, 80 }});
+    _b = std::array<double, 2>({{ 9, 9 }});
+    _c = std::array<double, 2>({{ 11, 11 }});
+    _d = std::array<double, 2>({{ 10, 10 }});
 
     return true;
 }

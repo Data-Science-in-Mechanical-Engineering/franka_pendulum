@@ -78,7 +78,7 @@
     <child link="$(arg arm_id)_pole_link_middle"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
-    <limit velocity="1000000" lower="${-10*pi/180}" effort="0" upper="${10*pi/180}" />
+    <limit velocity="1000000" lower="${-30*pi/180}" effort="0" upper="${30*pi/180}" />
     <dynamics damping="0.0"/>
   </joint>
 
@@ -106,7 +106,7 @@
     <child link="$(arg arm_id)_pole_link_upper"/>
     <origin xyz="0 0 0.012" rpy="0 0 0"/>
     <axis xyz="1 0 0"/>
-    <limit velocity="1000000" lower="${-10*pi/180}" effort="0" upper="${10*pi/180}" />
+    <limit velocity="1000000" lower="${-30*pi/180}" effort="0" upper="${30*pi/180}" />
     <dynamics damping="0.0"/>
   </joint>
   

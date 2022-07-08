@@ -47,8 +47,8 @@ void franka_pole::PoleState::update(const ros::Time &time)
     Eigen::Quaterniond pole_orientation;
     Eigen::Matrix<double, 3, 1> pole_position = _controller->franka_model->pole_forward_kinematics(_controller->franka_state->get_raw_joint_positions(), _joint_angle, &pole_orientation);
     Eigen::Matrix<double, 3, 3> rotation = _controller->franka_state->get_effector_orientation().toRotationMatrix();
-    Eigen::Matrix<double, 3, 1> up = pole_orientation.inverse() /*Not a bug, really inverse (for some reason)*/ * Eigen::Vector3d::UnitZ();
-    _angle(0) = atan2(up(1), up(2));
+    Eigen::Matrix<double, 3, 1> up = pole_orientation * Eigen::Vector3d::UnitZ();
+    _angle(0) = -atan2(up(1), up(2));
     _angle(1) = atan2(up(0), up(2));
 
     //Noise
