@@ -1,2 +1,3 @@
 *.urdf
 *.FCStd1
+**/__pycache__

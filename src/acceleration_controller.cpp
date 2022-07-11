@@ -13,10 +13,11 @@ bool franka_pole::AccelerationController::_controller_init(hardware_interface::R
 
     Parameters parameters(node_handle);
     _two_dimensional = parameters.two_dimensional();
-    _cartesian_stiffness.setZero();
-    _cartesian_stiffness.diagonal().segment<3>(0) = parameters.translation_stiffness();
-    _cartesian_stiffness.diagonal().segment<3>(3) = parameters.rotation_stiffness();
+    _cartesian_stiffness.segment<3>(0) = parameters.translation_stiffness();
+    _cartesian_stiffness.segment<3>(3) = parameters.rotation_stiffness();
     _cartesian_damping = 2.0 * _cartesian_stiffness.array().sqrt().matrix();
+    _cartesian_stiffness_safety = parameters.translation_stiffness_safety();
+    _cartesian_damping_safety = 2.0 * _cartesian_stiffness_safety.array().sqrt().matrix();
     _nullspace_stiffness = parameters.nullspace_stiffness();
     _position_target = parameters.target_effector_position();
     _orientation_target = parameters.target_effector_orientation();
@@ -44,26 +45,24 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
     Eigen::Matrix<double, 3, 1> position_target = Eigen::Matrix<double, 3, 1>::Zero();
     Eigen::Matrix<double, 6, 6> cartesian_stiffness = Eigen::Matrix<double, 6, 6>::Zero();
     Eigen::Matrix<double, 6, 6> cartesian_damping = Eigen::Matrix<double, 6, 6>::Zero();
-    cartesian_stiffness.block<3,3>(3,3) = _cartesian_stiffness.block<3,3>(3,3); //Always care about rotation
-    cartesian_damping.block<3,3>(3,3) = _cartesian_damping.block<3,3>(3,3);
+    cartesian_stiffness.diagonal().segment<3>(3) = _cartesian_stiffness.segment<3>(3); //Always care about rotation
+    cartesian_damping.diagonal().segment<3>(3) = _cartesian_damping.segment<3>(3);
 
     //set boundaries
-    bool care_if_exeeded[3] = { true, true, true };
-    bool care_if_not_exeeded[3] = { !_two_dimensional, false, true };
     for (size_t i = 0; i < 3; i++)
     {
         double clipped = std::max(_min_effector_position(i), std::min(franka_state->get_effector_position()(i), _max_effector_position(i)));
-        if (clipped != franka_state->get_effector_position()(i) && care_if_exeeded[i])
+        if (clipped != franka_state->get_effector_position()(i)) //Outbounds
         {
             position_target(i) = clipped;
-            cartesian_stiffness(i,i) = _cartesian_stiffness(i,i);
-            cartesian_damping(i,i) = _cartesian_damping(i,i);
+            cartesian_stiffness(i,i) = _cartesian_stiffness_safety(i);
+            cartesian_damping(i,i) = _cartesian_damping_safety(i);
         }
-        else if (clipped == franka_state->get_effector_position()(i) && care_if_not_exeeded[i])
+        else //Inbounds
         {
             position_target(i) = _position_target(i);
-            cartesian_stiffness(i,i) = _cartesian_stiffness(i,i);
-            cartesian_damping(i,i) = _cartesian_damping(i,i);
+            cartesian_stiffness(i,i) = _cartesian_stiffness(i);
+            cartesian_damping(i,i) = _cartesian_damping(i);
         }
     }
     
@@ -87,7 +86,9 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
     (_nullspace_stiffness.array() * (_target_joint_positions - franka_state->get_joint_positions()).array() - 2 * _nullspace_stiffness.array().sqrt() * franka_state->get_joint_velocities().array()).matrix();
 
     // acceleration control
-    torque += franka_model->get_torques(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle(), acceleration_target);
+    Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
+    a6.segment<3>(0) = acceleration_target;
+    torque += franka_model->get_torques(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle(), a6);
 
     // publish
     publisher->set_command_effector_position(position_target);

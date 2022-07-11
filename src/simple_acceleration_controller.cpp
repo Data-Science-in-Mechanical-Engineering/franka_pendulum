@@ -6,7 +6,7 @@ void franka_pole::SimpleAccelerationController::_command_callback(const franka_p
 {
     for (size_t i = 0; i < 2; i++)
     {
-        _a[i] = msg->a.at(i);
+        _a[i] = msg->a[i];
         _b[i] = msg->b[i];
         _c[i] = msg->c[i];
         _d[i] = msg->d[i];
@@ -23,10 +23,23 @@ bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW
 
     _command_subscriber = node_handle.subscribe("/franka_pole/command_parameters", 10, &SimpleAccelerationController::_command_callback, this);
 
-    _a = std::array<double, 2>({{ 80, 80 }});
-    _b = std::array<double, 2>({{ 9, 9 }});
-    _c = std::array<double, 2>({{ 11, 11 }});
-    _d = std::array<double, 2>({{ 10, 10 }});
+    if (_two_dimensional)
+    {
+        const double lqr1[4] = { 4.24364503e+01, 1.27280778e+01, 1.00000000e+01, 1.84860853e+01 };
+        const double lqr2[4] = { 1.85688832e+01, 4.62233425e+00, 3.16227766e+00, 5.85610013e+00 };
+        _a = std::array<double, 2>({{ lqr1[0], lqr2[0] }});
+        _b = std::array<double, 2>({{ lqr1[1], lqr2[1] }});
+        _c = std::array<double, 2>({{ lqr1[2], lqr2[2] }});
+        _d = std::array<double, 2>({{ lqr1[3], lqr2[3] }});
+    }
+    else
+    {
+        const double lqr[4] = { 20.84313016, 5.06703731, 3.16227766, 5.76745694 };
+        _a = std::array<double, 2>({{ 0.0, lqr[0] }});
+        _b = std::array<double, 2>({{ 0.0, lqr[1] }});
+        _c = std::array<double, 2>({{ 0.0, lqr[2] }});
+        _d = std::array<double, 2>({{ 0.0, lqr[3] }});
+    }
 
     return true;
 }

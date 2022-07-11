@@ -67,6 +67,7 @@ Eigen::Matrix<double, 2, 1> franka_pole::Parameters::initial_pole_positions() co
 Eigen::Matrix<double, 2, 1> franka_pole::Parameters::initial_pole_velocities() const { return _read_vector("initial_pole_velocities", 2); }
 
 Eigen::Matrix<double, 3, 1> franka_pole::Parameters::translation_stiffness() const { return _read_vector("translation_stiffness", 3); }
+Eigen::Matrix<double, 3, 1> franka_pole::Parameters::translation_stiffness_safety() const { return _read_vector("translation_stiffness_safety", 3); }
 Eigen::Matrix<double, 3, 1> franka_pole::Parameters::rotation_stiffness() const { return _read_vector("rotation_stiffness", 3); }
 Eigen::Matrix<double, 7, 1> franka_pole::Parameters::nullspace_stiffness() const { return _read_vector("nullspace_stiffness", 7); }
 Eigen::Matrix<double, 7, 1> franka_pole::Parameters::joint_stiffness() const { return _read_vector("joint_stiffness", 7); }

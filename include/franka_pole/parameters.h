@@ -39,6 +39,7 @@ namespace franka_pole
         Eigen::Matrix<double, 2, 1> initial_pole_velocities() const;
 
         Eigen::Matrix<double, 3, 1> translation_stiffness() const;
+        Eigen::Matrix<double, 3, 1> translation_stiffness_safety() const;
         Eigen::Matrix<double, 3, 1> rotation_stiffness() const;
         Eigen::Matrix<double, 7, 1> nullspace_stiffness() const;
         Eigen::Matrix<double, 7, 1> joint_stiffness() const;

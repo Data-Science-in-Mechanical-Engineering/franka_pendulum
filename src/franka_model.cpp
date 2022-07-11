@@ -46,32 +46,28 @@ franka_pole::FrankaModel::FrankaModel(ros::NodeHandle &node_handle)
 Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_gravity(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_positions)
 {
     Eigen::Matrix<double, 7, 1> torque;
+    pinocchio::Inertia old_inertias[13];
+    for (size_t i = 0; i < _model.inertias.size(); i++) { old_inertias[i] = _model.inertias[i]; _model.inertias[i].mass() = 0.0; }
+    _model.inertias[7].mass() = old_inertias[7].mass() - 1.46552; /* values taken from panda_arm.urdf.xacro */
+    _model.inertias[7].lever() = (old_inertias[7].mass() * old_inertias[7].lever() - Eigen::Matrix<double, 3, 1>({0.0017561, 0.0013882, 0.0991564}) * 1.46552) / _model.inertias[7].mass();
+
     if (_two_dimensional)
     {
-        Eigen::Matrix<double, 12, 1> masses;
-        for (size_t i = 0; i < 12; i++) { masses(i) = _model.inertias[i].mass(); _model.inertias[i].mass() = 0.0; }
-        _model.inertias[7].mass() = 0.5; //Needs further modelling
-
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
+        q11.segment<7>(0) = joint_positions;
         q11(9) = pole_joint_positions(1);
         q11(10) = pole_joint_positions(0);
         torque = pinocchio::computeGeneralizedGravity(_model, _data, q11).segment<7>(0);
-
-        for (size_t i = 0; i < 12; i++) _model.inertias[i].mass() = masses(i);
     }
     else
     {
-        Eigen::Matrix<double, 11, 1> masses;
-        for (size_t i = 0; i < 11; i++) { masses(i) = _model.inertias[i].mass(); _model.inertias[i].mass() = 0.0; }
-        _model.inertias[7].mass() = 0.5; //Needs further modelling
-
         Eigen::Matrix<double, 10, 1> q10 = Eigen::Matrix<double, 10, 1>::Zero();
         q10.segment<7>(0) = joint_positions;
         q10(9) = pole_joint_positions(0);
         torque = pinocchio::computeGeneralizedGravity(_model, _data, q10).segment<7>(0);
-
-        for (size_t i = 0; i < 11; i++) _model.inertias[i].mass() = masses(i);
     }
+
+    for (size_t i = 0; i < _model.inertias.size(); i++) _model.inertias[i] = old_inertias[i];
     return torque;
 }
 
@@ -130,9 +126,9 @@ Eigen::Matrix<double, 6, 7> franka_pole::FrankaModel::get_effector_jacobian(cons
     return jacobian;
 }
 
-Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_torques(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities, const Eigen::Matrix<double, 2, 1> &pole_joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_velocities, const Eigen::Matrix<double, 3, 1> &acceleration)
+Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_torques(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities, const Eigen::Matrix<double, 2, 1> &pole_joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_velocities, const Eigen::Matrix<double, 6, 1> &acceleration)
 {
-    pinocchio::Motion gravity = _model.gravity;
+    pinocchio::Motion old_gravity = _model.gravity;
     _model.gravity = pinocchio::Motion::Zero();
     Eigen::Matrix<double, 6, 7> jacobian = get_effector_jacobian(joint_positions);
     Eigen::Matrix<double, 7, 1> torques;
@@ -147,10 +143,8 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_torques(const Eigen::M
         v11.segment<7>(0) = joint_velocities;
         v11(9) = pole_joint_velocities(1);
         v11(10) = pole_joint_velocities(0);
-        Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
-        a6.segment<3>(0) = acceleration;
         Eigen::Matrix<double, 11, 1> a11 = Eigen::Matrix<double, 11, 1>::Zero();
-        a11.segment<7>(0) = pseudo_inverse(jacobian, true) * a6;
+        a11.segment<7>(0) = pseudo_inverse(jacobian, true) * acceleration;
         //a11(9) = ???
         //a11(10) = ???
         torques = pinocchio::rnea(_model, _data, q11, v11, a11).segment<7>(0);
@@ -163,15 +157,13 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_torques(const Eigen::M
         Eigen::Matrix<double, 10, 1> v10 = Eigen::Matrix<double, 10, 1>::Zero();
         v10.segment<7>(0) = joint_velocities;
         v10(9) = pole_joint_velocities(0);
-        Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
-        a6.segment<3>(0) = acceleration;
         Eigen::Matrix<double, 10, 1> a10 = Eigen::Matrix<double, 10, 1>::Zero();
-        a10.segment<7>(0) = pseudo_inverse(jacobian, true) * a6;
+        a10.segment<7>(0) = pseudo_inverse(jacobian, true) * acceleration;
         //a10(9) = ???
         torques = pinocchio::rnea(_model, _data, q10, v10, a10).segment<7>(0);
     }
 
-    _model.gravity = gravity;
+    _model.gravity = old_gravity;
     return torques;
 }
 

@@ -37,16 +37,6 @@
     <self_collide>true</self_collide>
   </gazebo>
 
-  <!-- Pendulum -->  
-  <xacro:property name="lower_mass" value="0.5" />
-  <xacro:property name="middle_mass" value="0.05" />
-  <xacro:property name="upper_mass" value="0.1" />
-  <xacro:property name="ball_mass" value="0.1" />
-  <xacro:property name="beam_mass" value="0.01" />
-  <xacro:property name="beam_length" value="0.5" />
-  <xacro:property name="beam_radius" value="0.005" />
-  <xacro:property name="ball_radius" value="0.025" />
-
   <!-- Connection -->   
   <joint name="$(arg arm_id)_pole_joint_connection" type="fixed">
     <origin xyz="${0.110/sqrt(2)} -${0.110/sqrt(2)} 0.03" rpy="${pi} 0 ${-pi/4}" />
@@ -64,12 +54,12 @@
     </visual>
 
     <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="${lower_mass}"/>
+      <origin xyz="-0.05109889873590216 2.087955225371467e-05 -0.09641756504956266" rpy="0 0 0"/>
+      <mass value="0.3291666816221097"/>
       <inertia
-      ixx="0.0" ixy="0.0" ixz="0.0"
-      iyy="0.0" iyz="0.0"
-      izz="0.0"/>
+      ixx="0.0019391504246096141" ixy="-1.2810025473031176e-07" ixz="-0.00018658257593334764"
+      iyy="0.0032282596099721715" iyz="-2.76251743233805e-07"
+      izz="0.002428110536000401"/>
     </inertial>
   </link>
   
@@ -85,19 +75,19 @@
   <!-- Middle bearing -->
   <link name="$(arg arm_id)_pole_link_middle">
     <visual>
-      <origin xyz="0 0 0" rpy="0 ${-pi/6} 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
         <mesh filename="package://franka_pole/meshes/visual/2D_middle.dae"/>
       </geometry>
     </visual>
 
     <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="${middle_mass}"/>
+      <origin xyz="0.0 6.359054534633294e-09 0.006000000469716085" rpy="0 0 0"/>
+      <mass value="0.01583948395827795"/>
       <inertia
-      ixx="0.0" ixy="0.0" ixz="0.0"
-      iyy="0.0" iyz="0.0"
-      izz="0.0"/>
+      ixx="2.2608411674142452e-05" ixy="0.0" ixz="0.0"
+      iyy="2.2608411674142462e-05" iyz="0.0"
+      izz="1.612722485663805e-05"/>
     </inertial>
   </link>
   
@@ -110,53 +100,34 @@
     <dynamics damping="0.0"/>
   </joint>
   
-  <!-- Upper bearing and beam -->
+  <!-- Upper bearing, beam and ball -->
   <link name="$(arg arm_id)_pole_link_upper">
     <visual>
-      <origin xyz="0 0 ${beam_length/2.0 + 0.03}" rpy="0 0 0"/>
-      <geometry>
-        <cylinder length="${beam_length - 0.06}" radius = "${beam_radius}"/>
-      </geometry>
-    </visual>
-    <visual>
-      <origin xyz="0 0 -0.012" rpy="0 ${-pi/6} 0"/>
+      <origin xyz="0 0 -0.012" rpy="0 0 0"/>
       <geometry>
         <mesh filename="package://franka_pole/meshes/visual/2D_upper.dae"/>
       </geometry>
     </visual>
-    
-    <inertial>
-      <origin xyz="0 0 ${beam_length/2.0}" rpy="0 0 0"/>
-      <mass value="${upper_mass} + ${beam_mass}"/>
-      <inertia
-      ixx="${beam_mass * beam_length*beam_length / 12.0 + beam_mass * beam_radius*beam_radius / 4.0}" ixy="0.0" ixz="0.0"
-      iyy="${beam_mass * beam_length*beam_length / 12.0 + beam_mass * beam_radius*beam_radius / 4.0}" iyz="0.0"
-      izz="${beam_mass * beam_radius*beam_radius / 2.0}"/>
-    </inertial>
-  </link>
-  
-  <joint name="$(arg arm_id)_pole_joint_ball" type="fixed">
-    <parent link="$(arg arm_id)_pole_link_upper"/>
-    <child link="$(arg arm_id)_pole_link_ball"/>
-    <origin xyz="0 0 ${beam_length}" rpy="0 0 0"/>
-  </joint>
-
-  <!-- Ball -->
-  <link name="$(arg arm_id)_pole_link_ball">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 ${0.06 + 0.65/2}" rpy="0 0 0"/>
       <geometry>
-        <sphere radius = "${ball_radius}"/>
+        <cylinder length="0.65" radius = "0.005"/>
       </geometry>
     </visual>
-
+    <visual>
+      <origin xyz="0 0 0.43" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius = "0.00275"/>
+      </geometry>
+    </visual>
+    
     <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="${ball_mass}"/>
+      <origin xyz="-7.652676027542849e-05 3.225024691385294e-07 ${0.13021144099656237 - 0.012}" rpy="0 0 0"/>
+      <mass value="0.11035793369531807"/>
       <inertia
-      ixx="${2.0 * ball_mass * ball_radius*ball_radius / 5.0}" ixy="0.0" ixz="0.0"
-      iyy="${2.0 * ball_mass * ball_radius*ball_radius / 5.0}" iyz="0.0"
-      izz="${2.0 * ball_mass * ball_radius*ball_radius / 5.0}"/>
+      ixx="0.00312322181055378" ixy="0.0" ixz="-5.323303220087574e-07"
+      iyy="0.002922973095088403" iyz="4.395839128943858e-09"
+      izz="0.00036214355788495307"/>
     </inertial>
   </link>
   

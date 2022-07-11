@@ -24,15 +24,21 @@ class AccelerationController:
 
     def __init__(self):
         rospy.init_node('acceleration_controller')
-
-        self._a = [ 80.0, 80.0 ]
-        self._b = [ 9.0, 9.0 ]
-        self._c = [ 11.0, 11.0 ]
-        self._d = [ 10.0, 10.0 ]
         self._two_dimensional = bool(rospy.get_param("/franka_pole/two_dimensional"))
         self._min = rospy.get_param("/franka_pole/min_effector_position")
         self._max = rospy.get_param("/franka_pole/max_effector_position")
         self._default = rospy.get_param("/franka_pole/target_effector_position")
+
+        if self._two_dimensional:
+            self._a = [ 4.24364503e+01, 1.85688832e+01 ]
+            self._b = [ 1.27280778e+01, 4.62233425e+00 ]
+            self._c = [ 1.00000000e+01, 3.16227766e+00 ]
+            self._d = [ 1.84860853e+01, 5.85610013e+00 ]
+        else:
+            self._a = [ 0.0, 20.84313016 ]
+            self._b = [ 0.0, 5.06703731 ]
+            self._c = [ 0.0, 3.16227766 ]
+            self._d = [ 0.0, 5.76745694 ]
 
         self._sample_subscriber = rospy.Subscriber('/franka_pole/sample', Sample, lambda sample: self._sample_callback(sample), queue_size=10)
         self._command_publisher = rospy.Publisher('/franka_pole/command_acceleration', CommandAcceleration, queue_size=10)

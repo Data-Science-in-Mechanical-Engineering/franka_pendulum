@@ -32,6 +32,8 @@
     <!-- Load controllers -->
     <rosparam file="$(find franka_gazebo)/config/franka_hw_sim.yaml" subst_value="true" />
     <rosparam file="$(find franka_pole)/config/franka_pole_controllers.yaml" subst_value="true" />
+    <arg name="translation_stiffness_x" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' or not arg('two_dimensional') else 0.0)" />
+    <arg name="translation_stiffness_y" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' else 0.0)" />
     <rosparam file="$(find franka_pole)/config/parameters.yaml" subst_value="true" />
 
     <!-- Create robot -->

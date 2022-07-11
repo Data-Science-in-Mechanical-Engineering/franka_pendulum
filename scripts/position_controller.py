@@ -17,8 +17,8 @@ class PositionController:
             self._d[1] * sample.franka_effector_velocity[1])
         
         command = CommandPosition()
-        command.command_effector_position[0] = sample.franka_effector_position[0] + ddx_target if self._two_dimensional else self._default[0]
-        command.command_effector_position[1] = sample.franka_effector_position[1] + ddy_target
+        command.command_effector_position[0] = sample.franka_effector_position[0] + 0.25*ddx_target if self._two_dimensional else self._default[0]
+        command.command_effector_position[1] = sample.franka_effector_position[1] + 0.25*ddy_target
         command.command_effector_position[2] = self._default[2]
         for i in range(3):
             if command.command_effector_position[i] < self._min[i]: command.command_effector_position[i] = self._min[i]
@@ -26,16 +26,15 @@ class PositionController:
         command.command_effector_velocity[0] = 0
         command.command_effector_velocity[1] = 0
         command.command_effector_velocity[2] = 0
-        print(command.command_effector_position)
         self._command_publisher.publish(command)
 
     def __init__(self):
         rospy.init_node('position_controller')
 
-        self._a = [ 16.363880157470703 / 30, 16.363880157470703 / 30 ]
-        self._b = [ 9.875003814697266 / 30, 9.875003814697266 / 30 ]
-        self._c = [ 7.015979766845703 / 30, 7.015979766845703 / 30 ]
-        self._d = [ 11.86760425567627 / 30, 11.86760425567627 / 30 ]
+        self._a = [ 16, 16 ]
+        self._b = [ 5, 5 ]
+        self._c = [ 9, 9 ]
+        self._d = [ 9, 9 ]
         self._two_dimensional = bool(rospy.get_param("/franka_pole/two_dimensional"))
         self._min = rospy.get_param("/franka_pole/min_effector_position")
         self._max = rospy.get_param("/franka_pole/max_effector_position")
