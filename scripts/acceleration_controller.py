@@ -30,20 +30,20 @@ class AccelerationController:
         self._default = rospy.get_param("/franka_pole/target_effector_position")
 
         if self._model == "1D":
-            self._a = [ 0.0, 52.23421734 ]
-            self._b = [ 0.0, 14.21253046 ]
+            self._a = [ 0.0, 84.4297616 ]
+            self._b = [ 0.0, 19.30641439 ]
             self._c = [ 0.0, 10.0 ]
-            self._d = [ 0.0, 17.36721051 ]
+            self._d = [ 0.0, 15.87860174 ]
         elif self._model == "2D":
-            self._a = [ 6.69280164e+01, 5.16509316e+01 ]
-            self._b = [ 1.94527670e+01, 1.42812800e+01 ]
+            self._a = [ 1.14076921e+02, 8.52752833e+01 ]
+            self._b = [ 2.70962650e+01, 1.97571361e+01 ]
             self._c = [ 1.41421356e+01, 1.00000000e+01 ]
-            self._d = [ 2.50387242e+01, 1.74816219e+01 ]
+            self._d = [ 2.23746113e+01, 1.59327897e+01 ]
         else:
-            self._a = [ 7.38746335e+01, 5.63751219e+01 ]
-            self._b = [ 1.84758010e+01, 1.38175352e+01 ]
-            self._c = [ 1.00000000e+01, 7.07106781e+00 ]
-            self._d = [ 1.64245608e+01, 1.17582709e+01 ]
+            self._a = [ 1.23675403e+02, 9.31225353e+01 ]
+            self._b = [ 3.23660696e+01, 2.41096509e+01 ]
+            self._c = [ 1.41421356e+01, 1.00000000e+01 ]
+            self._d = [ 2.29847265e+01, 1.64271806e+01 ]
 
         self._sample_subscriber = rospy.Subscriber('/franka_pole/sample', Sample, lambda sample: self._sample_callback(sample), queue_size=10)
         self._command_publisher = rospy.Publisher('/franka_pole/command_acceleration', CommandAcceleration, queue_size=10)

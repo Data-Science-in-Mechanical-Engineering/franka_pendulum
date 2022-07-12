@@ -12,11 +12,11 @@ def lqr():
     A = np.zeros((4,4))
     A[0,1] = 1
     A[2,3] = 1
-    A[1,0] = upper.mass * g * upper.position[2] / upper.inertia_at(np.zeros(3))[0,0]
+    A[1,0] = g * upper.mass * upper.position[2] / upper.inertia_at(np.zeros(3))[0,0]
 
     B = np.zeros((4,1))
     B[3,0] = 1
-    B[1,0] = -1 / upper.position[2]
+    B[1,0] = -upper.mass * upper.position[2] / upper.inertia_at(np.zeros(3))[0,0]
 
     Q = np.diag([100.0, 100.0, 100.0, 100.0])
     R = np.eye(1)
@@ -33,14 +33,14 @@ def lqr_2d():
     A[2,3] = 1
     A[4,5] = 1
     A[6,7] = 1
-    A[1,0] = upper.mass * g * (upper.position[2] - upper_position) / upper.inertia_at(np.array([0,0,upper_position]))[0,0]
-    A[5,4] = middle_and_upper.mass * g * middle_and_upper.position[2] / middle_and_upper.inertia_at(np.zeros(3))[1,1]
+    A[1,0] = g * upper.mass * (upper.position[2] - upper_position) / upper.inertia_at(np.array([0,0,upper_position]))[0,0]
+    A[5,4] = g * middle_and_upper.mass * middle_and_upper.position[2] / middle_and_upper.inertia_at(np.zeros(3))[1,1]
 
     B = np.zeros((8,2))
     B[3,0] = 1
     B[7,1] = 1
-    B[1,0] = -1 / (upper.position[2] - upper_position)
-    B[5,1] = -1 / upper.position[2]
+    B[1,0] = -upper.mass * (upper.position[2] - upper_position) / upper.inertia_at(np.array([0,0,upper_position]))[0,0]
+    B[5,1] = -middle_and_upper.mass * middle_and_upper.position[2] / middle_and_upper.inertia_at(np.zeros(3))[1,1]
 
     Q = np.diag([200.0, 200.0, 200.0, 200.0, 100.0, 100.0, 100.0, 100.0])
     R = np.eye(2)
@@ -55,14 +55,14 @@ def lqr_2db():
     A[2,3] = 1
     A[4,5] = 1
     A[6,7] = 1
-    A[1,0] = upper.mass * g * upper.position[2] / upper.inertia_at(np.zeros(3))[0,0]
-    A[5,4] = upper.mass * g * upper.position[2] / upper.inertia_at(np.zeros(3))[1,1]
+    A[1,0] = g * upper.mass * upper.position[2] / upper.inertia_at(np.zeros(3))[0,0]
+    A[5,4] = g * upper.mass * upper.position[2] / upper.inertia_at(np.zeros(3))[1,1]
 
     B = np.zeros((8,2))
     B[3,0] = 1
     B[7,1] = 1
-    B[1,0] = -1 / upper.position[2]
-    B[5,1] = -1 / upper.position[2]
+    B[1,0] = -upper.mass * upper.position[2] / upper.inertia_at(np.zeros(3))[0,0]
+    B[5,1] = -upper.mass * upper.position[2] / upper.inertia_at(np.zeros(3))[1,1]
 
     Q = np.diag([200.0, 200.0, 200.0, 200.0, 100.0, 100.0, 100.0, 100.0])
     R = np.eye(2)

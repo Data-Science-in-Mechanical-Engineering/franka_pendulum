@@ -25,7 +25,7 @@ bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW
 
     if (_model == Model::D1)
     {
-        const double lqr[4] = { 52.23421734, 14.21253046, 10.0, 17.36721051 };
+        const double lqr[4] = { 84.4297616, 19.30641439, 10.0, 15.87860174 };
         _a = std::array<double, 2>({{ 0.0, lqr[0] }});
         _b = std::array<double, 2>({{ 0.0, lqr[1] }});
         _c = std::array<double, 2>({{ 0.0, lqr[2] }});
@@ -33,8 +33,8 @@ bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW
     }
     else if (_model == Model::D2)
     {
-        const double lqr1[4] = { 6.69280164e+01, 1.94527670e+01, 1.41421356e+01, 2.50387242e+01 };
-        const double lqr2[4] = { 5.16509316e+01, 1.42812800e+01, 1.00000000e+01, 1.74816219e+01 };
+        const double lqr1[4] = { 1.14076921e+02, 2.70962650e+01, 1.41421356e+01, 2.23746113e+01 };
+        const double lqr2[4] = { 8.52752833e+01, 1.97571361e+01, 1.00000000e+01, 1.59327897e+01 };
         _a = std::array<double, 2>({{ lqr1[0], lqr2[0] }});
         _b = std::array<double, 2>({{ lqr1[1], lqr2[1] }});
         _c = std::array<double, 2>({{ lqr1[2], lqr2[2] }});
@@ -42,8 +42,8 @@ bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW
     }
     else
     {
-        const double lqr1[4] = { 1.03158335e+02, 2.80403213e+01, 1.41421356e+01, 2.34874244e+01 };
-        const double lqr2[4] = { 7.71037535e+01, 2.06923784e+01, 1.00000000e+01, 1.67572449e+01 };
+        const double lqr1[4] = { 1.23675403e+02, 3.23660696e+01, 1.41421356e+01, 2.29847265e+01 };
+        const double lqr2[4] = { 9.31225353e+01, 2.41096509e+01, 1.00000000e+01, 1.64271806e+01 };
         _a = std::array<double, 2>({{ lqr1[0], lqr2[0] }});
         _b = std::array<double, 2>({{ lqr1[1], lqr2[1] }});
         _c = std::array<double, 2>({{ lqr1[2], lqr2[2] }});

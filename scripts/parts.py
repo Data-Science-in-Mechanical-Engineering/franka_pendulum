@@ -145,8 +145,6 @@ def get_parts_2d():
         BallPart(ball_radius, False, density, np.array([0,0,ball_position]))
         ])
 
-    print('!!!', upper.inertia_at(np.zeros(3))[0,0], upper.mass)
-
     return lower, middle, upper
 
 def get_parts_2db():
@@ -167,8 +165,6 @@ def get_parts_2db():
         CADPart(document, "b_part17_001_", density),
         BeamPart(beam_length, beam_radius, True, 2, beam_density, np.array([0,0,beam_position+beam_length/2]))
         ])
-
-    print('!!!', upper.inertia_at(np.zeros(3))[0,0], upper.mass)
 
     return lower, upper
 
