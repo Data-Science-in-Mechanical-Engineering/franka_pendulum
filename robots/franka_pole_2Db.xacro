@@ -54,12 +54,12 @@
     </visual>
 
     <inertial>
-      <origin xyz="0.0 -0.03161502390972815 -0.06659192458617054" rpy="0 0 0"/>
-      <mass value="0.27322280135974475"/>
+      <origin xyz="-0.031615023280958485 0.0 -0.06659192458617054" rpy="0 0 0"/>
+      <mass value="0.2732228013597448"/>
       <inertia
-      ixx="0.0028058366276666187" ixy="0.0" ixz="0.0"
-      iyy="0.0016993982151537815" iyz="-8.877913787029444e-05"
-      izz="0.002116794356382879"/>
+      ixx="0.0016993982151537815" ixy="0.0" ixz="-8.877913625404171e-05"
+      iyy="0.00280583662568493" iyz="0.0"
+      izz="0.002116794354401193"/>
     </inertial>
   </link>
   
@@ -75,15 +75,19 @@
   <!-- Middle bearing -->
   <link name="$(arg arm_id)_pole_link_middle">
     <inertial>
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+      <origin xyz="0 0 0.005" rpy="0 0 0"/>
       <mass value="0.001"/>
+      <inertia
+      ixx="1e-05" ixy="0.0" ixz="0.0"
+      iyy="1e-05" iyz="0.0"
+      izz="1e-05"/>
     </inertial>
   </link>
   
   <joint name="$(arg arm_id)_pole_joint_x" type="revolute">
     <parent link="$(arg arm_id)_pole_link_middle"/>
     <child link="$(arg arm_id)_pole_link_upper"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 0.01" rpy="0 0 0"/>
     <axis xyz="1 0 0"/>
     <limit velocity="1000000" lower="${-30*pi/180}" effort="0" upper="${30*pi/180}" />
     <dynamics damping="0.0"/>
@@ -92,25 +96,25 @@
   <!-- Upper bearing, beam and ball -->
   <link name="$(arg arm_id)_pole_link_upper">
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 -0.01" rpy="0 0 0"/>
       <geometry>
         <mesh filename="package://franka_pole/meshes/visual/2Db_upper.dae"/>
       </geometry>
     </visual>
     <visual>
-      <origin xyz="0 0 ${0.039 + 0.5/2}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${0.039 + 0.65/2 - 0.01}" rpy="0 0 0"/>
       <geometry>
-        <cylinder length="0.5" radius="0.005"/>
+        <cylinder length="0.65" radius="0.005"/>
       </geometry>
     </visual>
     
     <inertial>
-      <origin xyz="0.0 0.0 0.35075520003248506" rpy="0 0 0"/>
-      <mass value="0.03241958003770816"/>
+      <origin xyz="0.0 0.0 ${0.43117306006864087 - 0.01}" rpy="0 0 0"/>
+      <mass value="0.038719580037708166"/>
       <inertia
-      ixx="0.001036931649741803" ixy="0.0" ixz="0.0"
-      iyy="0.001036931649741803" iyz="0.0"
-      izz="1.109395012820758e-05"/>
+      ixx="0.0019970733076910907" ixy="0.0" ixz="0.0"
+      iyy="0.0019970733076910907" iyz="0.0"
+      izz="1.1251450128207583e-05"/>
     </inertial>
   </link>
   

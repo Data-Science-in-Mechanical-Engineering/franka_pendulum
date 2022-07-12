@@ -4,41 +4,41 @@ from franka_pole.msg import Sample, CommandAcceleration
 
 class AccelerationController:
     def _sample_callback(self, sample):
-        if self._two_dimensional: ddx_target = (
+        if self._model == "2D" or self._model == "2Db": ddx_target = (
             self._a[0] * sample.pole_angle[1] +
-            self._b[0] * sample.pole_joint_dangle[1] +
+            self._b[0] * sample.pole_dangle[1] +
             (self._c[0] * sample.franka_effector_position[0] - self._default[0]) +
             self._d[0] * sample.franka_effector_velocity[0])
 
         ddy_target = (
             self._a[1] * sample.pole_angle[0] +
-            self._b[1] * sample.pole_joint_dangle[0] +
+            self._b[1] * sample.pole_dangle[0] +
             (self._c[1] * sample.franka_effector_position[1] - self._default[1]) +
             self._d[1] * sample.franka_effector_velocity[1])
 
         command = CommandAcceleration()
-        command.command_effector_acceleration[0] = ddx_target if self._two_dimensional else 0.0
+        command.command_effector_acceleration[0] = ddx_target if self._model == "2D" or self._model == "2Db" else 0.0
         command.command_effector_acceleration[1] = ddy_target
         command.command_effector_acceleration[2] = 0.0
         self._command_publisher.publish(command)
 
     def __init__(self):
         rospy.init_node('acceleration_controller')
-        self._two_dimensional = bool(rospy.get_param("/franka_pole/two_dimensional"))
+        self._model = bool(rospy.get_param("/franka_pole/model"))
         self._min = rospy.get_param("/franka_pole/min_effector_position")
         self._max = rospy.get_param("/franka_pole/max_effector_position")
         self._default = rospy.get_param("/franka_pole/target_effector_position")
 
         if self._model == "1D":
-            self._a = [ 0.0, 21.87589212 ]
-            self._b = [ 0.0, 5.30870431 ]
-            self._c = [ 0.0, 3.16227766 ]
-            self._d = [ 0.0, 5.74684468 ]
+            self._a = [ 0.0, 52.23421734 ]
+            self._b = [ 0.0, 14.21253046 ]
+            self._c = [ 0.0, 10.0 ]
+            self._d = [ 0.0, 17.36721051 ]
         elif self._model == "2D":
-            self._a = [ 4.90890528e+01, 3.85783754e+01 ]
-            self._b = [ 1.40105256e+01, 1.04032413e+01 ]
-            self._c = [ 1.00000000e+01, 7.07106781e+00 ]
-            self._d = [ 1.77790322e+01, 1.24503201e+01 ]
+            self._a = [ 6.69280164e+01, 5.16509316e+01 ]
+            self._b = [ 1.94527670e+01, 1.42812800e+01 ]
+            self._c = [ 1.41421356e+01, 1.00000000e+01 ]
+            self._d = [ 2.50387242e+01, 1.74816219e+01 ]
         else:
             self._a = [ 7.38746335e+01, 5.63751219e+01 ]
             self._b = [ 1.84758010e+01, 1.38175352e+01 ]

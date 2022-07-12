@@ -6,12 +6,12 @@ franka_pole:
   franka_period: 1
   pole_period: 10
   
-  target_effector_position: [ 0.7, 0.0, 0.5 ]
+  target_effector_position: [ 0.6, 0.0, 0.6 ]
   target_effector_orientation: { w: $(arg target_effector_orientation_w), x: 0.0, y: $(arg target_effector_orientation_y), z: 0.0 }
-  min_effector_position: [ 0.25, -0.6, 0.5 ]
-  max_effector_position: [ 0.75, 0.6, 0.5 ]
+  min_effector_position: [ 0.4, -0.6, 0.6 ]
+  max_effector_position: [ 0.8, 0.6, 0.6 ]
 
-  initial_effector_position: [ 0.7, 0.0, 0.5 ]
+  initial_effector_position: [ 0.6, 0.0, 0.6 ]
   initial_effector_orientation: { w: $(arg target_effector_orientation_w), x: 0.0, y: $(arg target_effector_orientation_y), z: 0.0 }
   initial_joint0_position: 0.0
   initial_pole_positions: [ 0.0, 0.0 ]

@@ -25,7 +25,7 @@ bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW
 
     if (_model == Model::D1)
     {
-        const double lqr[4] = { 20.84313016, 5.06703731, 3.16227766, 5.76745694 };
+        const double lqr[4] = { 52.23421734, 14.21253046, 10.0, 17.36721051 };
         _a = std::array<double, 2>({{ 0.0, lqr[0] }});
         _b = std::array<double, 2>({{ 0.0, lqr[1] }});
         _c = std::array<double, 2>({{ 0.0, lqr[2] }});
@@ -33,8 +33,8 @@ bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW
     }
     else if (_model == Model::D2)
     {
-        const double lqr1[4] = { 4.90890528e+01, 1.40105256e+01, 1.00000000e+01, 1.77790322e+01 };
-        const double lqr2[4] = { 3.85783754e+01, 1.04032413e+01, 7.07106781e+00, 1.24503201e+01 };
+        const double lqr1[4] = { 6.69280164e+01, 1.94527670e+01, 1.41421356e+01, 2.50387242e+01 };
+        const double lqr2[4] = { 5.16509316e+01, 1.42812800e+01, 1.00000000e+01, 1.74816219e+01 };
         _a = std::array<double, 2>({{ lqr1[0], lqr2[0] }});
         _b = std::array<double, 2>({{ lqr1[1], lqr2[1] }});
         _c = std::array<double, 2>({{ lqr1[2], lqr2[2] }});
@@ -42,8 +42,8 @@ bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW
     }
     else
     {
-        const double lqr1[4] = { 7.38746335e+01, 1.84758010e+01, 1.00000000e+01, 1.64245608e+01 };
-        const double lqr2[4] = { 5.63751219e+01, 1.38175352e+01, 7.07106781e+00, 1.17582709e+01 };
+        const double lqr1[4] = { 1.03158335e+02, 2.80403213e+01, 1.41421356e+01, 2.34874244e+01 };
+        const double lqr2[4] = { 7.71037535e+01, 2.06923784e+01, 1.00000000e+01, 1.67572449e+01 };
         _a = std::array<double, 2>({{ lqr1[0], lqr2[0] }});
         _b = std::array<double, 2>({{ lqr1[1], lqr2[1] }});
         _c = std::array<double, 2>({{ lqr1[2], lqr2[2] }});
@@ -66,13 +66,13 @@ void franka_pole::SimpleAccelerationController::update(const ros::Time &time, co
     
     if (_model == Model::D2 || _model == Model::D2b) acceleration_target(0) =
         (_a[0] * pole_state->get_angle()(1) +
-        _b[0] * pole_state->get_joint_dangle()(1) +
+        _b[0] * pole_state->get_dangle()(1) +
         _c[0] * (franka_state->get_effector_position()(0) - _target_position(0)) +
         _d[0] * franka_state->get_effector_velocity()(0));
         
     acceleration_target(1) =
         (_a[1] * pole_state->get_angle()(0) +
-        _b[1] * pole_state->get_joint_dangle()(0) +
+        _b[1] * pole_state->get_dangle()(0) +
         _c[1] * (franka_state->get_effector_position()(1) - _target_position(1)) +
         _d[1] * franka_state->get_effector_velocity()(1));
     

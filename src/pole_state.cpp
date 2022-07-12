@@ -82,6 +82,16 @@ double franka_pole::PoleState::get_timestamp() const
     return _timestamp;
 }
 
+Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_angle() const
+{
+    return _angle;
+}
+
+Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_dangle() const
+{
+    return _dangle;
+}
+
 Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_joint_angle() const
 {
     return _joint_angle;
@@ -90,9 +100,4 @@ Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_joint_angle() const
 Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_joint_dangle() const
 {
     return _joint_dangle;
-}
-
-Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_angle() const
-{
-    return _angle;
 }

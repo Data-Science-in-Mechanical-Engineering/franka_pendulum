@@ -42,7 +42,7 @@ def lqr_2d():
     B[1,0] = -1 / (upper.position[2] - upper_position)
     B[5,1] = -1 / upper.position[2]
 
-    Q = np.diag([100.0, 100.0, 1.0, 1.0, 100.0, 100.0, 1.0, 1.0])
+    Q = np.diag([200.0, 200.0, 200.0, 200.0, 100.0, 100.0, 100.0, 100.0])
     R = np.eye(2)
     K,S,E = control.lqr(A, B, Q, R)
     return -K
@@ -64,9 +64,7 @@ def lqr_2db():
     B[1,0] = -1 / upper.position[2]
     B[5,1] = -1 / upper.position[2]
 
-    Q = np.zeros((8,8))
-    for i in range(4): Q[i,i] = 100 #X
-    for i in range(4,8): Q[i,i] = 50 #Y
+    Q = np.diag([200.0, 200.0, 200.0, 200.0, 100.0, 100.0, 100.0, 100.0])
     R = np.eye(2)
     K,S,E = control.lqr(A, B, Q, R)
     return -K

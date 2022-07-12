@@ -87,7 +87,7 @@ def get_parts():
     density = 1250.0 #kg/m^3
     beam_length = 0.65 #m
     beam_radius = 0.005 #m
-    beam_density = 0.0042 #kg/m
+    beam_density = 0.042 #kg/m
     ball_radius = 0.0275 #m
     ball_position = 0.41 #m
     beam_position = 0.06 #m
@@ -102,7 +102,7 @@ def get_parts():
         CADPart(document, "b_part9_001_", density),
         CADPart(document, "b_part10_001_", density),
         CADPart(document, "b_part10_001_001", density),
-        BeamPart(beam_length, beam_radius, True, 2, beam_density, np.array([0,0,beam_position])),
+        BeamPart(beam_length, beam_radius, True, 2, beam_density, np.array([0,0,beam_position+beam_length/2])),
         BallPart(ball_radius, False, density, np.array([0,0,ball_position]))
         ])
 
@@ -145,11 +145,13 @@ def get_parts_2d():
         BallPart(ball_radius, False, density, np.array([0,0,ball_position]))
         ])
 
+    print('!!!', upper.inertia_at(np.zeros(3))[0,0], upper.mass)
+
     return lower, middle, upper
 
 def get_parts_2db():
     density = 0.2 * 1250.0 #kg/m^3
-    beam_length = 0.5 #m
+    beam_length = 0.65 #m
     beam_radius = 0.005 #m
     beam_density = 0.042 #kg/m
     beam_position = 0.039 #m
@@ -165,6 +167,8 @@ def get_parts_2db():
         CADPart(document, "b_part17_001_", density),
         BeamPart(beam_length, beam_radius, True, 2, beam_density, np.array([0,0,beam_position+beam_length/2]))
         ])
+
+    print('!!!', upper.inertia_at(np.zeros(3))[0,0], upper.mass)
 
     return lower, upper
 
