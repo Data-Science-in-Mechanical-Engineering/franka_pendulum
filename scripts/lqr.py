@@ -18,8 +18,7 @@ def lqr():
     B[3,0] = 1
     B[1,0] = -1 / upper.position[2]
 
-    Q = np.zeros((4,4))
-    for i in range(4): Q[i,i] = 10 #X
+    Q = np.diag([100.0, 100.0, 100.0, 100.0])
     R = np.eye(1)
     K,S,E = control.lqr(A, B, Q, R)
     return -K
@@ -43,9 +42,31 @@ def lqr_2d():
     B[1,0] = -1 / (upper.position[2] - upper_position)
     B[5,1] = -1 / upper.position[2]
 
+    Q = np.diag([100.0, 100.0, 1.0, 1.0, 100.0, 100.0, 1.0, 1.0])
+    R = np.eye(2)
+    K,S,E = control.lqr(A, B, Q, R)
+    return -K
+
+def lqr_2db():
+    lower, upper = parts.get_parts_2db()
+
+    A = np.zeros((8,8))
+    A[0,1] = 1
+    A[2,3] = 1
+    A[4,5] = 1
+    A[6,7] = 1
+    A[1,0] = upper.mass * g * upper.position[2] / upper.inertia_at(np.zeros(3))[0,0]
+    A[5,4] = upper.mass * g * upper.position[2] / upper.inertia_at(np.zeros(3))[1,1]
+
+    B = np.zeros((8,2))
+    B[3,0] = 1
+    B[7,1] = 1
+    B[1,0] = -1 / upper.position[2]
+    B[5,1] = -1 / upper.position[2]
+
     Q = np.zeros((8,8))
     for i in range(4): Q[i,i] = 100 #X
-    for i in range(4,8): Q[i,i] = 10 #Y
+    for i in range(4,8): Q[i,i] = 50 #Y
     R = np.eye(2)
     K,S,E = control.lqr(A, B, Q, R)
     return -K
@@ -53,5 +74,7 @@ def lqr_2d():
 if __name__ == "__main__":
     if sys.argv[-1] == '2D':
         print(lqr_2d())
+    elif sys.argv[-1] == '2Db':
+        print(lqr_2db())
     else:
         print(lqr())

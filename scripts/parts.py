@@ -112,7 +112,7 @@ def get_parts_2d():
     density = 0.2 * 1250.0 #kg/m^3
     beam_length = 0.65 #m
     beam_radius = 0.005 #m
-    beam_density = 0.0042 #kg/m
+    beam_density = 0.042 #kg/m
     ball_radius = 0.0275 #m
     ball_position = 0.43+0.012 #m
     beam_position = 0.06+0.012 #m
@@ -141,11 +141,32 @@ def get_parts_2d():
         CADPart(document, "b_part2_001_001", density),
         CADPart(document, "b_part14_001_", density),
         CADPart(document, "b_part14_001_001", density),
-        BeamPart(beam_length, beam_radius, True, 2, beam_density, np.array([0,0,beam_position])),
+        BeamPart(beam_length, beam_radius, True, 2, beam_density, np.array([0,0,beam_position+beam_length/2])),
         BallPart(ball_radius, False, density, np.array([0,0,ball_position]))
         ])
 
     return lower, middle, upper
+
+def get_parts_2db():
+    density = 0.2 * 1250.0 #kg/m^3
+    beam_length = 0.5 #m
+    beam_radius = 0.005 #m
+    beam_density = 0.042 #kg/m
+    beam_position = 0.039 #m
+    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pole") + "/meshes/2Db.FCStd")
+
+    lower = PartGroup([
+        CADPart(document, "b_part8_001_", density),
+        CADPart(document, "b_part15_001_", density)
+        ])
+    
+    upper = PartGroup([
+        CADPart(document, "b_part16_001_", density),
+        CADPart(document, "b_part17_001_", density),
+        BeamPart(beam_length, beam_radius, True, 2, beam_density, np.array([0,0,beam_position+beam_length/2]))
+        ])
+
+    return lower, upper
 
 if __name__ == "__main__":
     if sys.argv[-1] == '2D':
@@ -157,6 +178,12 @@ if __name__ == "__main__":
         print("Upper:")
         print(upper)
         #Warning: all coordinates are in CAD space / effector space. In reality upper link is 1.2cm higher
+    elif sys.argv[-1] == '2Db':
+        lower, upper = get_parts_2db()
+        print("Lower:")
+        print(lower)
+        print("Upper:")
+        print(upper)
     else:
         lower, upper = get_parts()
         print("Lower:")

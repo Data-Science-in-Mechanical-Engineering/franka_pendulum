@@ -1,6 +1,8 @@
 #pragma once
 
 #include <franka_pole/position_controller.h>
+#include <franka_pole/model.h>
+
 #include <Eigen/Dense>
 
 namespace franka_pole
@@ -8,7 +10,7 @@ namespace franka_pole
     class TestPositionController : public PositionController
     {
     private:
-        bool _two_dimensional = false;
+        Model _model = Model::D1;
         Eigen::Matrix<double, 3, 1> _target_position = Eigen::Matrix<double, 3, 1>::Zero();
 
     public:

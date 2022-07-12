@@ -24,6 +24,7 @@ namespace franka_pole
         gazebo::event::ConnectionPtr _connection;
 
         //Parameters
+        Model _mod = Model::D1;
         Eigen::Matrix<double, 7, 1> _initial_joint_positions = Eigen::Matrix<double, 7, 1>::Zero();
         Eigen::Matrix<double, 2, 1> _initial_pole_positions = Eigen::Matrix<double, 2, 1>::Zero();
         Eigen::Matrix<double, 2, 1> _initial_pole_velocities = Eigen::Matrix<double, 2, 1>::Zero();
@@ -54,6 +55,7 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
         ros::NodeHandle node_handle;
         Parameters parameters(node_handle);
         FrankaModel franka_model(node_handle);
+        _mod = parameters.model();
         _initial_joint_positions = franka_model.inverse_kinematics(parameters.initial_effector_position(), parameters.initial_effector_orientation(), parameters.initial_joint0_position());
         _initial_pole_positions = parameters.initial_pole_positions();
         _initial_pole_velocities = parameters.initial_pole_velocities();
@@ -105,12 +107,12 @@ void franka_pole::Plugin::SetDefault()
         _fingers[i]->SetPosition(0, 0.0);
         _fingers[i]->SetVelocity(0, 0.0);
     }
-    _pole[0]->SetPosition(0, _initial_pole_positions(1));
-    _pole[0]->SetVelocity(0, _initial_pole_velocities(1));
+    _pole[0]->SetPosition(0, _initial_pole_positions(0));
+    _pole[0]->SetVelocity(0, _initial_pole_velocities(0));
     if (_pole[1] != nullptr)
     {
-        _pole[1]->SetPosition(0, _initial_pole_positions(0));
-        _pole[1]->SetVelocity(0, _initial_pole_velocities(0));
+        _pole[1]->SetPosition(0, _initial_pole_positions(1) + ((_mod == Model::D2) ? (M_PI / 6) : 0));
+        _pole[1]->SetVelocity(0, _initial_pole_velocities(1));
     }
 }
 

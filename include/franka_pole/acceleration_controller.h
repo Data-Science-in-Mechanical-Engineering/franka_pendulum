@@ -10,7 +10,6 @@ namespace franka_pole
     {
     private:
         // Basic control
-        bool _two_dimensional = false;
         Eigen::Matrix<double, 6, 1> _cartesian_stiffness = Eigen::Matrix<double, 6, 1>::Zero();
         Eigen::Matrix<double, 6, 1> _cartesian_damping = Eigen::Matrix<double, 6, 1>::Zero();
         Eigen::Matrix<double, 3, 1> _cartesian_stiffness_safety = Eigen::Matrix<double, 3, 1>::Zero();

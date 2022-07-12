@@ -9,9 +9,9 @@ franka_pole::Publisher::Publisher(ros::NodeHandle &node_handle)
     set_franka_effector_velocity(Eigen::Matrix<double, 3, 1>::Zero());
     set_franka_effector_orientation(Eigen::Quaterniond(0.0, 1.0, 0.0, 0.0));
     set_pole_timestamp(ros::Time(0.0));
-    set_pole_joint_angle(Eigen::Matrix<double, 2, 1>::Zero());
-    set_pole_joint_dangle(Eigen::Matrix<double, 2, 1>::Zero());
     set_pole_angle(Eigen::Matrix<double, 2, 1>::Zero());
+    set_pole_dangle(Eigen::Matrix<double, 2, 1>::Zero());
+    set_pole_joint_angle(Eigen::Matrix<double, 2, 1>::Zero());
     set_command_timestamp(ros::Time(0.0));
     set_command_effector_position(Eigen::Matrix<double, 3, 1>::Zero());
     set_command_effector_velocity(Eigen::Matrix<double, 3, 1>::Zero());
@@ -48,6 +48,16 @@ void franka_pole::Publisher::set_pole_timestamp(const ros::Time &timestamp)
     _sample.pole_timestamp = timestamp.toSec();
 }
 
+void franka_pole::Publisher::set_pole_angle(const Eigen::Matrix<double, 2, 1> &angle)
+{
+    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_angle[0]) = angle;
+}
+
+void franka_pole::Publisher::set_pole_dangle(const Eigen::Matrix<double, 2, 1> &dangle)
+{
+    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_dangle[0]) = dangle;
+}
+
 void franka_pole::Publisher::set_pole_joint_angle(const Eigen::Matrix<double, 2, 1> &angle)
 {
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_angle[0]) = angle;
@@ -56,11 +66,6 @@ void franka_pole::Publisher::set_pole_joint_angle(const Eigen::Matrix<double, 2,
 void franka_pole::Publisher::set_pole_joint_dangle(const Eigen::Matrix<double, 2, 1> &dangle)
 {
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_dangle[0]) = dangle;
-}
-
-void franka_pole::Publisher::set_pole_angle(const Eigen::Matrix<double, 2, 1> &angle)
-{
-    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_angle[0]) = angle;
 }
 
 void franka_pole::Publisher::set_command_timestamp(const ros::Time &timestamp)

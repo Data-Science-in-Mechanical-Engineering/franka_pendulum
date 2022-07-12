@@ -7,7 +7,7 @@ bool franka_pole::TestAccelerationController::init(hardware_interface::RobotHW *
     if (!AccelerationController::_controller_init(robot_hw, node_handle)) return false;
     
     Parameters parameters(node_handle);
-    _two_dimensional = parameters.two_dimensional();
+    _model = parameters.model();
     
     return true;
 }
@@ -22,9 +22,8 @@ void franka_pole::TestAccelerationController::update(const ros::Time &time, cons
     AccelerationController::_controller_pre_update(time, period);
 
     Eigen::Matrix<double, 3, 1> acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
-    //acceleration_target = Eigen::Matrix<double, 3, 1>(0.0, 10, 0.0);
-    if (_two_dimensional) acceleration_target(0) = 0.25 * (2*M_PI) * (2*M_PI) * cos(2 * M_PI * time.toSec());
-    else acceleration_target(1) = 0.25 * (2*M_PI) * (2*M_PI) * cos(2 * M_PI * time.toSec());
+    if (_model == Model::D2 || _model == Model::D2b) acceleration_target(0) = 0.1 * (2*M_PI) * (2*M_PI) * (cos(2 * M_PI * time.toSec()) > 0.0 ? 1.0 : -1.0);
+    else acceleration_target(1) = 0.1 * (2*M_PI) * (2*M_PI) * (cos(2 * M_PI * time.toSec()) > 0.0 ? 1.0 : -1.0);
     
     AccelerationController::_controller_post_update(time, period, acceleration_target);
 }

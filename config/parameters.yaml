@@ -1,18 +1,18 @@
 franka_pole:
   arm_id: "$(arg arm_id)"
   simulated: $(arg simulated)
-  two_dimensional: $(arg two_dimensional)
+  model: "$(arg model)"
   
   franka_period: 1
   pole_period: 10
   
   target_effector_position: [ 0.7, 0.0, 0.5 ]
-  target_effector_orientation: { w: 1.0, x: 0.0, y: 0.0, z: 0.0 }
+  target_effector_orientation: { w: $(arg target_effector_orientation_w), x: 0.0, y: $(arg target_effector_orientation_y), z: 0.0 }
   min_effector_position: [ 0.25, -0.6, 0.5 ]
   max_effector_position: [ 0.75, 0.6, 0.5 ]
 
   initial_effector_position: [ 0.7, 0.0, 0.5 ]
-  initial_effector_orientation: { w: 1.0, x: 0.0, y: 0.0, z: 0.0 }
+  initial_effector_orientation: { w: $(arg target_effector_orientation_w), x: 0.0, y: $(arg target_effector_orientation_y), z: 0.0 }
   initial_joint0_position: 0.0
   initial_pole_positions: [ 0.0, 0.0 ]
   initial_pole_velocities: [ 0.0, 0.0 ]

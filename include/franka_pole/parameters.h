@@ -1,5 +1,7 @@
 #pragma once
 
+#include <franka_pole/model.h>
+
 #include <ros/node_handle.h>
 #include <Eigen/Dense>
 
@@ -22,7 +24,7 @@ namespace franka_pole
 
         std::string arm_id() const;
         bool simulated() const;
-        bool two_dimensional() const;
+        Model model() const;
 
         unsigned int franka_period() const;
         unsigned int pole_period() const;

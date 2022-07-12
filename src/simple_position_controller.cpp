@@ -19,7 +19,7 @@ bool franka_pole::SimplePositionController::init(hardware_interface::RobotHW *ro
     if (!PositionController::_controller_init(robot_hw, node_handle)) return false;
 
     Parameters parameters(node_handle);
-    _two_dimensional = parameters.two_dimensional();
+    _model = parameters.model();
     _target_position = parameters.target_effector_position();
     _max_effector_position = parameters.max_effector_position();
     _min_effector_position = parameters.min_effector_position();
@@ -45,7 +45,7 @@ void franka_pole::SimplePositionController::update(const ros::Time &time, const 
 
     Eigen::Matrix<double, 3, 1> position_target = _target_position;
 
-    if (_two_dimensional) position_target(0) = franka_state->get_effector_position()(0) + (
+    if (_model == Model::D2 || _model == Model::D2b) position_target(0) = franka_state->get_effector_position()(0) + (
         _a[0] * pole_state->get_angle()(1) +
         _b[0] * pole_state->get_joint_dangle()(1) +
         _c[0] * (franka_state->get_effector_position()(0) - _target_position(0)) +

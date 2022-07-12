@@ -236,8 +236,8 @@ if __name__ == '__main__':
         filtered_effector_dx = 0.95 * filtered_effector_dx + 0.05 * sample.franka_effector_velocity[0]
         filtered_effector_dy = 0.95 * filtered_effector_dy + 0.05 * sample.franka_effector_velocity[1]
 
-        pole_angle_x.set(sample.pole_timestamp, sample.pole_angle[0])
-        pole_angle_y.set(sample.pole_timestamp, sample.pole_angle[1])
+        pole_angle_x.set(sample.pole_timestamp, sample.pole_joint_angle[0])
+        pole_angle_y.set(sample.pole_timestamp, sample.pole_joint_angle[1])
         franka_effector_x.set(sample.franka_timestamp, sample.franka_effector_position[0])
         franka_effector_y.set(sample.franka_timestamp, sample.franka_effector_position[1])
         franka_effector_ddx.set(sample.franka_timestamp, (filtered_effector_dx - previous_filtered_effector_dx) / (sample.franka_timestamp - previous_franka_timestamp))

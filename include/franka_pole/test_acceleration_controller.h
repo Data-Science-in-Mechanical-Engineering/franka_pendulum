@@ -1,13 +1,14 @@
 #pragma once
 
 #include <franka_pole/acceleration_controller.h>
+#include <franka_pole/model.h>
 
 namespace franka_pole
 {
     class TestAccelerationController : public AccelerationController
     {
     private:
-        bool _two_dimensional = false;
+        Model _model = Model::D1;
         
     public:
         //Overridden from MultiInterfaceController

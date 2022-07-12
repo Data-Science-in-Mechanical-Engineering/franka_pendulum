@@ -4,7 +4,7 @@
   <!-- Customization -->
   <arg name="controller"      default="test_position" doc="Used controller. Can be [simple/test/python/external]_[position/acceleration]" />
   <arg name="simulated"       default="true"          doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
-  <arg name="two_dimensional" default="false"         doc="Use two-dimensional pole" />
+  <arg name="model"           default="1D"            doc="Model to use [1D/2D/2Db]" />
   <arg name="headless"        default="false"         doc="Should the gazebo GUI be launched?" />
   <arg name="paused"          default="false"         doc="Should the simulation directly be stopped at 0s?" />
   <arg name="arm_id"  	      default="panda"         doc="Name of the arm" />
@@ -22,18 +22,23 @@
     </include>
     
     <!-- Define robot -->
-    <group unless="$(arg two_dimensional)">
+    <group if="$(eval arg('model') == '1D')">
       <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole.xacro arm_id:=$(arg arm_id)" />
     </group>
-    <group if="$(arg two_dimensional)">
+    <group if="$(eval arg('model') == '2D')">
       <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2D.xacro arm_id:=$(arg arm_id)" />
+    </group>
+    <group if="$(eval arg('model') == '2Db')">
+      <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2Db.xacro arm_id:=$(arg arm_id)" />
     </group>
 
     <!-- Load controllers -->
+    <arg name="translation_stiffness_x" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' or arg('model') == '1D' else 0.0)" />
+    <arg name="translation_stiffness_y" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' else 0.0)" />
+    <arg name="target_effector_orientation_w" value="$(eval 0.9659258 if arg('model') == '2D' else 1.0)" />
+    <arg name="target_effector_orientation_y" value="$(eval -0.258819 if arg('model') == '2D' else 0.0)" />
     <rosparam file="$(find franka_gazebo)/config/franka_hw_sim.yaml" subst_value="true" />
     <rosparam file="$(find franka_pole)/config/franka_pole_controllers.yaml" subst_value="true" />
-    <arg name="translation_stiffness_x" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' or not arg('two_dimensional') else 0.0)" />
-    <arg name="translation_stiffness_y" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' else 0.0)" />
     <rosparam file="$(find franka_pole)/config/parameters.yaml" subst_value="true" />
 
     <!-- Create robot -->

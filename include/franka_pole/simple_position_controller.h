@@ -1,6 +1,7 @@
 #pragma once
 
 #include <franka_pole/position_controller.h>
+#include <franka_pole/model.h>
 #include <franka_pole/CommandParameters.h>
 
 namespace franka_pole
@@ -8,7 +9,7 @@ namespace franka_pole
     class SimplePositionController : public PositionController
     {
     private:
-        bool _two_dimensional = false;
+        Model _model = Model::D1;
         Eigen::Matrix<double, 3, 1> _target_position = Eigen::Matrix<double, 3, 1>::Zero();
         Eigen::Matrix<double, 3, 1> _max_effector_position = Eigen::Matrix<double, 3, 1>::Zero();
         Eigen::Matrix<double, 3, 1> _min_effector_position = Eigen::Matrix<double, 3, 1>::Zero();

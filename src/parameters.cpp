@@ -48,9 +48,18 @@ franka_pole::Parameters::Parameters(ros::NodeHandle &node_handle) : _node_handle
 {
 }
 
+franka_pole::Model franka_pole::Parameters::model() const
+{
+    std::string s;
+    if (!_node_handle.getParam("/franka_pole/model", s)) throw std::runtime_error("franka_pole::Parameters: Could not read parameter model");
+    if (s == "1D") return Model::D1;
+    else if (s == "2D") return Model::D2;
+    else if (s == "2Db") return Model::D2b;
+    else throw std::runtime_error("franka_pole::Parameters: Invalid parameter model");
+}
+
 std::string franka_pole::Parameters::arm_id() const { return _read_string("arm_id"); }
 bool franka_pole::Parameters::simulated() const { return _read_bool("simulated"); }
-bool franka_pole::Parameters::two_dimensional() const { return _read_bool("two_dimensional"); }
 
 unsigned int franka_pole::Parameters::franka_period() const { return _read_uint("franka_period"); }
 unsigned int franka_pole::Parameters::pole_period() const { return _read_uint("pole_period"); }

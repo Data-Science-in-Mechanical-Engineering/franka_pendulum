@@ -13,13 +13,16 @@ franka_pole::FrankaModel::FrankaModel(ros::NodeHandle &node_handle)
 {
     Parameters parameters(node_handle);
     _arm_id = parameters.arm_id();
-    _two_dimensional = parameters.two_dimensional();
+    _mod = parameters.model();
     _joint_position_standard_deviation = parameters.joint_position_standard_deviation();
     _joint_velocity_standard_deviation = parameters.joint_velocity_standard_deviation();
 
     //Pinocchio model
     std::string package_path = ros::package::getPath("franka_pole");
-    pinocchio::urdf::buildModel(package_path + (_two_dimensional ? "/robots/franka_pole_2D.urdf" : "/robots/franka_pole.urdf"), _model);
+    if (_mod == Model::D1) pinocchio::urdf::buildModel(package_path + "/robots/franka_pole.urdf", _model);
+    else if (_mod == Model::D2) pinocchio::urdf::buildModel(package_path + "/robots/franka_pole_2D.urdf", _model);
+    else pinocchio::urdf::buildModel(package_path + "/robots/franka_pole_2Db.urdf", _model);
+
     _data = pinocchio::Data(_model);
     for (size_t i = 0; i < 7; i++)
     {
@@ -32,7 +35,7 @@ franka_pole::FrankaModel::FrankaModel(ros::NodeHandle &node_handle)
         if (!_model.existJointName(name)) throw std::runtime_error("FrankaModel: Joint " + name + " not found");
     }
     if (!_model.existJointName(_arm_id + "_pole_joint_x")) throw std::runtime_error("FrankaModel: Joint " + _arm_id + "_pole_joint_x not found");
-    if (_two_dimensional)
+    if (_mod == Model::D2 || _mod == Model::D2b)
     {
         if (!_model.existJointName(_arm_id + "_pole_joint_y")) throw std::runtime_error("FrankaModel: Joint " + _arm_id + "_pole_joint_y not found");
     }
@@ -51,7 +54,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_gravity(const Eigen::M
     _model.inertias[7].mass() = old_inertias[7].mass() - 1.46552; /* values taken from panda_arm.urdf.xacro */
     _model.inertias[7].lever() = (old_inertias[7].mass() * old_inertias[7].lever() - Eigen::Matrix<double, 3, 1>({0.0017561, 0.0013882, 0.0991564}) * 1.46552) / _model.inertias[7].mass();
 
-    if (_two_dimensional)
+    if (_mod == Model::D2 || _mod == Model::D2b)
     {
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
         q11.segment<7>(0) = joint_positions;
@@ -73,7 +76,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_gravity(const Eigen::M
 
 Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_coriolis(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities, const Eigen::Matrix<double, 2, 1> &pole_joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_velocities)
 {
-    if (_two_dimensional)
+    if (_mod == Model::D2 || _mod == Model::D2b)
     {
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
         q11.segment<7>(0) = joint_positions;
@@ -101,7 +104,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_coriolis(const Eigen::
 
 Eigen::Matrix<double, 6, 7> franka_pole::FrankaModel::get_effector_jacobian(const Eigen::Matrix<double, 7, 1> &joint_positions)
 {
-    if (_two_dimensional)
+    if (_mod == Model::D2 || _mod == Model::D2b)
     {
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
         q11.segment<7>(0) = joint_positions;
@@ -133,7 +136,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_torques(const Eigen::M
     Eigen::Matrix<double, 6, 7> jacobian = get_effector_jacobian(joint_positions);
     Eigen::Matrix<double, 7, 1> torques;
 
-    if (_two_dimensional)
+    if (_mod == Model::D2 || _mod == Model::D2b)
     {
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
         q11.segment<7>(0) = joint_positions;
@@ -169,7 +172,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_torques(const Eigen::M
 
 Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::effector_forward_kinematics(const Eigen::Matrix<double, 7, 1> &joint_positions, Eigen::Quaterniond *effector_orientation)
 {
-    if (_two_dimensional)
+    if (_mod == Model::D2 || _mod == Model::D2b)
     {
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
         q11.segment<7>(0) = joint_positions;
@@ -188,7 +191,7 @@ Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::effector_forward_kinematic
 
 Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::pole_forward_kinematics(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_positions, Eigen::Quaterniond *pole_orientation)
 {
-    if (_two_dimensional)
+    if (_mod == Model::D2 || _mod == Model::D2b)
     {
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
         q11.segment<7>(0) = joint_positions;

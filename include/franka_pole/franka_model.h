@@ -1,5 +1,7 @@
 #pragma once
 
+#include <franka_pole/model.h>
+
 #include <pinocchio/multibody/model.hpp>
 #include <pinocchio/multibody/data.hpp>
 #include <ros/node_handle.h>
@@ -11,7 +13,7 @@ namespace franka_pole
     {
     private:
         std::string _arm_id;
-        bool _two_dimensional = false;
+        Model _mod = Model::D1;
         Eigen::Matrix<double, 7, 1> _joint_position_standard_deviation = Eigen::Matrix<double, 7, 1>::Zero();
         Eigen::Matrix<double, 7, 1> _joint_velocity_standard_deviation = Eigen::Matrix<double, 7, 1>::Zero();
 

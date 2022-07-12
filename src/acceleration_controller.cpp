@@ -12,7 +12,6 @@ bool franka_pole::AccelerationController::_controller_init(hardware_interface::R
     if (!Controller::_controller_init(robot_hw, node_handle)) return false;
 
     Parameters parameters(node_handle);
-    _two_dimensional = parameters.two_dimensional();
     _cartesian_stiffness.segment<3>(0) = parameters.translation_stiffness();
     _cartesian_stiffness.segment<3>(3) = parameters.rotation_stiffness();
     _cartesian_damping = 2.0 * _cartesian_stiffness.array().sqrt().matrix();
@@ -40,7 +39,8 @@ void franka_pole::AccelerationController::_controller_pre_update(const ros::Time
 
 void franka_pole::AccelerationController::_controller_post_update(const ros::Time &time, const ros::Duration &period, const Eigen::Matrix<double, 3, 1> &acceleration_target)
 {
-    // Conventional controller:
+    bool pure_acceleration = false; //Pure acceleration controller, no additional positon control. In reality performs worse.
+
     // compute target
     Eigen::Matrix<double, 3, 1> position_target = Eigen::Matrix<double, 3, 1>::Zero();
     Eigen::Matrix<double, 6, 6> cartesian_stiffness = Eigen::Matrix<double, 6, 6>::Zero();
@@ -66,7 +66,12 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
         }
     }
     
-    // compute error
+    // basics
+    Eigen::Matrix<double, 7, 1> torque = Eigen::Matrix<double, 7, 1>::Zero();
+    torque += franka_model->get_gravity(franka_state->get_joint_positions(), pole_state->get_joint_angle());
+    torque += franka_model->get_coriolis(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());
+
+    // conventional control
     Eigen::Matrix<double, 6, 1> error = Eigen::Matrix<double, 6, 1>::Zero();
     error.segment<3>(0) = franka_state->get_effector_position() - position_target;
     Eigen::Quaterniond orientation = franka_state->get_effector_orientation();
@@ -74,21 +79,22 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
     Eigen::Quaterniond error_quaternion(orientation.inverse() * _orientation_target);
     error.segment<3>(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
     error.segment<3>(3) = -(franka_state->get_effector_orientation() * error.segment<3>(3));
-
-    // compute torque
     Eigen::Matrix<double, 6, 7> jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
     Eigen::Matrix<double, 7, 6> jacobian_transpose = jacobian.transpose();
-    Eigen::Matrix<double, 7, 1> torque = Eigen::Matrix<double, 7, 1>::Zero();
-    torque += franka_model->get_gravity(franka_state->get_joint_positions(), pole_state->get_joint_angle());
-    torque += franka_model->get_coriolis(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());
-    torque += jacobian_transpose * (-cartesian_stiffness * error - cartesian_damping * franka_state->get_effector_velocity());
-    torque += (Eigen::Matrix<double, 7, 7>::Identity() - jacobian_transpose * pseudo_inverse(jacobian_transpose, true)) *
-    (_nullspace_stiffness.array() * (_target_joint_positions - franka_state->get_joint_positions()).array() - 2 * _nullspace_stiffness.array().sqrt() * franka_state->get_joint_velocities().array()).matrix();
-
+    if (!pure_acceleration) torque += jacobian_transpose * (-cartesian_stiffness * error - cartesian_damping * franka_state->get_effector_velocity());
+    
     // acceleration control
     Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
     a6.segment<3>(0) = acceleration_target;
+    if (pure_acceleration) a6 += (-cartesian_stiffness * error - cartesian_damping * franka_state->get_effector_velocity());
     torque += franka_model->get_torques(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle(), a6);
+
+    // nullspace control
+    torque += (Eigen::Matrix<double, 7, 7>::Identity() - jacobian_transpose * pseudo_inverse(jacobian_transpose, true)) *
+    (_nullspace_stiffness.array() * (_target_joint_positions - franka_state->get_joint_positions()).array() - 2 * _nullspace_stiffness.array().sqrt() * franka_state->get_joint_velocities().array()).matrix();
+
+    // anti-damping
+    torque += franka_state->get_joint_velocities() * 0.003;
 
     // publish
     publisher->set_command_effector_position(position_target);
