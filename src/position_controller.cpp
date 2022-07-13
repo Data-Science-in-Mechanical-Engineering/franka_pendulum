@@ -34,20 +34,11 @@ void franka_pole::PositionController::_controller_pre_update(const ros::Time &ti
 
 void franka_pole::PositionController::_controller_post_update(const ros::Time &time, const ros::Duration &period, const Eigen::Matrix<double, 3, 1> &position_target, const Eigen::Matrix<double, 3, 1> &velocity_target)
 {
-    Controller::_controller_pre_update(time, period);
-
-    // publish
-    publisher->set_command_effector_position(position_target);
-    publisher->set_command_effector_velocity(velocity_target);
-    publisher->set_command_effector_acceleration(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
-
     // basics
     Eigen::Matrix<double, 7, 1> torque = Eigen::Matrix<double, 7, 1>::Zero();
     torque += franka_model->get_gravity(franka_state->get_joint_positions(), pole_state->get_joint_angle());
-    Eigen::Matrix<double, 6, 1> v6 = Eigen::Matrix<double, 6, 1>::Zero();
-    v6.segment<3>(0) = velocity_target;
     torque += franka_model->get_coriolis(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());
-    
+
     // conventional control
     Eigen::Matrix<double, 6, 1> error = Eigen::Matrix<double, 6, 1>::Zero();
     error.segment<3>(0) = franka_state->get_effector_position() - position_target;
@@ -58,14 +49,21 @@ void franka_pole::PositionController::_controller_post_update(const ros::Time &t
     error.segment<3>(3) = -(franka_state->get_effector_orientation() * error.segment<3>(3));
     Eigen::Matrix<double, 6, 7> jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
     Eigen::Matrix<double, 7, 6> jacobian_transpose = jacobian.transpose();
+    Eigen::Matrix<double, 6, 1> v6 = Eigen::Matrix<double, 6, 1>::Zero();
+    v6.segment<3>(0) = velocity_target;
     torque += jacobian_transpose * (-_cartesian_stiffness * error - _cartesian_damping * (franka_state->get_effector_velocity() - v6));
-
+    
     // nullspace control
     torque += (Eigen::Matrix<double, 7, 7>::Identity() - jacobian_transpose * pseudo_inverse(jacobian_transpose, true)) *
     (_nullspace_stiffness.array() * (_target_joint_positions - franka_state->get_joint_positions()).array() - 2 * _nullspace_stiffness.array().sqrt() * franka_state->get_joint_velocities().array()).matrix();
 
     // anti-damping
     torque += franka_state->get_joint_velocities() * 0.003;
+
+    // publish
+    publisher->set_command_effector_position(position_target);
+    publisher->set_command_effector_velocity(velocity_target);
+    publisher->set_command_effector_acceleration(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
 
     Controller::_controller_post_update(time, period, torque);
 }
