@@ -47,18 +47,28 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
     Eigen::Matrix<double, 6, 6> cartesian_damping = Eigen::Matrix<double, 6, 6>::Zero();
     cartesian_stiffness.diagonal().segment<3>(3) = _cartesian_stiffness.segment<3>(3); //Always care about rotation
     cartesian_damping.diagonal().segment<3>(3) = _cartesian_damping.segment<3>(3);
+    Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
+    a6.segment<3>(0) = acceleration_target;
 
     //set boundaries
     for (size_t i = 0; i < 3; i++)
     {
         double clipped = std::max(_min_effector_position(i), std::min(franka_state->get_effector_position()(i), _max_effector_position(i)));
-        if (clipped != franka_state->get_effector_position()(i)) //Outbounds
+        if (clipped != franka_state->get_effector_position()(i)) //Outbounds -> cut acceleration in that direction, cut position target, apply safety stiffness/damping
         {
+            if (franka_state->get_effector_position()(i) > _max_effector_position(i))
+            {
+                if (a6(i) > 0.0) a6(i) = 0.0;
+            }
+            else
+            {
+                if (a6(i) < 0.0) a6(i) = 0.0;
+            }
             position_target(i) = clipped;
             cartesian_stiffness(i,i) = _cartesian_stiffness_safety(i);
             cartesian_damping(i,i) = _cartesian_damping_safety(i);
         }
-        else //Inbounds
+        else //Inbounds -> apply normal stiffness
         {
             position_target(i) = _position_target(i);
             cartesian_stiffness(i,i) = _cartesian_stiffness(i);
@@ -81,12 +91,9 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
     error.segment<3>(3) = -(franka_state->get_effector_orientation() * error.segment<3>(3));
     Eigen::Matrix<double, 6, 7> jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
     Eigen::Matrix<double, 7, 6> jacobian_transpose = jacobian.transpose();
-    if (!pure_acceleration) torque += jacobian_transpose * (-cartesian_stiffness * error - cartesian_damping * franka_state->get_effector_velocity());
+    torque += jacobian_transpose * (-cartesian_stiffness * error - cartesian_damping * franka_state->get_effector_velocity());
     
     // acceleration control
-    Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
-    a6.segment<3>(0) = acceleration_target;
-    if (pure_acceleration) a6 += (-cartesian_stiffness * error - cartesian_damping * franka_state->get_effector_velocity());
     torque += franka_model->get_torques(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle(), a6);
 
     // nullspace control
