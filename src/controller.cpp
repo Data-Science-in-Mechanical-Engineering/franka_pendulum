@@ -34,7 +34,7 @@ bool franka_pole::Controller::_controller_init(hardware_interface::RobotHW *robo
         pole_state = std::make_unique<PoleState>(this, robot_hw, node_handle);
 
         //Reading parameters
-        _initial_joint_positions = franka_model->inverse_kinematics(parameters.initial_effector_position(), parameters.initial_effector_orientation(), parameters.initial_joint0_position());
+        _initial_joint_positions = franka_model->effector_inverse_kinematics(parameters.initial_effector_position(), parameters.initial_effector_orientation(), parameters.initial_joint0_position());
         _joint_stiffness = parameters.joint_stiffness();
         _franka_period = parameters.franka_period();
         _pole_period = parameters.pole_period();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <franka_pole/controller.h>
+#include <franka_pole/model.h>
 
 #include <Eigen/Dense>
 
@@ -10,6 +11,7 @@ namespace franka_pole
     {
     private:
         // Basic control
+        Model _model = Model::D1;
         Eigen::Matrix<double, 6, 1> _cartesian_stiffness = Eigen::Matrix<double, 6, 1>::Zero();
         Eigen::Matrix<double, 6, 1> _cartesian_damping = Eigen::Matrix<double, 6, 1>::Zero();
         Eigen::Matrix<double, 3, 1> _cartesian_stiffness_safety = Eigen::Matrix<double, 3, 1>::Zero();

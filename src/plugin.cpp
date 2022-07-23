@@ -56,7 +56,7 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
         Parameters parameters(node_handle);
         FrankaModel franka_model(node_handle);
         _mod = parameters.model();
-        _initial_joint_positions = franka_model.inverse_kinematics(parameters.initial_effector_position(), parameters.initial_effector_orientation(), parameters.initial_joint0_position());
+        _initial_joint_positions = franka_model.effector_inverse_kinematics(parameters.initial_effector_position(), parameters.initial_effector_orientation(), parameters.initial_joint0_position());
         _initial_pole_positions = parameters.initial_pole_positions();
         _initial_pole_velocities = parameters.initial_pole_velocities();
 
