@@ -52,7 +52,6 @@ void franka_pole::FrankaState::update(const ros::Time &time)
     {
         _joint_positions = _raw_joint_positions;
     }
-   _joint_positions = _raw_joint_positions;
 
     //Basic computations
     _effector_position = _controller->franka_model->effector_forward_kinematics(_joint_positions, &_effector_orientation);

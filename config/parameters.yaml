@@ -8,8 +8,8 @@ franka_pole:
   
   target_effector_position: [ 0.6, 0.0, 0.6 ]
   target_effector_orientation: { w: $(arg target_effector_orientation_w), x: 0.0, y: $(arg target_effector_orientation_y), z: 0.0 }
-  min_effector_position: [ 0.4, -0.6, 0.6 ]
-  max_effector_position: [ 0.8, 0.6, 0.6 ]
+  min_effector_position: [ 0.4, -0.3, 0.6 ]
+  max_effector_position: [ 0.8, 0.3, 0.6 ]
 
   initial_effector_position: [ 0.6, 0.0, 0.6 ]
   initial_effector_orientation: { w: $(arg target_effector_orientation_w), x: 0.0, y: $(arg target_effector_orientation_y), z: 0.0 }
@@ -19,7 +19,7 @@ franka_pole:
   
   translation_stiffness: [ $(arg translation_stiffness_x), $(arg translation_stiffness_y), 200.0 ]
   translation_stiffness_safety: [ 200.0, 200.0, 200.0 ]
-  rotation_stiffness: [ 100.0, 100.0, 100.0 ]
+  rotation_stiffness: [ 50.0, 50.0, 50.0 ]
   nullspace_stiffness: [ 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 ]
   joint_stiffness: [ 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0 ]
   
@@ -27,9 +27,3 @@ franka_pole:
   joint_velocity_standard_deviation: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
   pole_period_standard_deviation: 0.0
   pole_angle_standard_deviation: [ 0.0, 0.0 ]
-
-motion_generators:
-  position:
-    gains:
-      panda_pole_joint_x: { p: 0, d: 0, i: 0 }
-      panda_pole_joint_y: { p: 0, d: 0, i: 0 }

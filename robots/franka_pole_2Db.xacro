@@ -54,12 +54,12 @@
     </visual>
 
     <inertial>
-      <origin xyz="-0.031615023280958485 0.0 -0.06659192458617054" rpy="0 0 0"/>
-      <mass value="0.2732228013597448"/>
+      <origin xyz="-0.029498584051831502 0.0 -0.06313961580055441" rpy="0 0 0"/>
+      <mass value="0.41100000000000003"/>
       <inertia
-      ixx="0.0016993982151537815" ixy="0.0" ixz="-8.877913625404171e-05"
-      iyy="0.00280583662568493" iyz="0.0"
-      izz="0.002116794354401193"/>
+      ixx="0.000895475019378853" ixy="0.0" ixz="-0.00015591824406532102"
+      iyy="0.0013577361299841326" iyz="0.0"
+      izz="0.0008258336095097959"/>
     </inertial>
   </link>
   
@@ -93,7 +93,7 @@
     <dynamics damping="0.0"/>
   </joint>
   
-  <!-- Upper bearing, beam and ball -->
+  <!-- Upper bearing, beam, pine and ball -->
   <link name="$(arg arm_id)_pole_link_upper">
     <visual>
       <origin xyz="0 0 -0.01" rpy="0 0 0"/>
@@ -104,17 +104,23 @@
     <visual>
       <origin xyz="0 0 ${0.039 + 0.65/2 - 0.01}" rpy="0 0 0"/>
       <geometry>
+        <sphere radius="0.0275"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 ${0.039 + 0.65/2 - 0.01}" rpy="0 0 0"/>
+      <geometry>
         <cylinder length="0.65" radius="0.005"/>
       </geometry>
     </visual>
     
     <inertial>
-      <origin xyz="0.0 0.0 ${0.43117306006864087 - 0.01}" rpy="0 0 0"/>
-      <mass value="0.038719580037708166"/>
+      <origin xyz="0.0 0.0 ${0.4632543529459209 - 0.01}" rpy="0 0 0"/>
+      <mass value="0.1593"/>
       <inertia
-      ixx="0.0019970733076910907" ixy="0.0" ixz="0.0"
-      iyy="0.0019970733076910907" iyz="0.0"
-      izz="1.1251450128207583e-05"/>
+      ixx="0.012139364109265307" ixy="0.0" ixz="0.0"
+      iyy="0.012139364109265307" iyz="0.0"
+      izz="4.63115872630246e-05"/>
     </inertial>
   </link>
   

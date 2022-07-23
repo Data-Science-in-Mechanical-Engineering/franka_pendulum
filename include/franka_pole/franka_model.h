@@ -12,10 +12,7 @@ namespace franka_pole
     class FrankaModel
     {
     private:
-        std::string _arm_id;
         Model _mod = Model::D1;
-        Eigen::Matrix<double, 7, 1> _joint_position_standard_deviation = Eigen::Matrix<double, 7, 1>::Zero();
-        Eigen::Matrix<double, 7, 1> _joint_velocity_standard_deviation = Eigen::Matrix<double, 7, 1>::Zero();
 
         // Pinocchio technical
         size_t _effector_frame_id = 0;

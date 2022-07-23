@@ -30,20 +30,25 @@ class AccelerationController:
         self._default = rospy.get_param("/franka_pole/target_effector_position")
 
         if self._model == "1D":
-            self._a = [ 0.0, 84.4297616 ]
-            self._b = [ 0.0, 19.30641439 ]
-            self._c = [ 0.0, 10.0 ]
-            self._d = [ 0.0, 15.87860174 ]
+            lqr = [ 84.4717672, 19.32872174, 10.0, 15.88129816 ]
+            self._a = [ 0.0, lqr[0] ]
+            self._b = [ 0.0, lqr[1] ]
+            self._c = [ 0.0, lqr[2] ]
+            self._d = [ 0.0, lqr[3] ]
         elif self._model == "2D":
-            self._a = [ 1.14076921e+02, 8.52752833e+01 ]
-            self._b = [ 2.70962650e+01, 1.97571361e+01 ]
-            self._c = [ 1.41421356e+01, 1.00000000e+01 ]
-            self._d = [ 2.23746113e+01, 1.59327897e+01 ]
+            lqr1 = [ 8.53149121e+01, 1.97783488e+01, 1.00000000e+01, 1.59353250e+01 ]
+            lqr2 = [ 5.19597825e+01, 1.14967702e+01, 5.00000000e+00, 8.24415788e+00 ]
+            self._a = [ lqr1[0], lqr2[0] ]
+            self._b = [ lqr1[1], lqr2[1] ]
+            self._c = [ lqr1[2], lqr2[2] ]
+            self._d = [ lqr1[3], lqr2[3] ]
         else:
-            self._a = [ 1.23675403e+02, 9.31225353e+01 ]
-            self._b = [ 3.23660696e+01, 2.41096509e+01 ]
-            self._c = [ 1.41421356e+01, 1.00000000e+01 ]
-            self._d = [ 2.29847265e+01, 1.64271806e+01 ]
+            lqr1 = [ 9.70119041e+01, 2.63787913e+01, 1.00000000e+01, 1.66667831e+01 ]
+            lqr2 = [ 5.89905828e+01, 1.56870017e+01, 5.00000000e+00, 8.66793585e+00 ]
+            self._a = [ lqr1[0], lqr2[0] ]
+            self._b = [ lqr1[1], lqr2[1] ]
+            self._c = [ lqr1[2], lqr2[2] ]
+            self._d = [ lqr1[3], lqr2[3] ]
 
         self._sample_subscriber = rospy.Subscriber('/franka_pole/sample', Sample, lambda sample: self._sample_callback(sample), queue_size=10)
         self._command_publisher = rospy.Publisher('/franka_pole/command_acceleration', CommandAcceleration, queue_size=10)

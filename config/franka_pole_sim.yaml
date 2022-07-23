@@ -1,0 +1,5 @@
+motion_generators:
+    position:
+      gains:
+        panda_pole_joint_x: { p: 0, d: 0, i: 0 }
+        panda_pole_joint_y: { p: 0, d: 0, i: 0 }

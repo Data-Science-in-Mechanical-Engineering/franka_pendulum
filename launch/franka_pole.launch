@@ -2,18 +2,33 @@
 <launch>
 
   <!-- Customization -->
-  <arg name="controller"      default="test_position" doc="Used controller. Can be [simple/test/python/external]_[position/acceleration]" />
-  <arg name="simulated"       default="true"          doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
-  <arg name="model"           default="1D"            doc="Model to use [1D/2D/2Db]" />
-  <arg name="headless"        default="false"         doc="Should the gazebo GUI be launched?" />
-  <arg name="paused"          default="false"         doc="Should the simulation directly be stopped at 0s?" />
-  <arg name="arm_id"  	      default="panda"         doc="Name of the arm" />
+  <arg name="controller"      default="test_position"   doc="Used controller. Can be [simple/test/python/external]_[position/acceleration]" />
+  <arg name="simulated"       default="true"            doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
+  <arg name="headless"        default="false"           doc="Should the gazebo GUI be launched?" />
+  <arg name="paused"          default="false"           doc="Should the simulation directly be stopped at 0s?" />
+  <arg name="model"           default="1D"              doc="Model to use [1D/2D/2Db]" />
+  <arg name="arm_id"  	      default="panda"           doc="Name of the arm" />
+  <arg name="arm_ip"          default="192.168.0.1"     doc="IP address of the arm"/>
+  <arg name="vicon_ip"        default="192.168.0.1:800" doc="IP address of the VICON system"/>
 
-  <!-- Launch gazebo -->
+  <!-- Load parameters -->
+  <arg name="translation_stiffness_x" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' or arg('model') == '1D' else 0.0)" />
+  <arg name="translation_stiffness_y" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' else 0.0)" />
+  <arg name="target_effector_orientation_w" value="$(eval 0.9659258 if arg('model') == '2D' else 1.0)" />
+  <arg name="target_effector_orientation_y" value="$(eval -0.258819 if arg('model') == '2D' else 0.0)" />
+  <rosparam file="$(find franka_pole)/config/parameters.yaml" subst_value="true" />
+
+  <!-- Load available controllers -->
+  <rosparam file="$(find franka_pole)/config/franka_pole_controllers.yaml" subst_value="true" />
+
+  <!-- Simulation -->
   <group if="$(arg simulated)">
+    <!-- Load simulation parameters -->
+    <rosparam file="$(find franka_gazebo)/config/franka_hw_sim.yaml" subst_value="true" />
+    <rosparam file="$(find franka_pole)/config/franka_pole_sim.yaml" subst_value="true" />
   
     <!-- Load world -->
-    <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg simulated)">
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
       <arg name="world_name" value="worlds/empty.world"/>
       <!-- Always start in paused mode, and only unpause when spawning the model -->
       <arg name="paused" value="true"/>
@@ -32,21 +47,31 @@
       <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2Db.xacro arm_id:=$(arg arm_id)" />
     </group>
 
-    <!-- Load controllers -->
-    <arg name="translation_stiffness_x" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' or arg('model') == '1D' else 0.0)" />
-    <arg name="translation_stiffness_y" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' else 0.0)" />
-    <arg name="target_effector_orientation_w" value="$(eval 0.9659258 if arg('model') == '2D' else 1.0)" />
-    <arg name="target_effector_orientation_y" value="$(eval -0.258819 if arg('model') == '2D' else 0.0)" />
-    <rosparam file="$(find franka_gazebo)/config/franka_hw_sim.yaml" subst_value="true" />
-    <rosparam file="$(find franka_pole)/config/franka_pole_controllers.yaml" subst_value="true" />
-    <rosparam file="$(find franka_pole)/config/parameters.yaml" subst_value="true" />
-
     <!-- Create robot -->
     <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />
     <node name="$(arg arm_id)_model_spawner"
      pkg="gazebo_ros"
      type="spawn_model"
      args="-param robot_description -urdf -model $(arg arm_id) $(arg unpause)"/>
+
+     <!-- Gripper controller -->
+    <node name="$(arg arm_id)_gripper_controller_spawner"
+      pkg="controller_manager"
+      type="spawner"
+      respawn="false" output="screen"
+      args="franka_gripper"/>
+  </group>
+
+  <!-- Real robot -->
+  <group unless="$(arg simulated)">
+    <include file="$(find franka_control)/launch/franka_control.launch" >
+      <arg name="robot_ip" value="$(arg arm_ip)" />
+      <arg name="load_gripper" value="true" />
+    </include>
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="bridge_ip" value="$(arg vicon_ip)" />
+    </include>
   </group>
 
   <!-- Main controller -->
@@ -70,15 +95,8 @@
     respawn="false" output="screen"
     args="franka_pole_external_acceleration_controller"
     if="$(eval arg('controller') == 'python_acceleration')"/>
-  
-  <!-- Gripper controller -->
-  <node name="$(arg arm_id)_gripper_controller_spawner"
-    pkg="controller_manager"
-    type="spawner"
-    respawn="false" output="screen"
-    args="franka_gripper"/>
 
-  <!-- Python controllers -->
+  <!-- External python controllers -->
   <node name="python_position_controller" pkg="franka_pole" type="position_controller.py" required="true" output="screen" if="$(eval arg('controller') == 'python_position')"/>
   <node name="python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" required="true" output="screen" if="$(eval arg('controller') == 'python_acceleration')"/>
 
@@ -86,6 +104,6 @@
   <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen"/>
 
   <!-- Resetter -->
-  <node name="resetter" pkg="franka_pole" type="resetter.py" required="true" output="screen"/>
+  <node name="resetter" pkg="franka_pole" type="resetter.py" required="true" output="screen" if="$(arg simulated)"/>
 
 </launch>
