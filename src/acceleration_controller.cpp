@@ -19,7 +19,7 @@ bool franka_pole::AccelerationController::_controller_init(hardware_interface::R
     _cartesian_stiffness_safety = parameters.translation_stiffness_safety();
     _cartesian_damping_safety = 2.0 * _cartesian_stiffness_safety.array().sqrt().matrix();
     _nullspace_stiffness = parameters.nullspace_stiffness();
-    _position_target = parameters.target_effector_position();
+    _position_target = parameters.initial_effector_position();
     _orientation_target = parameters.target_effector_orientation();
     _max_effector_position = parameters.max_effector_position();
     _min_effector_position = parameters.min_effector_position();
@@ -40,35 +40,45 @@ void franka_pole::AccelerationController::_controller_pre_update(const ros::Time
 
 void franka_pole::AccelerationController::_controller_post_update(const ros::Time &time, const ros::Duration &period, const Eigen::Matrix<double, 3, 1> &acceleration_target)
 {
-    bool pure_acceleration = false; //Pure acceleration controller, no additional positon control. In reality performs worse.
-
     // compute target
-    Eigen::Matrix<double, 3, 1> position_target = Eigen::Matrix<double, 3, 1>::Zero();
+    _velocity_target += 0.001 * acceleration_target;
+    _position_target += 0.001 * _velocity_target;
+    Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
+    a6.segment<3>(0) = acceleration_target;
+
+    // apply constraints and safety
     Eigen::Matrix<double, 6, 6> cartesian_stiffness = Eigen::Matrix<double, 6, 6>::Zero();
     Eigen::Matrix<double, 6, 6> cartesian_damping = Eigen::Matrix<double, 6, 6>::Zero();
-    cartesian_stiffness.diagonal().segment<3>(3) = _cartesian_stiffness.segment<3>(3); //Always care about rotation
+    cartesian_stiffness.diagonal().segment<3>(3) = _cartesian_stiffness.segment<3>(3);
     cartesian_damping.diagonal().segment<3>(3) = _cartesian_damping.segment<3>(3);
-    Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
-    a6.segment<3>(0) = acceleration_target + franka_model->get_effector_centroidal_acceleration(franka_state->get_joint_positions(), franka_state->get_joint_velocities());
-
-    // set boundaries
     for (size_t i = 0; i < 3; i++)
     {
-        double clipped = std::max(_min_effector_position(i), std::min(franka_state->get_effector_position()(i), _max_effector_position(i)));
-        if (clipped != franka_state->get_effector_position()(i)) //Outbounds -> cut acceleration in that direction, cut position target, apply safety stiffness/damping
+        if (_position_target(i) > _max_effector_position(i) || franka_state->get_effector_position()(i) > _max_effector_position(i))
         {
-            if ((franka_state->get_effector_position()(i) > _max_effector_position(i)) == (a6(i) > 0.0)) a6(i) = 0.0;
-            position_target(i) = clipped;
+            _position_target(i) = _max_effector_position(i);
+            if (_velocity_target(i) > 0.0) _velocity_target(i) = 0.0;
+            if (a6(i) > 0.0) a6(i) = 0.0;
+        }
+        else if (_position_target(i) < _min_effector_position(i) || franka_state->get_effector_position()(i) < _min_effector_position(i))
+        {
+            _position_target(i) = _min_effector_position(i);
+            if (_velocity_target(i) < 0.0) _velocity_target(i) = 0.0;
+            if (a6(i) < 0.0) a6(i) = 0.0;
+        }
+
+        if (_position_target(i) < _min_effector_position(i) || _position_target(i) > _max_effector_position(i))
+        {
             cartesian_stiffness(i,i) = _cartesian_stiffness_safety(i);
             cartesian_damping(i,i) = _cartesian_damping_safety(i);
         }
-        else //Inbounds -> apply normal stiffness
+        else
         {
-            position_target(i) = _position_target(i);
             cartesian_stiffness(i,i) = _cartesian_stiffness(i);
             cartesian_damping(i,i) = _cartesian_damping(i);
         }
     }
+    
+    std::cout << cartesian_stiffness << std::endl << std::endl;
 
     // calculate jacobians
     Eigen::Matrix<double, 6, 7> jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
@@ -78,13 +88,15 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
 
     // conventional control
     Eigen::Matrix<double, 6, 1> error = Eigen::Matrix<double, 6, 1>::Zero();
-    error.segment<3>(0) = franka_state->get_effector_position() - position_target;
+    error.segment<3>(0) = franka_state->get_effector_position() - _position_target;
     Eigen::Quaterniond orientation = franka_state->get_effector_orientation();
     if (_orientation_target.coeffs().dot(orientation.coeffs()) < 0.0) orientation.coeffs() << -orientation.coeffs();
     Eigen::Quaterniond error_quaternion(orientation.inverse() * _orientation_target);
     error.segment<3>(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
     error.segment<3>(3) = -(franka_state->get_effector_orientation() * error.segment<3>(3));
-    Eigen::Matrix<double, 7, 1> torque = jacobian_transpose * (-cartesian_stiffness * error - cartesian_damping * franka_state->get_effector_velocity());
+    Eigen::Matrix<double, 6, 1> v6 = Eigen::Matrix<double, 6, 1>::Zero();
+    v6.segment<3>(0) = _velocity_target;
+    Eigen::Matrix<double, 7, 1> torque = jacobian_transpose * (-cartesian_stiffness * error - cartesian_damping * (franka_state->get_effector_velocity() - v6));
 
     // nullspace control
     torque += (Eigen::Matrix<double, 7, 7>::Identity() - jacobian_transpose * jacobian_transpose_inverse) *
@@ -94,6 +106,7 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
     torque += franka_state->get_joint_velocities() * 0.003;
 
     // inverse dynamics
+    a6.segment<3>(0) += franka_model->get_effector_centroidal_acceleration(franka_state->get_joint_positions(), franka_state->get_joint_velocities());
     if (_model == Model::D2 || _model == Model::D2b)
     {
         // calculate first (7+2) of acceleration
@@ -132,8 +145,8 @@ void franka_pole::AccelerationController::_controller_post_update(const ros::Tim
     }
     
     // publish
-    publisher->set_command_effector_position(position_target);
-    publisher->set_command_effector_velocity(Eigen::Matrix<double, 3, 1>(0.0, 0.0, 0.0));
+    publisher->set_command_effector_position(_position_target);
+    publisher->set_command_effector_velocity(_velocity_target);
     publisher->set_command_effector_acceleration(acceleration_target);
 
     Controller::_controller_post_update(time, period, torque);

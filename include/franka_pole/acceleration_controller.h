@@ -17,6 +17,7 @@ namespace franka_pole
         Eigen::Matrix<double, 3, 1> _cartesian_stiffness_safety = Eigen::Matrix<double, 3, 1>::Zero();
         Eigen::Matrix<double, 3, 1> _cartesian_damping_safety = Eigen::Matrix<double, 3, 1>::Zero();
         Eigen::Matrix<double, 7, 1> _nullspace_stiffness = Eigen::Matrix<double, 7, 1>::Zero();
+        Eigen::Matrix<double, 3, 1> _velocity_target = Eigen::Matrix<double, 3, 1>::Zero();
         Eigen::Matrix<double, 3, 1> _position_target = Eigen::Matrix<double, 3, 1>::Zero();
         Eigen::Quaterniond _orientation_target = Eigen::Quaterniond(0.0, 1.0, 0.0, 0.0);
         Eigen::Matrix<double, 3, 1> _max_effector_position = Eigen::Matrix<double, 3, 1>::Zero();
