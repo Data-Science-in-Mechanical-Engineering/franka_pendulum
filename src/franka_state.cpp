@@ -59,6 +59,8 @@ void franka_pole::FrankaState::update(const ros::Time &time)
 
     //Publish
     _controller->publisher->set_franka_timestamp(time);
+    _controller->publisher->set_franka_joint_positions(_joint_positions);
+    _controller->publisher->set_franka_joint_velocities(_joint_velocities);
     _controller->publisher->set_franka_effector_position(_effector_position);
     _controller->publisher->set_franka_effector_velocity(_effector_velocity.segment<3>(0));
 }

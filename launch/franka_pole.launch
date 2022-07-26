@@ -2,12 +2,17 @@
 <launch>
 
   <!-- Customization -->
+  <arg name="gui"             default="true"            doc="Should the gazebo GUI be launched?" />
+  <arg name="rviz"            default="true"            doc="Should RVIZ be launched?" />
+  <arg name="plotter"         default="true"            doc="Should plotter be launched?" />
+  <arg name="resetter"        default="true"            doc="Should resetter be launched?" />
+  
   <arg name="controller"      default="test_position"   doc="Used controller. Can be [simple/test/python/external]_[position/acceleration]" />
   <arg name="simulated"       default="true"            doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
-  <arg name="headless"        default="false"           doc="Should the gazebo GUI be launched?" />
   <arg name="paused"          default="false"           doc="Should the simulation directly be stopped at 0s?" />
   <arg name="model"           default="1D"              doc="Model to use [1D/2D/2Db]" />
   <arg name="arm_id"  	      default="panda"           doc="Name of the arm" />
+  
   <arg name="arm_ip"          default="192.168.0.1"     doc="IP address of the arm"/>
   <arg name="vicon_ip"        default="192.168.0.1:800" doc="IP address of the VICON system"/>
 
@@ -30,9 +35,7 @@
     <!-- Load world -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
       <arg name="world_name" value="worlds/empty.world"/>
-      <!-- Always start in paused mode, and only unpause when spawning the model -->
       <arg name="paused" value="true"/>
-      <arg name="gui" value="$(eval not arg('headless'))"/>
       <arg name="use_sim_time" value="false"/>
     </include>
     
@@ -48,11 +51,11 @@
     </group>
 
     <!-- Create robot -->
-    <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />
+    <arg name="unpaused" value="$(eval '' if arg('paused') else '-unpause')" />
     <node name="$(arg arm_id)_model_spawner"
      pkg="gazebo_ros"
      type="spawn_model"
-     args="-param robot_description -urdf -model $(arg arm_id) $(arg unpause)"/>
+     args="-param robot_description -urdf -model $(arg arm_id) $(arg unpaused)"/>
 
      <!-- Gripper controller -->
     <node name="$(arg arm_id)_gripper_controller_spawner"
@@ -101,9 +104,18 @@
   <node name="python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" required="true" output="screen" if="$(eval arg('controller') == 'python_acceleration')"/>
 
   <!-- Plotter -->
-  <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen"/>
+  <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen" if="$(arg plotter)"/>
 
   <!-- Resetter -->
-  <node name="resetter" pkg="franka_pole" type="resetter.py" required="true" output="screen" if="$(arg simulated)"/>
+  <node name="resetter" pkg="franka_pole" type="resetter.py" required="true" output="screen" if="$(arg resetter)"/>
 
+  <!-- RVIZ -->
+  <group if="$(arg rviz)">
+    <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_example_controllers)/launch/robot.rviz" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="joint_state_publisher" type="joint_state_publisher" pkg="joint_state_publisher">
+      <rosparam param="source_list">[franka_pole/joint_state] </rosparam>
+      <param name="rate" value="20"/>
+    </node>
+  </group>
 </launch>
