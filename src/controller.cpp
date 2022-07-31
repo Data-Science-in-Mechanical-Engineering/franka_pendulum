@@ -1,13 +1,15 @@
-#include <pinocchio/fwd.hpp>
+#include <franka_pole/franka_model.h>
 #include <franka_pole/controller.h>
+#include <franka_pole/parameter_reader.h>
 #include <franka_pole/parameters.h>
 #include <franka_pole/franka_state.h>
 #include <franka_pole/pole_state.h>
 #include <franka_pole/publisher.h>
 #include <fcntl.h>
-
-void franka_pole::Controller::_command_reset(const franka_pole::CommandReset::ConstPtr &msg)
+        
+void franka_pole::Controller::_callback(const franka_pole::CommandReset::ConstPtr &msg)
 {
+    std::lock_guard<std::mutex> guard(_mutex);
     if (msg->software)
     {
         sem_post(_software_reset_semaphore);
@@ -16,98 +18,105 @@ void franka_pole::Controller::_command_reset(const franka_pole::CommandReset::Co
     else
     {
         _hardware_reset_old_positions = franka_state->get_joint_positions();
-        _hardware_reset_counter = 0;
+        _hardware_reset_time = 0.0;
         _hardware_reset = true;
     }
 }
 
-bool franka_pole::Controller::_controller_init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+void franka_pole::Controller::_reset()
 {
+    _franka_period_counter = 0;
+    _pole_period_counter = 0;
+    _command_period_counter = 0;
+    _publish_period_counter = 0;
+    _software_reset = false;
+    _hardware_reset = false;
+    std::cout << parameters->initial_effector_position << "\n" << parameters->initial_joint0_position << "\n\n";
+    _initial_joint_positions = franka_model->effector_inverse_kinematics(parameters->initial_effector_position, parameters->initial_effector_orientation, parameters->initial_joint0_position);
+    if (parameters->model == Model::D0) _torque = franka_model->get_gravity9(_initial_joint_positions).segment<7>(0);
+    else if (parameters->model == Model::D1) _torque = franka_model->get_gravity10(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
+    else _torque = franka_model->get_gravity11(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
+    _init_level1(_robot_hw, _node_handle);
+}
+
+bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+{
+    std::lock_guard<std::mutex> guard(_mutex);
+    _robot_hw = robot_hw;
+    _node_handle = node_handle;
     try
     {
-        Parameters parameters(node_handle);
+        ros::TransportHints().tcpNoDelay();
 
         //Creating components
-        franka_model = std::make_unique<FrankaModel>(node_handle);
-        publisher = std::make_unique<Publisher>(node_handle);
-        franka_state = std::make_unique<FrankaState>(this, robot_hw, node_handle);
-        pole_state = std::make_unique<PoleState>(this, robot_hw, node_handle);
-
-        //Reading parameters
-        _initial_joint_positions = franka_model->effector_inverse_kinematics(parameters.initial_effector_position(), parameters.initial_effector_orientation(), parameters.initial_joint0_position());
-        _joint_stiffness = parameters.joint_stiffness();
-        _franka_period = parameters.franka_period();
-        _pole_period = parameters.pole_period();
+        ParameterReader parameter_reader(node_handle);
+        parameters = new Parameters(parameter_reader, node_handle);
+        franka_model = new FrankaModel(parameters);
+        publisher = new Publisher(parameters, node_handle);
+        franka_state = new FrankaState(parameters, franka_model, publisher, robot_hw);
+        if (parameters->model != Model::D0) pole_state = new PoleState(parameters, franka_model, franka_state, publisher, robot_hw, node_handle);    
 
         //Opening reset subscribers
-        _reset_subscriber = node_handle.subscribe("/franka_pole/command_reset", 10, &franka_pole::Controller::_command_reset, this);
+        _reset_subscriber = node_handle.subscribe("/franka_pole/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
         _software_reset_semaphore = sem_open("/franka_pole_software_reset", O_CREAT, 0644, 0);
+
+        //Initialize simulation
+        _reset();
     }
     catch (const std::exception &e)
     {
         ROS_ERROR_STREAM("Exception: " << e.what());
         return false;
     }
-
     return true;
 }
 
-void franka_pole::Controller::_controller_starting(const ros::Time &time)
+void franka_pole::Controller::_starting_level0(const ros::Time &time)
 {
+    std::lock_guard<std::mutex> guard(_mutex);
 }
 
-void franka_pole::Controller::_controller_pre_update(const ros::Time &time, const ros::Duration &period)
+void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::Duration &period)
 {
-    if (_franka_period_counter == 0) franka_state->update(time);
-    if (_pole_period_counter == 0) pole_state->update(time);
-}
-
-void franka_pole::Controller::_controller_post_update(const ros::Time &time, const ros::Duration &period, const Eigen::Matrix<double, 7, 1> &torque)
-{
+    std::lock_guard<std::mutex> guard(_mutex);
     if (_software_reset)
     {
         int value;
         sem_getvalue(_software_reset_semaphore, &value);
-        if (value == 0) _software_reset = false;
-        franka_state->set_torque(Eigen::Matrix<double, 7, 1>::Zero());
+        if (value == 0) _reset();
     }
     else if (_hardware_reset)
     {
-        if (_hardware_reset_counter < 5000)
+        if (_hardware_reset_time < parameters->hardware_reset_duration)
         {
-            double factor = (double)_hardware_reset_counter / 5000.0;
-            Eigen::Matrix<double, 7, 1> target = factor * _initial_joint_positions + (1.0 - factor) * _hardware_reset_old_positions;
+            double factor = _hardware_reset_time / parameters->hardware_reset_duration;
+            Eigen::Matrix<double, 7, 1> target_joint_positions = factor * _initial_joint_positions + (1.0 - factor) * _hardware_reset_old_positions;
             
-            franka_state->set_torque((
-                (target - franka_state->get_joint_positions()).array() * _joint_stiffness.array()
-                - franka_state->get_joint_velocities().array() * 2 * _joint_stiffness.array().sqrt())
-            .matrix());
-            _hardware_reset_counter++;
+            _torque = (
+                (target_joint_positions - franka_state->get_joint_positions()).array() * parameters->hardware_reset_stiffness.array() +
+                ( - franka_state->get_joint_velocities()).array() * parameters->hardware_reset_damping.array()
+            ).matrix();
+            _hardware_reset_time += 0.001;
         }
-        else _hardware_reset = false;
+        else _reset();
     }
-    else if (is_period())
+    
+    if (!_software_reset || !_hardware_reset)
     {
-        _previous_torque = torque;
-        franka_state->set_torque(torque);
-        publisher->set_command_timestamp(time);
+        if (++_franka_period_counter > parameters->franka_period) { franka_state->update(time); _franka_period_counter = 0; }
+        if (pole_state != nullptr && ++_pole_period_counter > parameters->pole_period) { pole_state->update(time); _pole_period_counter = 0; }
+        if (++_command_period_counter > parameters->command_period) { _torque = _get_torque_level1(time, period); _command_period_counter = 0; }
+        if (++_publish_period_counter > parameters->publish_period) { publisher->publish(); _publish_period_counter = 0; }
     }
-    else
-    {
-        franka_state->set_torque(_previous_torque);
-    }
-    publisher->set_reset(_hardware_reset || _software_reset);
-    if (is_period()) publisher->publish();
-    _franka_period_counter++; if (_franka_period_counter >= _franka_period) _franka_period_counter = 0;
-    _pole_period_counter++; if (_pole_period_counter >= _pole_period) _pole_period_counter = 0;
+
+    franka_state->set_torque(_torque);
 }
 
-bool franka_pole::Controller::is_reset() const
+franka_pole::Controller::~Controller()
 {
-    return _hardware_reset || _software_reset;
-}
-
-bool franka_pole::Controller::is_period() const
-{
-    return _franka_period_counter == 0;
+    if (parameters != nullptr) delete parameters;
+    if (franka_model != nullptr) delete franka_model;
+    if (franka_state != nullptr) delete franka_state;
+    if (pole_state != nullptr) delete pole_state;
+    if (publisher != nullptr) delete publisher;
 }

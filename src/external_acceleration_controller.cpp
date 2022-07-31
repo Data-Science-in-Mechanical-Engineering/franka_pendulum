@@ -1,29 +1,23 @@
 #include <franka_pole/external_acceleration_controller.h>
-#include <pluginlib/class_list_macros.h>
 
-void franka_pole::ExternalAccelerationController::_command_callback(const franka_pole::CommandAcceleration::ConstPtr &msg)
+void franka_pole::ExternalAccelerationController::_callback(const franka_pole::CommandAcceleration::ConstPtr &msg)
 {
+    std::lock_guard<std::mutex> guard(_mutex);
     _acceleration_target = Eigen::Matrix<double, 3, 1>::Map(&msg->command_effector_acceleration[0]);
 }
 
-bool franka_pole::ExternalAccelerationController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+bool franka_pole::ExternalAccelerationController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
-    if (!AccelerationController::_controller_init(robot_hw, node_handle)) return false;
-
-    _command_subscriber = node_handle.subscribe("/franka_pole/command_acceleration", 10, &ExternalAccelerationController::_command_callback, this);
-
+    std::lock_guard<std::mutex> guard(_mutex);
+    _acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
+    _subscriber = node_handle.subscribe("/franka_pole/command_acceleration", 10, &ExternalAccelerationController::_callback, this);
     return true;
 }
 
-void franka_pole::ExternalAccelerationController::starting(const ros::Time &time)
+Eigen::Matrix<double, 3, 1> franka_pole::ExternalAccelerationController::_get_acceleration_level2(const ros::Time &time, const ros::Duration &period)
 {
-    AccelerationController::_controller_starting(time);
+    std::lock_guard<std::mutex> guard(_mutex);
+    return _acceleration_target;
 }
 
-void franka_pole::ExternalAccelerationController::update(const ros::Time &time, const ros::Duration &period)
-{
-    AccelerationController::_controller_pre_update(time, period);
-    AccelerationController::_controller_post_update(time, period, _acceleration_target);
-}
-
-PLUGINLIB_EXPORT_CLASS(franka_pole::ExternalAccelerationController, controller_interface::ControllerBase)
+FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole::ExternalAccelerationController);

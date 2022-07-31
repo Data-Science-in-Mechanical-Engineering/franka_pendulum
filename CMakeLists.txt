@@ -123,6 +123,8 @@ include_directories(${catkin_INCLUDE_DIRS})
 
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf")
 add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf")
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.urdf")
+add_custom_target(franka_pole_xacro_1D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.urdf")
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
 add_custom_target(franka_pole_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf")
@@ -131,6 +133,7 @@ add_custom_target(franka_pole_xacro_2Db ALL DEPENDS "${PROJECT_SOURCE_DIR}/robot
 ## Declare a C++ libraries
 add_library(franka_pole_common SHARED
 src/parameters.cpp
+src/parameter_reader.cpp
 src/franka_model.cpp)
 target_include_directories(franka_pole_common PUBLIC include)
 target_compile_options(franka_pole_common PUBLIC -O3)

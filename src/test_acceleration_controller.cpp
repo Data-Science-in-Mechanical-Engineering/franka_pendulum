@@ -1,31 +1,17 @@
 #include <franka_pole/test_acceleration_controller.h>
 #include <franka_pole/parameters.h>
-#include <pluginlib/class_list_macros.h>
 
-bool franka_pole::TestAccelerationController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
-{
-    if (!AccelerationController::_controller_init(robot_hw, node_handle)) return false;
-    
-    Parameters parameters(node_handle);
-    _model = parameters.model();
-    
+bool franka_pole::TestAccelerationController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+{    
     return true;
 }
 
-void franka_pole::TestAccelerationController::starting(const ros::Time &time)
+Eigen::Matrix<double, 3, 1> franka_pole::TestAccelerationController::_get_acceleration_level2(const ros::Time &time, const ros::Duration &period)
 {
-    AccelerationController::_controller_starting(time);
-}
-
-void franka_pole::TestAccelerationController::update(const ros::Time &time, const ros::Duration &period)
-{
-    AccelerationController::_controller_pre_update(time, period);
-
     Eigen::Matrix<double, 3, 1> acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
-    if (_model == Model::D2 || _model == Model::D2b) acceleration_target(0) = 0.1 * (2*M_PI) * (2*M_PI) * (cos(2 * M_PI * time.toSec()) > 0.0 ? 1.0 : -1.0);
-    else acceleration_target(1) = 0.1 * (2*M_PI) * (2*M_PI) * (cos(2 * M_PI * time.toSec()) > 0.0 ? 1.0 : -1.0);
-    
-    AccelerationController::_controller_post_update(time, period, acceleration_target);
+    unsigned int axis = (parameters->model == Model::D2 || parameters->model == Model::D2b) ? 0 : 1;
+    acceleration_target(axis) = 0.1 * (2*M_PI) * (2*M_PI) * (cos(2 * M_PI * time.toSec()) > 0.0 ? 1.0 : -1.0);
+    return acceleration_target;
 }
 
-PLUGINLIB_EXPORT_CLASS(franka_pole::TestAccelerationController, controller_interface::ControllerBase)
+FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole::TestAccelerationController);

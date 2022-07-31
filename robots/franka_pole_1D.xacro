@@ -1,0 +1,115 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="franka_pole">
+  <xacro:arg name="arm_id" default="panda" />
+  
+  <!-- Create a simulatable URDF -->
+  <xacro:include filename="$(find franka_description)/robots/utils.xacro" />
+  <xacro:include filename="$(find franka_description)/robots/panda_gazebo.xacro" />
+  <xacro:panda_arm arm_id="$(arg arm_id)" />
+  <xacro:hand arm_id="$(arg arm_id)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id)_link8" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint1" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint2" transmission="hardware_interface/EffortJointInterface" />
+  
+  <!-- Gazebo requires a joint to a link called "world" for statically mounted robots -->
+  <link name="world" />
+    <joint name="world_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="world" />
+    <child  link="$(arg arm_id)_link0" />
+  </joint>
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint1" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint2" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint3" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint4" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint5" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint6" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:gazebo-joint joint="$(arg arm_id)_joint7" transmission="hardware_interface/EffortJointInterface" />
+  <xacro:transmission-franka-state arm_id="$(arg arm_id)" />
+  <xacro:transmission-franka-model arm_id="$(arg arm_id)" root="$(arg arm_id)_joint1" tip="$(arg arm_id)_joint8" />
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <controlPeriod>0.001</controlPeriod>
+      <robotSimType>franka_gazebo/FrankaHWSim</robotSimType>
+    </plugin>
+    <plugin name="franka_pole_plugin" filename="libfranka_pole_plugin.so">
+    </plugin>
+    <self_collide>true</self_collide>
+  </gazebo>
+
+  <!-- Connection -->   
+  <joint name="$(arg arm_id)_pole_joint_connection" type="fixed">
+    <origin xyz="${0.085/sqrt(2)} -${0.085/sqrt(2)} 0.03" rpy="${pi} 0 ${-pi/4}" />
+    <parent link="$(arg arm_id)_link8" />
+    <child  link="$(arg arm_id)_pole_link_lower" />
+  </joint>
+  
+  <!-- Lower bearing and holder -->
+  <link name="$(arg arm_id)_pole_link_lower">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://franka_pole/meshes/visual/1D_lower.dae"/>
+      </geometry>
+    </visual>
+
+    <inertial>
+      <origin xyz="-0.022003229638627025 0.0 -0.06809318358207639" rpy="0 0 0"/>
+      <mass value="0.5054569600898893"/>
+      <inertia
+      ixx="0.0008334988699267267" ixy="0.0" ixz="-0.00013466959040378683"
+      iyy="0.0013231310073701067" iyz="0.0"
+      izz="0.0008994724071810742"/>
+    </inertial>
+  </link>
+  
+  <joint name="$(arg arm_id)_pole_joint_x" type="revolute">
+    <parent link="$(arg arm_id)_pole_link_lower"/>
+    <child link="$(arg arm_id)_pole_link_upper"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit velocity="1000000" lower="${-30*pi/180}" effort="0" upper="${30*pi/180}" />
+    <dynamics damping="0.0"/>
+  </joint>
+  
+  <!-- Upper bearing, beam  and ball -->
+  <link name="$(arg arm_id)_pole_link_upper">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://franka_pole/meshes/visual/1D_upper.dae"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 ${0.65/2 + 0.06}" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.65" radius="0.005"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.43" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.0275"/>
+      </geometry>
+    </visual>  
+    
+    <inertial>
+      <origin xyz="0.0 0.0 0.18292189266626382" rpy="0 0 0"/>
+      <mass value="0.34291554992177825"/>
+      <inertia
+      ixx="0.012455943363405825" ixy="0.0" ixz="0.0"
+      iyy="0.012294411551671247" iyz="0.0"
+      izz="0.00027958843954040385"/>
+    </inertial>
+  </link>
+  
+  <transmission name="$(arg arm_id)_pole_joint_x_transmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="$(arg arm_id)_pole_joint_x">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="$(arg arm_id)_pole_joint_x_motor">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </actuator>
+  </transmission>
+</robot>

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <franka_pole/Sample.h>
-#include <franka_pole/model.h>
 
 #include <sensor_msgs/JointState.h>
 #include <ros/node_handle.h>
@@ -9,19 +8,21 @@
 
 namespace franka_pole
 {
+    class Parameters;
+
     ///Class that publishes data to ROS topic
     class Publisher
     {
     private:
+        const Parameters *_parameters;
+
         ros::Publisher _sample_publisher;
         ros::Publisher _joint_state_publisher;
         Sample _sample;
         sensor_msgs::JointState _joint_state;
-        size_t _counter = 0;
-        Model _model = Model::D1;
 
     public:
-        Publisher(ros::NodeHandle &node_handle);
+        Publisher(const Parameters *parameters, ros::NodeHandle &node_handle);
         void publish();
 
         //Franka

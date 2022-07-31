@@ -1,35 +1,32 @@
-#include <pinocchio/fwd.hpp>
 #include <franka_pole/external_position_controller.h>
 #include <franka_pole/parameters.h>
-#include <pluginlib/class_list_macros.h>
 
-void franka_pole::ExternalPositionController::_command_callback(const franka_pole::CommandPosition::ConstPtr &msg)
+void franka_pole::ExternalPositionController::_callback(const franka_pole::CommandPosition::ConstPtr &msg)
 {
+    std::lock_guard<std::mutex> guard(_mutex);
     _position_target = Eigen::Matrix<double, 3, 1>::Map(&msg->command_effector_position[0]);
     _velocity_target = Eigen::Matrix<double, 3, 1>::Map(&msg->command_effector_velocity[0]);
 }
 
-bool franka_pole::ExternalPositionController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+bool franka_pole::ExternalPositionController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
-    if (!PositionController::_controller_init(robot_hw, node_handle)) return false;
-
-    Parameters parameters(node_handle);
-    _position_target = parameters.target_effector_position();
-
-    _command_subscriber = node_handle.subscribe("/franka_pole/command_position", 10, &ExternalPositionController::_command_callback, this);
-
+    std::lock_guard<std::mutex> guard(_mutex);
+    _position_target = parameters->target_effector_position;
+    _velocity_target = Eigen::Matrix<double, 3, 1>::Zero();
+    _subscriber = node_handle.subscribe("/franka_pole/command_position", 10, &ExternalPositionController::_callback, this);
     return true;
 }
 
-void franka_pole::ExternalPositionController::starting(const ros::Time &time)
+Eigen::Matrix<double, 3, 1> franka_pole::ExternalPositionController::_get_position_level2(const ros::Time &time, const ros::Duration &period)
 {
-    PositionController::_controller_starting(time);
+    std::lock_guard<std::mutex> guard(_mutex);
+    return _position_target;
 }
 
-void franka_pole::ExternalPositionController::update(const ros::Time &time, const ros::Duration &period)
+Eigen::Matrix<double, 3, 1> franka_pole::ExternalPositionController::_get_velocity_level2(const ros::Time &time, const ros::Duration &period)
 {
-    PositionController::_controller_pre_update(time, period);
-    PositionController::_controller_post_update(time, period, _position_target, _velocity_target);
+    std::lock_guard<std::mutex> guard(_mutex);
+    return _velocity_target;
 }
 
-PLUGINLIB_EXPORT_CLASS(franka_pole::ExternalPositionController, controller_interface::ControllerBase)
+FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole::ExternalPositionController);

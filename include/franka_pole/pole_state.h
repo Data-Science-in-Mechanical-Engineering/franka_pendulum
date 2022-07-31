@@ -9,45 +9,53 @@
 #include <ros/time.h>
 #include <Eigen/Dense>
 #include <random>
-#include <type_traits>
+#include <mutex>
 
 namespace franka_pole
 {
-    class Controller;
+    class Parameters;
+    class FrankaModel;
+    class FrankaState;
+    class Publisher;
 
     //Provides pole states
     class PoleState
     {
     private:
-        //Technical
-        Controller *_controller = nullptr;
-        Model _model = Model::D1;
-        bool _simulated = false;
-        std::vector<hardware_interface::JointHandle> _joint_handles;
-        std::vector<std::normal_distribution<double>> _random_angle_distributions;
+        //Reserences
+        const Parameters *_parameters;
+        const FrankaModel *_franka_model;
+        const FrankaState *_franka_state;
+        Publisher *_publisher;
+
+        //Technical, simulated
+        hardware_interface::JointHandle _joint_handles[2];
+        std::normal_distribution<double> _random_angle_distributions[2];
         std::default_random_engine _random_engine;
+
+        //Callback for ROS, not simulated
+        ros::Subscriber _subscriber;
+        std::mutex _mutex;
+        void _callback(const geometry_msgs::TransformStamped::ConstPtr &msg);
         
         //Timestamp
         double _timestamp = 0.0;
 
         //Angles
-        Eigen::Matrix<double, 2, 1> _angle = std::numeric_limits<double>::quiet_NaN() * Eigen::Matrix<double, 2, 1>::Zero();
+        bool _first = true;
+        Eigen::Matrix<double, 2, 1> _angle = Eigen::Matrix<double, 2, 1>::Zero();
         Eigen::Matrix<double, 2, 1> _dangle = Eigen::Matrix<double, 2, 1>::Zero();
-        Eigen::Matrix<double, 2, 1> _joint_angle = std::numeric_limits<double>::quiet_NaN() * Eigen::Matrix<double, 2, 1>::Zero();
+        Eigen::Matrix<double, 2, 1> _joint_angle = Eigen::Matrix<double, 2, 1>::Zero();
         Eigen::Matrix<double, 2, 1> _joint_dangle = Eigen::Matrix<double, 2, 1>::Zero();
 
-        //Callback for ROS, used if simulated
-        ros::Subscriber _pose_stamped_subscriber;
-        void _update(const geometry_msgs::TransformStamped::ConstPtr &msg);
-
     public:
-        PoleState(Controller *controller, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
+        PoleState(const Parameters *parameters, const FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
         void update(const ros::Time &time);
-        
-        double get_timestamp() const;
-        Eigen::Matrix<double, 2, 1> get_angle() const;
-        Eigen::Matrix<double, 2, 1> get_dangle() const;
-        Eigen::Matrix<double, 2, 1> get_joint_angle() const;
-        Eigen::Matrix<double, 2, 1> get_joint_dangle() const;
+
+        double get_timestamp();
+        Eigen::Matrix<double, 2, 1> get_angle();
+        Eigen::Matrix<double, 2, 1> get_dangle();
+        Eigen::Matrix<double, 2, 1> get_joint_angle();
+        Eigen::Matrix<double, 2, 1> get_joint_dangle();
     };
 }

@@ -1,19 +1,16 @@
 #pragma once
 
 #include <franka_pole/acceleration_controller.h>
-#include <franka_pole/model.h>
 
 namespace franka_pole
 {
     class TestAccelerationController : public AccelerationController
     {
     private:
-        Model _model = Model::D1;
-        
-    public:
-        //Overridden from MultiInterfaceController
-        bool init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) override;
-        void starting(const ros::Time&) override;
-        void update(const ros::Time&, const ros::Duration& period) override;
+        //Overrides from franka_pole::AccelerationController
+        bool _init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) override;
+        Eigen::Matrix<double, 3, 1> _get_acceleration_level2(const ros::Time &time, const ros::Duration &period) override;
+
+        FRANKA_POLE_CONTROLLER_DECLARATION();
     };
 }

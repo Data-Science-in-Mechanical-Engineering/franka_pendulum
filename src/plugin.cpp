@@ -1,5 +1,6 @@
 #include <pinocchio/fwd.hpp>
 #include <franka_pole/parameters.h>
+#include <franka_pole/parameter_reader.h>
 #include <franka_pole/franka_model.h>
 
 #include <ros/ros.h>
@@ -23,11 +24,9 @@ namespace franka_pole
         gazebo::physics::JointPtr _pole[2];
         gazebo::event::ConnectionPtr _connection;
 
-        //Parameters
-        Model _mod = Model::D1;
-        Eigen::Matrix<double, 7, 1> _initial_joint_positions = Eigen::Matrix<double, 7, 1>::Zero();
-        Eigen::Matrix<double, 2, 1> _initial_pole_positions = Eigen::Matrix<double, 2, 1>::Zero();
-        Eigen::Matrix<double, 2, 1> _initial_pole_velocities = Eigen::Matrix<double, 2, 1>::Zero();
+        //Components
+        Parameters *_parameters = nullptr;
+        FrankaModel *_franka_model = nullptr;
 
         //Reset flag
         sem_t *_software_reset_semaphore;
@@ -35,7 +34,7 @@ namespace franka_pole
     public:
         Plugin();
         virtual void Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf);
-        void SetDefault();
+        void Reset();
         void Update(const gazebo::common::UpdateInfo &info);
         virtual ~Plugin();
     };
@@ -51,15 +50,14 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
 {
     try
     {
-        //Read parameters
+        ros::TransportHints().tcpNoDelay();
+        
+        //Create components
         ros::NodeHandle node_handle;
-        Parameters parameters(node_handle);
-        FrankaModel franka_model(node_handle);
-        _mod = parameters.model();
-        _initial_joint_positions = franka_model.effector_inverse_kinematics(parameters.initial_effector_position(), parameters.initial_effector_orientation(), parameters.initial_joint0_position());
-        _initial_pole_positions = parameters.initial_pole_positions();
-        _initial_pole_velocities = parameters.initial_pole_velocities();
-
+        ParameterReader parameter_reader(node_handle);
+        _parameters = new Parameters(parameter_reader, node_handle);
+        _franka_model = new FrankaModel(_parameters);
+        
         //Init semaphore
         _software_reset_semaphore = sem_open("/franka_pole_software_reset", O_CREAT, 0644, 0);
         if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_emulator::emulator::Semaphore::Semaphore: sem_open failed");
@@ -68,14 +66,13 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
         while (value > 0) { sem_wait(_software_reset_semaphore); value--; }
 
         //Initializing joints
-        _model = model;
         for (size_t i = 0; i < 7; i++) _joints[i] = model->GetJoint(std::string("panda::panda_joint") + std::to_string(i + 1));
         for (size_t i = 0; i < 2; i++) _fingers[i] = model->GetJoint(std::string("panda::panda_finger_joint") + std::to_string(i + 1));
-        _pole[0] = model->GetJoint("panda::panda_pole_joint_x");
-        try { _pole[1] = model->GetJoint("panda::panda_pole_joint_y"); } catch (...) { _pole[1] = nullptr; }
+        _pole[0] = (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2) ? model->GetJoint("panda::panda_pole_joint_x") : nullptr;
+        _pole[1] = (_parameters->model == Model::D2 || _parameters->model == Model::D2) ? model->GetJoint("panda::panda_pole_joint_y") : nullptr;
         
-        //Initializing position
-        SetDefault();
+        //Initializing
+        Reset();
 
         //Subscribe to update
         class Subscriber
@@ -95,11 +92,13 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
     ROS_INFO_STREAM("Loaded franka_pole_plugin.");
 }
 
-void franka_pole::Plugin::SetDefault()
+void franka_pole::Plugin::Reset()
 {
+    Eigen::Matrix<double, 7, 1> initial_joint_positions = _franka_model->effector_inverse_kinematics(_parameters->initial_effector_position, _parameters->initial_effector_orientation, _parameters->initial_joint0_position);
+
     for (size_t i = 0; i < 7; i++)
     {
-        _joints[i]->SetPosition(0, _initial_joint_positions(i));
+        _joints[i]->SetPosition(0, initial_joint_positions(i));
         _joints[i]->SetVelocity(0, 0.0);
     }
     for (size_t i = 0; i < 2; i++)
@@ -107,12 +106,15 @@ void franka_pole::Plugin::SetDefault()
         _fingers[i]->SetPosition(0, 0.0);
         _fingers[i]->SetVelocity(0, 0.0);
     }
-    _pole[0]->SetPosition(0, _initial_pole_positions(0));
-    _pole[0]->SetVelocity(0, _initial_pole_velocities(0));
+    if (_pole[0] != nullptr)
+    {
+        _pole[0]->SetPosition(0, _parameters->initial_pole_positions(0));
+        _pole[0]->SetVelocity(0, _parameters->initial_pole_velocities(0));
+    }
     if (_pole[1] != nullptr)
     {
-        _pole[1]->SetPosition(0, _initial_pole_positions(1) + ((_mod == Model::D2) ? (M_PI / 6) : 0));
-        _pole[1]->SetVelocity(0, _initial_pole_velocities(1));
+        _pole[1]->SetPosition(0, _parameters->initial_pole_positions(1) + ((_parameters->model == Model::D2) ? (M_PI / 6) : 0));
+        _pole[1]->SetVelocity(0, _parameters->initial_pole_velocities(1));
     }
 }
 
@@ -122,7 +124,7 @@ void franka_pole::Plugin::Update(const gazebo::common::UpdateInfo &info)
     sem_getvalue(_software_reset_semaphore, &value);
     if (value > 0)
     {
-        SetDefault();
+        Reset();
         sem_wait(_software_reset_semaphore);
     }
 }

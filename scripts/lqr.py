@@ -64,7 +64,7 @@ def lqr_2db():
     B[1,0] = -upper.mass * upper.position[2] / upper.inertia_at(np.zeros(3))[0,0]
     B[5,1] = -upper.mass * upper.position[2] / upper.inertia_at(np.zeros(3))[1,1]
 
-    Q = np.diag([100.0, 100.0, 100.0, 100.0, 25.0, 25.0, 25.0, 25.0])
+    Q = np.diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) * 200
     R = np.eye(2)
     K,S,E = control.lqr(A, B, Q, R)
     return -K

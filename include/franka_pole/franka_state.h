@@ -9,24 +9,31 @@
 
 namespace franka_pole
 {
-    class Controller;
+    class Parameters;
+    class FrankaModel;
+    class Publisher;
+    class PoleState;
 
     class FrankaState
     {
+    friend PoleState;
     private:
+        //References
+        const Parameters *_parameters;
+        const FrankaModel *_franka_model;
+        Publisher *_publisher;
+
         //Technical
-        Controller *_controller;
-        bool _simulated = false;
-        std::vector<hardware_interface::JointHandle> _joint_handles;
-        std::vector<std::normal_distribution<double>> _random_position_distributions;
-        std::vector<std::normal_distribution<double>> _random_velocity_distributions;
+        hardware_interface::JointHandle _joint_handles[7];
+        std::normal_distribution<double> _random_position_distributions[7];
+        std::normal_distribution<double> _random_velocity_distributions[7];
         std::default_random_engine _random_engine;
 
         //Timestamp
         double _timestamp = 0.0;
 
         //Joints
-        Eigen::Matrix<double, 7, 1> _raw_joint_positions;
+        Eigen::Matrix<double, 7, 1> _exact_joint_positions;
         Eigen::Matrix<double, 7, 1> _joint_positions;
         Eigen::Matrix<double, 7, 1> _joint_velocities;
 
@@ -36,14 +43,13 @@ namespace franka_pole
         Eigen::Matrix<double, 6, 1> _effector_velocity;
 
     public:
-        FrankaState(Controller *controller, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
+        FrankaState(const Parameters *parameters, const FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw);
         void update(const ros::Time &time);
         
         //Time
         double get_timestamp() const;
         
         //Joint space
-        Eigen::Matrix<double, 7, 1> get_raw_joint_positions() const;
         Eigen::Matrix<double, 7, 1> get_joint_positions() const;
         Eigen::Matrix<double, 7, 1> get_joint_velocities() const;
 

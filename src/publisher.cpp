@@ -1,33 +1,38 @@
 #include <franka_pole/publisher.h>
 #include <franka_pole/parameters.h>
 
-franka_pole::Publisher::Publisher(ros::NodeHandle &node_handle)
+franka_pole::Publisher::Publisher(const Parameters *parameters, ros::NodeHandle &node_handle) :
+_parameters(parameters)
 {
-    Parameters parameters(node_handle);
-    _model = parameters.model();
-
     _sample_publisher = node_handle.advertise<franka_pole::Sample>("/franka_pole/sample", 10);
     _joint_state_publisher = node_handle.advertise<sensor_msgs::JointState>("/franka_pole/joint_state", 10);
     
-    if (_model == Model::D2 || _model == Model::D2b)
+    if (_parameters->model == Model::D0)
     {
         _joint_state.name.resize(9);
         _joint_state.position.resize(9, 0.0);
         _joint_state.velocity.resize(9, 0.0);
         _joint_state.effort.resize(9, 0.0);
-        for (size_t i = 0; i < 7; i++) _joint_state.name[i] = "panda_joint" + std::to_string(i+1);
+    }
+    else if (_parameters->model == Model::D1)
+    {
+        _joint_state.name.resize(10);
+        _joint_state.position.resize(10, 0.0);
+        _joint_state.velocity.resize(10, 0.0);
+        _joint_state.effort.resize(10, 0.0);
         _joint_state.name[7] = "panda_pole_joint_x";
         _joint_state.name[8] = "panda_pole_joint_y";
     }
-    else
+    else if (_parameters->model == Model::D2 || _parameters->model == Model::D2b)
     {
-        _joint_state.name.resize(8);
-        _joint_state.position.resize(8, 0.0);
-        _joint_state.velocity.resize(8, 0.0);
-        _joint_state.effort.resize(8, 0.0);
-        for (size_t i = 0; i < 7; i++) _joint_state.name[i] = "panda_joint" + std::to_string(i+1);
+        _joint_state.name.resize(11);
+        _joint_state.position.resize(11, 0.0);
+        _joint_state.velocity.resize(11, 0.0);
+        _joint_state.effort.resize(11, 0.0);
         _joint_state.name[7] = "panda_pole_joint_x";
     }
+    for (size_t i = 0; i < 7; i++) _joint_state.name[i] = _parameters->arm_id + "_joint" + std::to_string(i+1);
+    for (size_t i = 0; i < 2; i++) _joint_state.name[7+i] = _parameters->arm_id + "_finger_joint" + std::to_string(i+1);
 
     set_franka_timestamp(ros::Time(0.0));
     set_franka_joint_positions(Eigen::Matrix<double, 7, 1>::Zero());
@@ -50,7 +55,7 @@ franka_pole::Publisher::Publisher(ros::NodeHandle &node_handle)
 void franka_pole::Publisher::publish()
 {
     _sample_publisher.publish(_sample);
-    if (++_counter == 50) { _joint_state_publisher.publish(_joint_state); _counter = 0; }
+    _joint_state_publisher.publish(_joint_state);
 }
 
 void franka_pole::Publisher::set_franka_timestamp(const ros::Time &timestamp)
@@ -95,7 +100,7 @@ void franka_pole::Publisher::set_pole_timestamp(const ros::Time &timestamp)
 void franka_pole::Publisher::set_pole_angle(const Eigen::Matrix<double, 2, 1> &angle)
 {
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_angle[0]) = angle;
-    if (_model == Model::D2 || _model == Model::D2b)
+    if (_parameters->model == Model::D2 || _parameters->model == Model::D2b)
     {
         _joint_state.position[7] = angle(0);
         _joint_state.position[8] = angle(1);
@@ -109,7 +114,7 @@ void franka_pole::Publisher::set_pole_angle(const Eigen::Matrix<double, 2, 1> &a
 void franka_pole::Publisher::set_pole_dangle(const Eigen::Matrix<double, 2, 1> &dangle)
 {
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_dangle[0]) = dangle;
-    if (_model == Model::D2 || _model == Model::D2b)
+    if (_parameters->model == Model::D2 || _parameters->model == Model::D2b)
     {
         _joint_state.velocity[7] = dangle(0);
         _joint_state.velocity[8] = dangle(1);

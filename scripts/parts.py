@@ -176,7 +176,7 @@ def get_parts_2db():
     beam_density = 0.042 #kg/m
     beam_position = 0.039 #m
     ball_radius = 0.0275 #m
-    ball_position = 0.039 + beam_length/2 #m
+    ball_position = 0.215 #m
     ball_mass = 0.038 #kg
     document = FreeCAD.open(rospkg.RosPack().get_path("franka_pole") + "/meshes/2Db.FCStd")
 

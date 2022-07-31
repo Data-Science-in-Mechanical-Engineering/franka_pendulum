@@ -1,82 +1,31 @@
 #include <franka_pole/simple_acceleration_controller.h>
 #include <franka_pole/parameters.h>
-#include <pluginlib/class_list_macros.h>
+#include <franka_pole/franka_state.h>
+#include <franka_pole/pole_state.h>
 
-void franka_pole::SimpleAccelerationController::_command_callback(const franka_pole::CommandParameters::ConstPtr &msg)
+bool franka_pole::SimpleAccelerationController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
-    for (size_t i = 0; i < 2; i++)
-    {
-        _a[i] = msg->a[i];
-        _b[i] = msg->b[i];
-        _c[i] = msg->c[i];
-        _d[i] = msg->d[i];
-    }
-}
-
-bool franka_pole::SimpleAccelerationController::init(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
-{
-    if (!AccelerationController::_controller_init(robot_hw, node_handle)) return false;
-
-    Parameters parameters(node_handle);
-    _model = parameters.model();
-    _target_position = parameters.target_effector_position();
-
-    _command_subscriber = node_handle.subscribe("/franka_pole/command_parameters", 10, &SimpleAccelerationController::_command_callback, this);
-
-    if (_model == Model::D1)
-    {
-        const double lqr[4] = { 84.4717672, 19.32872174, 10.0, 15.88129816 };
-        _a = std::array<double, 2>({{ 0.0, lqr[0] }});
-        _b = std::array<double, 2>({{ 0.0, lqr[1] }});
-        _c = std::array<double, 2>({{ 0.0, lqr[2] }});
-        _d = std::array<double, 2>({{ 0.0, lqr[3] }});
-    }
-    else if (_model == Model::D2)
-    {
-        const double lqr1[4] = { 8.53149121e+01, 1.97783488e+01, 1.00000000e+01, 1.59353250e+01 };
-        const double lqr2[4] = { 5.19597825e+01, 1.14967702e+01, 5.00000000e+00, 8.24415788e+00 };
-        _a = std::array<double, 2>({{ lqr1[0], lqr2[0] }});
-        _b = std::array<double, 2>({{ lqr1[1], lqr2[1] }});
-        _c = std::array<double, 2>({{ lqr1[2], lqr2[2] }});
-        _d = std::array<double, 2>({{ lqr1[3], lqr2[3] }});
-    }
-    else
-    {
-        const double lqr1[4] = { 9.70119041e+01, 2.63787913e+01, 1.00000000e+01, 1.66667831e+01 };
-        const double lqr2[4] = { 5.89905828e+01, 1.56870017e+01, 5.00000000e+00, 8.66793585e+00 };
-        _a = std::array<double, 2>({{ lqr1[0], lqr2[0] }});
-        _b = std::array<double, 2>({{ lqr1[1], lqr2[1] }});
-        _c = std::array<double, 2>({{ lqr1[2], lqr2[2] }});
-        _d = std::array<double, 2>({{ lqr1[3], lqr2[3] }});
-    }
-
     return true;
 }
 
-void franka_pole::SimpleAccelerationController::starting(const ros::Time &time)
+Eigen::Matrix<double, 3, 1> franka_pole::SimpleAccelerationController::_get_acceleration_level2(const ros::Time &time, const ros::Duration &period)
 {
-    AccelerationController::_controller_starting(time);
-}
-
-void franka_pole::SimpleAccelerationController::update(const ros::Time &time, const ros::Duration &period)
-{
-    AccelerationController::_controller_pre_update(time, period);
-
     Eigen::Matrix<double, 3, 1> acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
-    
-    if (_model == Model::D2 || _model == Model::D2b) acceleration_target(0) =
-        (_a[0] * pole_state->get_angle()(1) +
-        _b[0] * pole_state->get_dangle()(1) +
-        _c[0] * (franka_state->get_effector_position()(0) - _target_position(0)) +
-        _d[0] * franka_state->get_effector_velocity()(0));
+    Eigen::Matrix<double, 4, 1> input = Eigen::Matrix<double, 4, 1>::Zero();
+
+    input(0) = pole_state->get_angle()(1);
+    input(1) = pole_state->get_dangle()(1);
+    input(2) = franka_state->get_effector_position()(0) - parameters->target_effector_position(0);
+    input(3) = franka_state->get_effector_velocity()(0);
+    acceleration_target(0) = parameters->control.segment<4>(0).transpose() * input;
         
-    acceleration_target(1) =
-        (_a[1] * pole_state->get_angle()(0) +
-        _b[1] * pole_state->get_dangle()(0) +
-        _c[1] * (franka_state->get_effector_position()(1) - _target_position(1)) +
-        _d[1] * franka_state->get_effector_velocity()(1));
-    
-    AccelerationController::_controller_post_update(time, period, acceleration_target);
+    input(0) = pole_state->get_angle()(0);
+    input(1) = pole_state->get_dangle()(0);
+    input(2) = franka_state->get_effector_position()(1) - parameters->target_effector_position(1);
+    input(3) = franka_state->get_effector_velocity()(1);
+    acceleration_target(1) = parameters->control.segment<4>(4).transpose() * input;
+
+    return acceleration_target;
 }
 
-PLUGINLIB_EXPORT_CLASS(franka_pole::SimpleAccelerationController, controller_interface::ControllerBase)
+FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole::SimpleAccelerationController);
