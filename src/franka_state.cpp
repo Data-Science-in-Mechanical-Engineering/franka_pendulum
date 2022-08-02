@@ -4,7 +4,7 @@
 #include <franka_pole/publisher.h>
 #include <time.h>
 
-franka_pole::FrankaState::FrankaState(const Parameters *parameters, const FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw) :
+franka_pole::FrankaState::FrankaState(const Parameters *parameters, FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw) :
 _parameters(parameters), _franka_model(franka_model), _publisher(publisher)
 {
     //Joint handles

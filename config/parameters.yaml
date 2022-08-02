@@ -26,7 +26,7 @@ franka_pole:
   initial_pole_velocities: [ 0.0, 0.0 ]
   
   # Stiffness
-  outbound_translation_stiffness: [ 200.0, 200.0, 200.0 ]
+  outbound_translation_stiffness: [ 0.0, 200.0, 200.0 ]
   outbound_translation_damping: [ .NaN, .NaN, .NaN ] # fallbacks to 2 * sqrt(outbound_translation_stiffness)
   outbound_rotation_stiffness: [ 50.0, 50.0, 50.0 ]
   outbound_rotation_damping: [ .NaN, .NaN, .NaN ] # fallbacks to 2 * sqrt(outbound_rotation_stiffness)
@@ -35,7 +35,7 @@ franka_pole:
   rotation_stiffness: [ .NaN, .NaN, .NaN ] # fallbacks to 2 * sqrt(outbound_rotation_stiffness)
   rotation_damping: [ .NaN, .NaN, .NaN ] # fallbacks to 2 * sqrt(rotation_stiffness)
 
-  joint_stiffness: [ 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0 ]
+  joint_stiffness: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
   joint_damping: [ .NaN, .NaN, .NaN, .NaN, .NaN, .NaN, .NaN ] # fallbacks to 2 * sqrt(joint_stiffness)
 
   nullspace_stiffness: [ 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 ]

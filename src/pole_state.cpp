@@ -31,7 +31,7 @@ void franka_pole::PoleState::_callback(const geometry_msgs::TransformStamped::Co
     _publisher->set_pole_dangle(_dangle);
 }
 
-franka_pole::PoleState::PoleState(const Parameters *parameters, const FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) :
+franka_pole::PoleState::PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) :
 _parameters(parameters), _franka_model(franka_model), _franka_state(franka_state), _publisher(publisher)
 {
     std::lock_guard<std::mutex> guard(_mutex);

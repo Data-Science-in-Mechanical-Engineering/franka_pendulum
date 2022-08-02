@@ -18,10 +18,6 @@
   <arg name="vicon_ip"    default="134.130.192.68:801"  doc="IP address of the VICON system"/>
 
   <!-- Load parameters -->
-  <arg name="translation_stiffness_x" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' or arg('model') == '1D' else 0.0)" />
-  <arg name="translation_stiffness_y" value="$(eval 200.0 if arg('controller') == 'simple_position' or arg('controller') == 'test_position' or arg('controller') == 'external_position' or arg('controller') == 'python_position' else 0.0)" />
-  <arg name="target_effector_orientation_w" value="$(eval 0.9659258 if arg('model') == '2D' else 1.0)" />
-  <arg name="target_effector_orientation_y" value="$(eval -0.258819 if arg('model') == '2D' else 0.0)" />
   <rosparam file="$(find franka_pole)/config/parameters.yaml" subst_value="true" />
 
   <!-- Load available controllers -->

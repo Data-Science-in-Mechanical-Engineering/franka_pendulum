@@ -24,7 +24,7 @@ namespace franka_pole
     private:
         //Reserences
         const Parameters *_parameters;
-        const FrankaModel *_franka_model;
+        FrankaModel *_franka_model;
         const FrankaState *_franka_state;
         Publisher *_publisher;
 
@@ -49,7 +49,7 @@ namespace franka_pole
         Eigen::Matrix<double, 2, 1> _joint_dangle = Eigen::Matrix<double, 2, 1>::Zero();
 
     public:
-        PoleState(const Parameters *parameters, const FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
+        PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
         void update(const ros::Time &time);
 
         double get_timestamp();

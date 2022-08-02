@@ -14,7 +14,7 @@ class Signal:
          - label - label to be placed on the plot
          - source - function that returns float value"""
         self.label = label
-        self._timestamp = 0
+        self._timestamp = -np.Inf
         self._timestamps = np.zeros(0)
         self._values = np.zeros(0)
         self._lock = Lock()
@@ -30,11 +30,8 @@ class Signal:
          - timestamp - time of the measurement
          - value - new value"""
         self._lock.acquire()
-        self._timestamp = timestamp
-        if len(self._timestamps) > 2 and (self._timestamps[-1] - self._timestamps[-2]) < 1.0/self._frequency:
-            self._timestamps[-1] = timestamp
-            self._values[-1] = value
-        else:
+        if timestamp - self._timestamp > 1.0/self._frequency:
+            self._timestamp = timestamp
             self._timestamps = np.append(self._timestamps, timestamp)
             self._values = np.append(self._values, value)
         self._lock.release()
@@ -71,8 +68,8 @@ class Plot:
         for signal in self.signals: signal._init(frequency)
 
         # Create buffers
-        self._buffers = [ np.zeros(self.time * frequency) for signal in self.signals ]
-        self._time_buffers = [ np.linspace(-self.time, 0, self.time * frequency) for signal in self.signals ]
+        self._buffers = [ np.zeros(0) for signal in self.signals ]
+        self._time_buffers = [ np.zeros(0) for signal in self.signals ]
 
         # Set limits
         self._axes.set_xlim([-self.time, 0])
@@ -88,16 +85,25 @@ class Plot:
 
     def _animate(self):
         """Returns lines, internal use only"""
-        latest = 0
+        latest = -np.Inf
         for signal in self.signals:
             if signal._timestamp > latest: latest = signal._timestamp
 
         for i in range(len(self.signals)):
             self.signals[i]._lock.acquire() #Multithreading issues in Python, who could have thought?
-            count = len(self.signals[i]._timestamps)
-            if len(self.signals[i]._timestamps) != 0:
-                self._time_buffers[i] = np.concatenate((self._time_buffers[i][count:], self.signals[i]._timestamps))
-                self._buffers[i] = np.concatenate((self._buffers[i][count:], self.signals[i]._values))
+            existing = len(self._time_buffers[i])
+            new = len(self.signals[i]._timestamps)
+            limit = self.time * self._frequency
+            if new != 0:
+                if new > limit:
+                    self._time_buffers[i] = self._time_buffers[i][-limit:]
+                    self._buffers[i] = self._buffers[i][-limit:]
+                elif new + existing > limit:
+                    self._time_buffers[i] = np.concatenate((self._time_buffers[i][new+existing-limit:], self.signals[i]._timestamps))
+                    self._buffers[i] = np.concatenate((self._buffers[i][new+existing-limit:], self.signals[i]._values))
+                else:
+                    self._time_buffers[i] = np.concatenate((self._time_buffers[i], self.signals[i]._timestamps))
+                    self._buffers[i] = np.concatenate((self._buffers[i], self.signals[i]._values))
                 self._lines[i].set_data(self._time_buffers[i] - latest, self._buffers[i])
                 self.signals[i]._timestamps = np.zeros(0)
                 self.signals[i]._values = np.zeros(0)

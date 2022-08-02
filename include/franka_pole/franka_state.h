@@ -20,7 +20,7 @@ namespace franka_pole
     private:
         //References
         const Parameters *_parameters;
-        const FrankaModel *_franka_model;
+        FrankaModel *_franka_model;
         Publisher *_publisher;
 
         //Technical
@@ -43,7 +43,7 @@ namespace franka_pole
         Eigen::Matrix<double, 6, 1> _effector_velocity;
 
     public:
-        FrankaState(const Parameters *parameters, const FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw);
+        FrankaState(const Parameters *parameters, FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw);
         void update(const ros::Time &time);
         
         //Time

@@ -31,7 +31,6 @@ void franka_pole::Controller::_reset()
     _publish_period_counter = 0;
     _software_reset = false;
     _hardware_reset = false;
-    std::cout << parameters->initial_effector_position << "\n" << parameters->initial_joint0_position << "\n\n";
     _initial_joint_positions = franka_model->effector_inverse_kinematics(parameters->initial_effector_position, parameters->initial_effector_orientation, parameters->initial_joint0_position);
     if (parameters->model == Model::D0) _torque = franka_model->get_gravity9(_initial_joint_positions).segment<7>(0);
     else if (parameters->model == Model::D1) _torque = franka_model->get_gravity10(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
@@ -44,6 +43,7 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
     std::lock_guard<std::mutex> guard(_mutex);
     _robot_hw = robot_hw;
     _node_handle = node_handle;
+
     try
     {
         ros::TransportHints().tcpNoDelay();
@@ -59,9 +59,8 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
         //Opening reset subscribers
         _reset_subscriber = node_handle.subscribe("/franka_pole/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
         _software_reset_semaphore = sem_open("/franka_pole_software_reset", O_CREAT, 0644, 0);
-
-        //Initialize simulation
-        _reset();
+        _software_reset = true;
+        _hardware_reset = false;
     }
     catch (const std::exception &e)
     {
@@ -101,13 +100,10 @@ void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::D
         else _reset();
     }
     
-    if (!_software_reset || !_hardware_reset)
-    {
-        if (++_franka_period_counter > parameters->franka_period) { franka_state->update(time); _franka_period_counter = 0; }
-        if (pole_state != nullptr && ++_pole_period_counter > parameters->pole_period) { pole_state->update(time); _pole_period_counter = 0; }
-        if (++_command_period_counter > parameters->command_period) { _torque = _get_torque_level1(time, period); _command_period_counter = 0; }
-        if (++_publish_period_counter > parameters->publish_period) { publisher->publish(); _publish_period_counter = 0; }
-    }
+    if (++_franka_period_counter >= parameters->franka_period) { franka_state->update(time); _franka_period_counter = 0; }
+    if (pole_state != nullptr && ++_pole_period_counter >= parameters->pole_period) { pole_state->update(time); _pole_period_counter = 0; }
+    if (++_command_period_counter >= parameters->command_period) { if (!_software_reset && !_hardware_reset) _torque = _get_torque_level1(time, period); _command_period_counter = 0; }
+    if (++_publish_period_counter >= parameters->publish_period) { publisher->publish(); _publish_period_counter = 0; }
 
     franka_state->set_torque(_torque);
 }

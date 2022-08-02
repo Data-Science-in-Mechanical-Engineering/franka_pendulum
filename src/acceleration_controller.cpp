@@ -39,19 +39,28 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     bool outbound = false;
     for (size_t i = 0; i < 3; i++)
     {
+        // target
+        if (_position_target(i) > parameters->max_effector_position(i))
+        {
+            _position_target(i) = parameters->max_effector_position(i);
+        }
+        else if (_position_target(i) < parameters->min_effector_position(i))
+        {
+            _position_target(i) = parameters->min_effector_position(i);
+        }
+
+        // real state
         bool axis_outbound = false;
         if (franka_state->get_effector_position()(i) > parameters->max_effector_position(i))
         {
-            _position_target(i) = parameters->max_effector_position(i);
             if (_velocity_target(i) > 0.0) _velocity_target(i) = 0.0;
             if (_acceleration_target(i) > 0.0) _acceleration_target(i) = 0.0;
             axis_outbound = outbound = true;
         }
         else if (franka_state->get_effector_position()(i) < parameters->min_effector_position(i))
         {
-            _position_target(i) = parameters->min_effector_position(i);
             if (_velocity_target(i) < 0.0) _velocity_target(i) = 0.0;
-            if (_acceleration_target(i) < 0.0) _acceleration_target(i) = 0.0;
+            if (_acceleration_target(i) < 0.0) _acceleration_target (i) = 0.0;
             axis_outbound = outbound = true;
         }
 
@@ -117,8 +126,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
         // calculate gravity, coriolis and mass matrix
         Eigen::Matrix<double, 9, 1> gravity = franka_model->get_gravity9(franka_state->get_joint_positions());
         Eigen::Matrix<double, 9, 1> coriolis = franka_model->get_coriolis9(franka_state->get_joint_positions(), franka_state->get_joint_velocities());
-        Eigen::Matrix<double, 9, 9> mass = Eigen::Matrix<double, 9, 9>::Zero();
-        if (parameters->dynamics > 0.0) mass = franka_model->get_mass_matrix9(franka_state->get_joint_positions());
+        Eigen::Matrix<double, 9, 9> mass = (parameters->dynamics > 0.0) ? mass = franka_model->get_mass_matrix9(franka_state->get_joint_positions()) : Eigen::Matrix<double, 9, 9>::Zero();
 
         // calculate first (7) torque (we don't care about 2 on fingers)
         torque += parameters->dynamics * (mass.block<7,9>(0,0) * a9) + coriolis.segment<7>(0) + gravity.segment<7>(0);
@@ -133,8 +141,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
         // calculate gravity, coriolis and mass matrix
         Eigen::Matrix<double, 10, 1> gravity = franka_model->get_gravity10(franka_state->get_joint_positions(), pole_state->get_joint_angle());
         Eigen::Matrix<double, 10, 1> coriolis = franka_model->get_coriolis10(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());
-        Eigen::Matrix<double, 10, 10> mass = Eigen::Matrix<double, 10, 10>::Zero();
-        if (parameters->dynamics > 0.0) franka_model->get_mass_matrix10(franka_state->get_joint_positions(), pole_state->get_joint_angle());
+        Eigen::Matrix<double, 10, 10> mass = (parameters->dynamics > 0.0) ? mass = franka_model->get_mass_matrix10(franka_state->get_joint_positions(), pole_state->get_joint_angle()) : Eigen::Matrix<double, 10, 10>::Zero();
 
         // calculate last (1) of acceleration
         a10.segment<1>(9) = /*zero torque on pole*/ - gravity.segment<1>(9) - coriolis.segment<1>(9) - mass.block<1, 9>(9,0) * a10.segment<9>(0);
@@ -152,8 +159,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
         // calculate gravity, coriolis and mass matrix
         Eigen::Matrix<double, 11, 1> gravity = franka_model->get_gravity11(franka_state->get_joint_positions(), pole_state->get_joint_angle());
         Eigen::Matrix<double, 11, 1> coriolis = franka_model->get_coriolis11(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());
-        Eigen::Matrix<double, 11, 11> mass = Eigen::Matrix<double, 11, 11>::Zero();
-        if (parameters->dynamics > 0.0) franka_model->get_mass_matrix11(franka_state->get_joint_positions(), pole_state->get_joint_angle());
+        Eigen::Matrix<double, 11, 11> mass = (parameters->dynamics > 0.0) ? mass = franka_model->get_mass_matrix11(franka_state->get_joint_positions(), pole_state->get_joint_angle()) : Eigen::Matrix<double, 11, 11>::Zero();
 
         // calculate last (1) of acceleration
         a11.segment<2>(9) = /*zero torque on pole*/ - gravity.segment<2>(9) - coriolis.segment<2>(9) - mass.block<2, 9>(9,0) * a11.segment<9>(0);
@@ -163,6 +169,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     }
     
     // publish
+    publisher->set_command_timestamp(time);
     publisher->set_command_effector_position(_position_target);
     publisher->set_command_effector_velocity(_velocity_target);
     publisher->set_command_effector_acceleration(_acceleration_target);
