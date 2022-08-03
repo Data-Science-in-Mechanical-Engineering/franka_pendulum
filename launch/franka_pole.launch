@@ -2,23 +2,34 @@
 <launch>
 
   <!-- Customization -->
-  <arg name="gui"         default="true"                doc="Should the gazebo GUI be launched?" />
-  <arg name="plotter"     default="true"                doc="Should plotter be launched?" />
-  <arg name="rviz"        default="false"               doc="Should RVIZ be launched?" />
-  <arg name="resetter"    default="false"               doc="Should resetter be launched?" />
-  <arg name="logger"      default="false"               doc="Should logger be launched?" />
+  <arg name="model"         default="0D"                  doc="Model to use [0D/1D/2D/2Db]" />
+  <arg name="type"          default="test"                doc="Type of controller [test/simple/external/python]" />
+  <arg name="acceleration"  default="true"                doc="Use acceleration controller" />
+  <arg name="simulated"     default="true"                doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
+  <arg name="paused"        default="false"               doc="Should the simulation directly be stopped at 0s?" />
   
-  <arg name="controller"  default="test_position"       doc="Used controller. Can be [simple/test/python/external]_[position/acceleration]" />
-  <arg name="simulated"   default="true"                doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
-  <arg name="paused"      default="false"               doc="Should the simulation directly be stopped at 0s?" />
-  <arg name="model"       default="0D"                  doc="Model to use [0D/1D/2D/2Db]" />
-  <arg name="arm_id"  	  default="panda"               doc="Name of the arm" />
-  
-  <arg name="arm_ip"      default="192.168.0.1"         doc="IP address of the arm"/>
-  <arg name="vicon_ip"    default="134.130.192.68:801"  doc="IP address of the VICON system"/>
+  <arg name="gui"           default="true"                doc="Should the gazebo GUI be launched?" />
+  <arg name="plotter"       default="true"                doc="Should plotter be launched?" />
+  <arg name="rviz"          default="false"               doc="Should RVIZ be launched?" />
+  <arg name="resetter"      default="false"               doc="Should resetter be launched?" />
+  <arg name="logger"        default="false"               doc="Should logger be launched?" />
+
+  <arg name="arm_id"  	    default="panda"               doc="Name of the arm" />
+  <arg name="arm_ip"        default="192.168.0.1"         doc="IP address of the arm"/>
+  <arg name="vicon_ip"      default="134.130.192.68:801"  doc="IP address of the VICON system"/>
 
   <!-- Load parameters -->
   <rosparam file="$(find franka_pole)/config/parameters.yaml" subst_value="true" />
+  <rosparam file="$(find franka_pole)/config/override/0D.yaml" subst_value="true" if="$(eval arg('model') == '0D')"/>
+  <rosparam file="$(find franka_pole)/config/override/1D.yaml" subst_value="true" if="$(eval arg('model') == '1D')"/>
+  <rosparam file="$(find franka_pole)/config/override/2D.yaml" subst_value="true" if="$(eval arg('model') == '2D')"/>
+  <rosparam file="$(find franka_pole)/config/override/2Db.yaml" subst_value="true" if="$(eval arg('model') == '2Db')"/>
+  <rosparam file="$(find franka_pole)/config/override/acceleration+1D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '1D')"/>
+  <rosparam file="$(find franka_pole)/config/override/acceleration+2D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '2D')"/>
+  <rosparam file="$(find franka_pole)/config/override/acceleration+2Db.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '2Db')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+acceleration+1D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '1D')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+acceleration+2D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '2D')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+acceleration+2Db.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '2Db')"/>
 
   <!-- Load available controllers -->
   <rosparam file="$(find franka_pole)/config/franka_pole_controllers.yaml" subst_value="true" />
@@ -82,26 +93,33 @@
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
-    args="franka_pole_$(arg controller)_controller"
-    if="$(eval arg('controller') != 'python_position' and arg('controller') != 'python_acceleration')"/>
+    args="franka_pole_$(arg type)_acceleration_controller"
+    if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and arg('acceleration')))"/>
 
   <node name="$(arg arm_id)_controller_spawner"
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
-    args="franka_pole_external_position_controller"
-    if="$(eval arg('controller') == 'python_position')"/>
+    args="franka_pole_$(arg type)_position_controller"
+    if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and not arg('acceleration')))"/>
 
   <node name="$(arg arm_id)_controller_spawner"
     pkg="controller_manager"
     type="spawner"
     respawn="false" output="screen"
     args="franka_pole_external_acceleration_controller"
-    if="$(eval arg('controller') == 'python_acceleration')"/>
+    if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
+
+  <node name="$(arg arm_id)_controller_spawner"
+    pkg="controller_manager"
+    type="spawner"
+    respawn="false" output="screen"
+    args="franka_pole_external_position_controller"
+    if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
 
   <!-- External python controllers -->
-  <node name="python_position_controller" pkg="franka_pole" type="position_controller.py" required="true" output="screen" if="$(eval arg('controller') == 'python_position')"/>
-  <node name="python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" required="true" output="screen" if="$(eval arg('controller') == 'python_acceleration')"/>
+  <node name="python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" required="true" output="screen" if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
+  <node name="python_position_controller" pkg="franka_pole" type="position_controller.py" required="true" output="screen" if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
 
   <!-- Plotter -->
   <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen" if="$(arg plotter)"/>
@@ -110,7 +128,8 @@
   <node name="resetter" pkg="franka_pole" type="resetter.py" required="true" output="screen" if="$(arg resetter)"/>
 
   <!-- Logger -->
-  <node name="logger" pkg="franka_pole" type="logger.py" required="true" output="screen" if="$(arg logger)"/>
+  <node name="logger" pkg="rosbag" type="record" args="record /franka_pole/sample -O $(find franka_pole)/temp/log" if="$(arg logger)"/>
+  <!-- <node name="logger" pkg="franka_pole" type="logger.py" required="true" output="screen" if="$(arg logger)"/> -->
 
   <!-- RVIZ -->
   <group if="$(arg rviz)">

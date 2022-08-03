@@ -113,7 +113,8 @@ void franka_pole::Plugin::Reset()
     }
     if (_pole[1] != nullptr)
     {
-        _pole[1]->SetPosition(0, _parameters->initial_pole_positions(1) + ((_parameters->model == Model::D2) ? (M_PI / 6) : 0));
+        if (_parameters->model == Model::D2) _pole[1]->SetPosition(0, _parameters->initial_pole_positions(1) + M_PI/6);
+        else _pole[1]->SetPosition(0, _parameters->initial_pole_positions(1));
         _pole[1]->SetVelocity(0, _parameters->initial_pole_velocities(1));
     }
 }

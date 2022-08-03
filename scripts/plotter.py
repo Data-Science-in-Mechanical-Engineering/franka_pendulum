@@ -1,6 +1,7 @@
 #!/usr/bin/python3
-import rospy
+import rospy, rosbag, rospkg
 import numpy as np
+import sys
 from franka_pole.msg import Sample
 from matplotlib import pyplot as plt
 from matplotlib import animation
@@ -212,8 +213,6 @@ class Plotter:
         plt.show()
 
 if __name__ == '__main__':
-    rospy.init_node('plotter')
-    
     # Plot structure
     pole_angle_x = Signal("Pole angle around X")
     pole_angle_y = Signal("Pole angle around Y")
@@ -231,12 +230,13 @@ if __name__ == '__main__':
     
     plotter = Plotter("Plotter", [ position_plot_x, position_plot_y, acceleration_plot_x, acceleration_plot_y ], 200)
 
-    # Plot values
+    # Message processing
     previous_franka_timestamp = -np.Inf
     filtered_effector_dx = 0.0
     filtered_effector_dy = 0.0
     previous_filtered_effector_dx = 0.0
     previous_filtered_effector_dy = 0.0
+
     def callback(sample):
         global previous_franka_timestamp, filtered_effector_dx, filtered_effector_dy, previous_filtered_effector_dx, previous_filtered_effector_dy
         filtered_effector_dx = 0.95 * filtered_effector_dx + 0.05 * sample.franka_effector_velocity[0]
@@ -254,7 +254,22 @@ if __name__ == '__main__':
         previous_filtered_effector_dx = filtered_effector_dx
         previous_filtered_effector_dy = filtered_effector_dy
         previous_franka_timestamp = sample.franka_timestamp
+
+    # Feeding values
+    if len(sys.argv) == 1:
+        # Live
+        rospy.init_node('plotter')
+        sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, callback)
+        plotter.start()
+        
+    elif len(sys.argv) == 2:
+        # Recorded
+        start_time = float(sys.argv[1])
+        duration = 3.0
+        bag = rosbag.Bag(rospkg.RosPack().get_path("franka_pole") + "/temp/log.bag")
+        for topic, sample, time in bag.read_messages(topics=['/franka_pole/sample']):
+            if sample.franka_timestamp > start_time and sample.franka_timestamp < start_time + duration: callback(sample)
+        bag.close()
+        plotter.start()
     
-    sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, callback)        
-    
-    plotter.start()
+    else: raise Exception("Invalid usage")
