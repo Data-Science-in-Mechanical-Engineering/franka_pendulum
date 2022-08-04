@@ -2,13 +2,12 @@
 
 void franka_pole::ExternalAccelerationController::_callback(const franka_pole::CommandAcceleration::ConstPtr &msg)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
+    std::lock_guard<std::mutex> guard(mutex);
     _acceleration_target = Eigen::Matrix<double, 3, 1>::Map(&msg->command_effector_acceleration[0]);
 }
 
 bool franka_pole::ExternalAccelerationController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
     _acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
     _subscriber = node_handle.subscribe("/franka_pole/command_acceleration", 10, &ExternalAccelerationController::_callback, this);
     return true;
@@ -16,7 +15,6 @@ bool franka_pole::ExternalAccelerationController::_init_level2(hardware_interfac
 
 Eigen::Matrix<double, 3, 1> franka_pole::ExternalAccelerationController::_get_acceleration_level2(const ros::Time &time, const ros::Duration &period)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
     return _acceleration_target;
 }
 

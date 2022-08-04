@@ -45,7 +45,6 @@ namespace franka_pole
         //Additional parameters
         Eigen::Matrix<double, 7, 1> _initial_joint_positions;
 
-        std::mutex _mutex;
         void _callback(const franka_pole::CommandReset::ConstPtr &msg);
         void _reset();
 
@@ -61,6 +60,7 @@ namespace franka_pole
 
     public:
         //Components
+        std::mutex mutex;
         Parameters *parameters = nullptr;
         FrankaModel *franka_model = nullptr;
         FrankaState *franka_state = nullptr;

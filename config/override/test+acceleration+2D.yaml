@@ -1,2 +1,2 @@
 franka_pole:
-  outbound_translation_stiffness: [ 0.0, 200.0, 200.0 ]
+  translation_stiffness: [ 0.0, .NaN, .NaN ]

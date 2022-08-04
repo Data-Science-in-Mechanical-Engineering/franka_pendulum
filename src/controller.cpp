@@ -9,7 +9,7 @@
         
 void franka_pole::Controller::_callback(const franka_pole::CommandReset::ConstPtr &msg)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
+    std::lock_guard<std::mutex> guard(mutex);
     if (msg->software)
     {
         sem_post(_software_reset_semaphore);
@@ -40,7 +40,7 @@ void franka_pole::Controller::_reset()
 
 bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
+    std::lock_guard<std::mutex> guard(mutex);
     _robot_hw = robot_hw;
     _node_handle = node_handle;
 
@@ -50,11 +50,11 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
 
         //Creating components
         ParameterReader parameter_reader(node_handle);
-        parameters = new Parameters(parameter_reader, node_handle);
+        parameters = new Parameters(&mutex, parameter_reader, node_handle, true);
         franka_model = new FrankaModel(parameters);
         publisher = new Publisher(parameters, node_handle);
         franka_state = new FrankaState(parameters, franka_model, publisher, robot_hw);
-        if (parameters->model != Model::D0) pole_state = new PoleState(parameters, franka_model, franka_state, publisher, robot_hw, node_handle);    
+        if (parameters->model != Model::D0) pole_state = new PoleState(parameters, franka_model, franka_state, publisher, &mutex, robot_hw, node_handle);    
 
         //Opening reset subscribers
         _reset_subscriber = node_handle.subscribe("/franka_pole/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
@@ -72,12 +72,12 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
 
 void franka_pole::Controller::_starting_level0(const ros::Time &time)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
+    std::lock_guard<std::mutex> guard(mutex);
 }
 
 void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::Duration &period)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
+    std::lock_guard<std::mutex> guard(mutex);
     if (_software_reset)
     {
         int value;

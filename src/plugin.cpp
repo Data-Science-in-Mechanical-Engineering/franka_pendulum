@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <string>
 #include <iostream>
+#include <mutex>
 
 namespace franka_pole
 {
@@ -25,6 +26,7 @@ namespace franka_pole
         gazebo::event::ConnectionPtr _connection;
 
         //Components
+        std::mutex _mutex;
         Parameters *_parameters = nullptr;
         FrankaModel *_franka_model = nullptr;
 
@@ -50,12 +52,13 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
 {
     try
     {
+        std::lock_guard<std::mutex> guard(_mutex);
         ros::TransportHints().tcpNoDelay();
         
         //Create components
         ros::NodeHandle node_handle;
         ParameterReader parameter_reader(node_handle);
-        _parameters = new Parameters(parameter_reader, node_handle);
+        _parameters = new Parameters(&_mutex, parameter_reader, node_handle, false);
         _franka_model = new FrankaModel(_parameters);
         
         //Init semaphore
@@ -121,6 +124,7 @@ void franka_pole::Plugin::Reset()
 
 void franka_pole::Plugin::Update(const gazebo::common::UpdateInfo &info)
 {
+    std::lock_guard<std::mutex> guard(_mutex);
     int value;
     sem_getvalue(_software_reset_semaphore, &value);
     if (value > 0)

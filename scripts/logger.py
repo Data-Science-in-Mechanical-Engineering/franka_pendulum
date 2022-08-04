@@ -1,12 +1,25 @@
 #!/usr/bin/python3
 import rospy, rospkg
-import numpy as np
+import sys
 from franka_pole.msg import Sample
 
 if __name__ == '__main__':
-    rospy.init_node('logger')
-    file = open(rospkg.RosPack().get_path("franka_pole") + "/temp/log", "w")
+    # Get log name
+    log_name = "log"
+    next_log_name = False
+    for i in sys.argv:
+        if next_log_name:
+            log_name = i
+            next_log_name  = False
+        elif i == "-O":
+            next_log_name = True
 
+    # Open log file
+    rospy.init_node('logger')
+    print(sys.argv)
+    file = open(rospkg.RosPack().get_path("franka_pole") + "/temp/" + log_name, "w")
+
+    # Write
     def callback(sample):
         file.write(
             "pole_timestamp:                " + str(sample.pole_timestamp) + "\n" +

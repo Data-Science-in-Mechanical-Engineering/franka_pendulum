@@ -5,6 +5,7 @@
 
 #include <ros/ros.h>
 #include <Eigen/Dense>
+#include <mutex>
 
 namespace franka_pole
 {
@@ -13,15 +14,28 @@ namespace franka_pole
     class Parameters
     {
     private:
+        //References
+        std::mutex *_mutex;
+
+        //ROS topics
+        bool _publish;
+        bool _changed;
+        ros::Publisher _publisher;
         ros::Subscriber _subscriber;
-        void _callback(const CommandParameters::ConstPtr &msg);
-        static void _replace_uint(unsigned int *dest, unsigned int source);
-        static void _replace_double(double *dest, double source);
-        static void _replace_quaternion(Eigen::Quaterniond *dest, const boost::array<double, 4> &source);
-        template<int N> static void _replace_vector(Eigen::Matrix<double, N, 1> *dest, const boost::array<double, N> &source);
+        void _receive(const CommandParameters::ConstPtr &msg);
+        void _send();
+
+        void _receive_uint(unsigned int *dest, unsigned int source);
+        void _receive_double(double *dest, double source);
+        void _receive_quaternion(Eigen::Quaterniond *dest, const boost::array<double, 4> &source);
+        template<int N> void _receive_vector(Eigen::Matrix<double, N, 1> *dest, const boost::array<double, N> &source);
+        static void _send_uint(unsigned int source, unsigned int *dest);
+        static void _send_double(double source, double *dest);
+        static void _send_quaternion(const Eigen::Quaterniond &source, boost::array<double, 4> *dest);
+        template<int N> static void _send_vector(const Eigen::Matrix<double, N, 1> &source, boost::array<double, N> *dest);
 
     public:
-        Parameters(const ParameterReader &reader, ros::NodeHandle &node_handle);
+        Parameters(std::mutex *mutex, const ParameterReader &reader, ros::NodeHandle &node_handle, bool publish);
         
         // Essential
         std::string arm_id;

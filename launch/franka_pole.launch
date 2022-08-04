@@ -2,10 +2,10 @@
 <launch>
 
   <!-- Customization -->
+  <arg name="source"        default="gazebo"              doc="Source of data [gazebo/robot/record]" />
   <arg name="model"         default="0D"                  doc="Model to use [0D/1D/2D/2Db]" />
   <arg name="type"          default="test"                doc="Type of controller [test/simple/external/python]" />
   <arg name="acceleration"  default="true"                doc="Use acceleration controller" />
-  <arg name="simulated"     default="true"                doc="Should the gazebo simulation be launched? Use false in case if you want to run on the real hardware" />
   <arg name="paused"        default="false"               doc="Should the simulation directly be stopped at 0s?" />
   
   <arg name="gui"           default="true"                doc="Should the gazebo GUI be launched?" />
@@ -13,20 +13,26 @@
   <arg name="rviz"          default="false"               doc="Should RVIZ be launched?" />
   <arg name="resetter"      default="false"               doc="Should resetter be launched?" />
   <arg name="logger"        default="false"               doc="Should logger be launched?" />
+  <arg name="recorder"      default="false"               doc="Should recorder (rosbag) be launched?" />
 
+  <arg name="log_name"  	  default="log"                 doc="Name of the log file" />
+  <arg name="record_name"   default="log"                 doc="Name of the the record (.bag) file" />
   <arg name="arm_id"  	    default="panda"               doc="Name of the arm" />
   <arg name="arm_ip"        default="192.168.0.1"         doc="IP address of the arm"/>
   <arg name="vicon_ip"      default="134.130.192.68:801"  doc="IP address of the VICON system"/>
 
   <!-- Load parameters -->
+  <arg name="simulated" value="$(eval arg('source') == 'gazebo')" />
   <rosparam file="$(find franka_pole)/config/parameters.yaml" subst_value="true" />
   <rosparam file="$(find franka_pole)/config/override/0D.yaml" subst_value="true" if="$(eval arg('model') == '0D')"/>
   <rosparam file="$(find franka_pole)/config/override/1D.yaml" subst_value="true" if="$(eval arg('model') == '1D')"/>
   <rosparam file="$(find franka_pole)/config/override/2D.yaml" subst_value="true" if="$(eval arg('model') == '2D')"/>
   <rosparam file="$(find franka_pole)/config/override/2Db.yaml" subst_value="true" if="$(eval arg('model') == '2Db')"/>
+  <rosparam file="$(find franka_pole)/config/override/acceleration+0D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '0D')"/>
   <rosparam file="$(find franka_pole)/config/override/acceleration+1D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '1D')"/>
   <rosparam file="$(find franka_pole)/config/override/acceleration+2D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '2D')"/>
   <rosparam file="$(find franka_pole)/config/override/acceleration+2Db.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '2Db')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+acceleration+0D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '0D')"/>
   <rosparam file="$(find franka_pole)/config/override/test+acceleration+1D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '1D')"/>
   <rosparam file="$(find franka_pole)/config/override/test+acceleration+2D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '2D')"/>
   <rosparam file="$(find franka_pole)/config/override/test+acceleration+2Db.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '2Db')"/>
@@ -34,8 +40,22 @@
   <!-- Load available controllers -->
   <rosparam file="$(find franka_pole)/config/franka_pole_controllers.yaml" subst_value="true" />
 
-  <!-- Simulation -->
-  <group if="$(arg simulated)">
+  <!-- Define robot model -->
+  <group if="$(eval arg('model') == '0D')">
+    <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole.xacro arm_id:=$(arg arm_id)" />
+  </group>
+  <group if="$(eval arg('model') == '1D')">
+    <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_1D.xacro arm_id:=$(arg arm_id)" />
+  </group>
+  <group if="$(eval arg('model') == '2D')">
+    <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2D.xacro arm_id:=$(arg arm_id)" />
+  </group>
+  <group if="$(eval arg('model') == '2Db')">
+    <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2Db.xacro arm_id:=$(arg arm_id)" />
+  </group>
+
+  <!-- Option 1: Simulation -->
+  <group if="$(eval arg('source') == 'gazebo')">
     <!-- Load simulation parameters -->
     <rosparam file="$(find franka_gazebo)/config/franka_hw_sim.yaml" subst_value="true" />
     <rosparam file="$(find franka_pole)/config/franka_pole_sim.yaml" subst_value="true" />
@@ -46,20 +66,6 @@
       <arg name="paused" value="true"/>
       <arg name="use_sim_time" value="false"/>
     </include>
-    
-    <!-- Define robot -->
-    <group if="$(eval arg('model') == '0D')">
-      <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole.xacro arm_id:=$(arg arm_id)" />
-    </group>
-    <group if="$(eval arg('model') == '1D')">
-      <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_1D.xacro arm_id:=$(arg arm_id)" />
-    </group>
-    <group if="$(eval arg('model') == '2D')">
-      <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2D.xacro arm_id:=$(arg arm_id)" />
-    </group>
-    <group if="$(eval arg('model') == '2Db')">
-      <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2Db.xacro arm_id:=$(arg arm_id)" />
-    </group>
 
     <!-- Create robot -->
     <arg name="unpaused" value="$(eval '' if arg('paused') else '-unpause')" />
@@ -76,8 +82,8 @@
       args="franka_gripper"/>
   </group>
 
-  <!-- Real robot -->
-  <group unless="$(arg simulated)">
+  <!-- Option 2: Real robot -->
+  <group if="$(eval arg('source') == 'robot')">
     <include file="$(find franka_control)/launch/franka_control.launch">
       <arg name="robot_ip" value="$(arg arm_ip)" />
       <arg name="load_gripper" value="true" />
@@ -88,38 +94,48 @@
     </include>
   </group>
 
-  <!-- Main controller -->
-  <node name="$(arg arm_id)_controller_spawner"
-    pkg="controller_manager"
-    type="spawner"
-    respawn="false" output="screen"
-    args="franka_pole_$(arg type)_acceleration_controller"
-    if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and arg('acceleration')))"/>
+  <!-- Option 3: Record -->
+  <group if="$(eval arg('source') == 'record')">
+    <node name="player" pkg="rosbag" type="play" args="$(find franka_pole)/temp/$(arg record_name).bag"/>
+  </group>
 
-  <node name="$(arg arm_id)_controller_spawner"
-    pkg="controller_manager"
-    type="spawner"
-    respawn="false" output="screen"
-    args="franka_pole_$(arg type)_position_controller"
-    if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and not arg('acceleration')))"/>
+  <group unless="$(eval arg('source') == 'record')">
+    <!-- Main controller -->
+    <node name="$(arg arm_id)_controller_spawner"
+      pkg="controller_manager"
+      type="spawner"
+      respawn="false" output="screen"
+      args="franka_pole_$(arg type)_acceleration_controller"
+      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and arg('acceleration')))"/>
 
-  <node name="$(arg arm_id)_controller_spawner"
-    pkg="controller_manager"
-    type="spawner"
-    respawn="false" output="screen"
-    args="franka_pole_external_acceleration_controller"
-    if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
+    <node name="$(arg arm_id)_controller_spawner"
+      pkg="controller_manager"
+      type="spawner"
+      respawn="false" output="screen"
+      args="franka_pole_$(arg type)_position_controller"
+      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and not arg('acceleration')))"/>
 
-  <node name="$(arg arm_id)_controller_spawner"
-    pkg="controller_manager"
-    type="spawner"
-    respawn="false" output="screen"
-    args="franka_pole_external_position_controller"
-    if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
+    <node name="$(arg arm_id)_controller_spawner"
+      pkg="controller_manager"
+      type="spawner"
+      respawn="false" output="screen"
+      args="franka_pole_external_acceleration_controller"
+      if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
 
-  <!-- External python controllers -->
-  <node name="python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" required="true" output="screen" if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
-  <node name="python_position_controller" pkg="franka_pole" type="position_controller.py" required="true" output="screen" if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
+    <node name="$(arg arm_id)_controller_spawner"
+      pkg="controller_manager"
+      type="spawner"
+      respawn="false" output="screen"
+      args="franka_pole_external_position_controller"
+      if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
+
+    <!-- External python controllers -->
+    <node name="python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" required="true" output="screen" if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
+    <node name="python_position_controller" pkg="franka_pole" type="position_controller.py" required="true" output="screen" if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
+
+    <!-- Recorder -->
+    <node name="recorder" pkg="rosbag" type="record" args="record /franka_pole/sample /franka_pole/joint_state -O $(find franka_pole)/temp/$(arg record_name)" if="$(arg recorder)"/>
+  </group>
 
   <!-- Plotter -->
   <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen" if="$(arg plotter)"/>
@@ -128,8 +144,7 @@
   <node name="resetter" pkg="franka_pole" type="resetter.py" required="true" output="screen" if="$(arg resetter)"/>
 
   <!-- Logger -->
-  <node name="logger" pkg="rosbag" type="record" args="record /franka_pole/sample -O $(find franka_pole)/temp/log" if="$(arg logger)"/>
-  <!-- <node name="logger" pkg="franka_pole" type="logger.py" required="true" output="screen" if="$(arg logger)"/> -->
+  <node name="logger" pkg="franka_pole" type="logger.py"  args="-O $(find franka_pole)/temp/$(arg log_name)" required="true" output="screen" if="$(arg logger)"/>
 
   <!-- RVIZ -->
   <group if="$(arg rviz)">
@@ -137,7 +152,7 @@
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
     <node name="joint_state_publisher" type="joint_state_publisher" pkg="joint_state_publisher">
       <rosparam param="source_list">[franka_pole/joint_state] </rosparam>
-      <param name="rate" value="20"/>
+      <param name="rate" value="100"/>
     </node>
   </group>
 </launch>

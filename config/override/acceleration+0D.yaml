@@ -1,0 +1,2 @@
+franka_pole:
+  translation_stiffness: [ .NaN, 0.0, .NaN ]

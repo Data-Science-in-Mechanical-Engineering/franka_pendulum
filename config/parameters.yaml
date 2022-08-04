@@ -13,7 +13,7 @@ franka_pole:
   
   # Target state and constraints
   target_effector_position: [ 0.6, 0.0, 0.6 ]
-  target_effector_orientation: { w: 0.0, x: 1.0, y: 0.0, z: 0.0 }
+  target_effector_orientation: { w: 1.0, x: 0.0, y: 0.0, z: 0.0 }
   target_joint0_position: .NaN # fallbacks to atan2(target_effector_position[1] / target_effector_position[0])
   min_effector_position: [ 0.4, -0.3, 0.6 ]
   max_effector_position: [ 0.8, 0.3, 0.6 ]

@@ -27,6 +27,7 @@ namespace franka_pole
         FrankaModel *_franka_model;
         const FrankaState *_franka_state;
         Publisher *_publisher;
+        std::mutex *_mutex;
 
         //Technical, simulated
         hardware_interface::JointHandle _joint_handles[2];
@@ -35,7 +36,6 @@ namespace franka_pole
 
         //Callback for ROS, not simulated
         ros::Subscriber _subscriber;
-        std::mutex _mutex;
         void _callback(const geometry_msgs::TransformStamped::ConstPtr &msg);
         
         //Timestamp
@@ -49,7 +49,7 @@ namespace franka_pole
         Eigen::Matrix<double, 2, 1> _joint_dangle = Eigen::Matrix<double, 2, 1>::Zero();
 
     public:
-        PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
+        PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, std::mutex *mutex, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
         void update(const ros::Time &time);
 
         double get_timestamp();

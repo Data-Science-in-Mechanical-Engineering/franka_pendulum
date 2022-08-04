@@ -14,7 +14,6 @@ namespace franka_pole
         //Subscriber
         Eigen::Matrix<double, 3, 1> _acceleration_target;
         ros::Subscriber _subscriber;
-        std::mutex _mutex;
         void _callback(const franka_pole::CommandAcceleration::ConstPtr &msg);
 
         //Overrides from franka_pole::AccelerationController

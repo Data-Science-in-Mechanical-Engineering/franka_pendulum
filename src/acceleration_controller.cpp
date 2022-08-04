@@ -30,8 +30,8 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     Eigen::Matrix<double, 7, 1> torque = Eigen::Matrix<double, 7, 1>::Zero();
 
     // integrate
-    _velocity_target += 0.001 * _acceleration_target;
-    _position_target += 0.001 * _velocity_target;
+    _velocity_target += 0.001 * parameters->command_period * _acceleration_target;
+    _position_target += 0.001 * parameters->command_period * _velocity_target;
 
     // apply constraints and safety
     Eigen::Matrix<double, 6, 1> cartesian_stiffness;

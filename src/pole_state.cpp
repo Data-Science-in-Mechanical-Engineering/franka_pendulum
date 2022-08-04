@@ -6,7 +6,7 @@
 
 void franka_pole::PoleState::_callback(const geometry_msgs::TransformStamped::ConstPtr &msg)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
+    std::lock_guard<std::mutex> guard(*_mutex);
 
     //Absolute angles
     Eigen::Matrix<double, 3, 1> up = Eigen::Quaterniond(msg->transform.rotation.w, msg->transform.rotation.x, msg->transform.rotation.y, msg->transform.rotation.z) * Eigen::Vector3d::UnitZ();
@@ -31,11 +31,9 @@ void franka_pole::PoleState::_callback(const geometry_msgs::TransformStamped::Co
     _publisher->set_pole_dangle(_dangle);
 }
 
-franka_pole::PoleState::PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) :
-_parameters(parameters), _franka_model(franka_model), _franka_state(franka_state), _publisher(publisher)
+franka_pole::PoleState::PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, std::mutex *mutex, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) :
+_parameters(parameters), _franka_model(franka_model), _franka_state(franka_state), _publisher(publisher), _mutex(mutex)
 {
-    std::lock_guard<std::mutex> guard(_mutex);
-
     if (_parameters->simulated)
     {
         auto* position_joint_interface = robot_hw->get<hardware_interface::PositionJointInterface>();
@@ -59,9 +57,7 @@ _parameters(parameters), _franka_model(franka_model), _franka_state(franka_state
 }
 
 void franka_pole::PoleState::update(const ros::Time &time)
-{
-    std::lock_guard<std::mutex> guard(_mutex);
-    
+{    
     if (_parameters->simulated)
     {
         //Measuring joint angles + adding noise
@@ -110,30 +106,25 @@ void franka_pole::PoleState::update(const ros::Time &time)
 
 double franka_pole::PoleState::get_timestamp()
 {
-    std::lock_guard<std::mutex> guard(_mutex);
     return _timestamp;
 }
 
 Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_angle()
 {
-    std::lock_guard<std::mutex> guard(_mutex);
     return _angle;
 }
 
 Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_dangle()
 {
-    std::lock_guard<std::mutex> guard(_mutex);
     return _dangle;
 }
 
 Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_joint_angle()
 {
-    std::lock_guard<std::mutex> guard(_mutex);
     return _joint_angle;
 }
 
 Eigen::Matrix<double, 2, 1> franka_pole::PoleState::get_joint_dangle()
 {
-    std::lock_guard<std::mutex> guard(_mutex);
     return _joint_dangle;
 }

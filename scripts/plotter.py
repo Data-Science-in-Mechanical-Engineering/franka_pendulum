@@ -236,11 +236,13 @@ if __name__ == '__main__':
     filtered_effector_dy = 0.0
     previous_filtered_effector_dx = 0.0
     previous_filtered_effector_dy = 0.0
+    filter_factor = 0.5
 
     def callback(sample):
         global previous_franka_timestamp, filtered_effector_dx, filtered_effector_dy, previous_filtered_effector_dx, previous_filtered_effector_dy
-        filtered_effector_dx = 0.95 * filtered_effector_dx + 0.05 * sample.franka_effector_velocity[0]
-        filtered_effector_dy = 0.95 * filtered_effector_dy + 0.05 * sample.franka_effector_velocity[1]
+        
+        filtered_effector_dx = (1.0 - filter_factor) * filtered_effector_dx + filter_factor * sample.franka_effector_velocity[0]
+        filtered_effector_dy = (1.0 - filter_factor) * filtered_effector_dy + filter_factor * sample.franka_effector_velocity[1]
 
         pole_angle_x.set(sample.pole_timestamp, sample.pole_angle[0])
         pole_angle_y.set(sample.pole_timestamp, sample.pole_angle[1])
@@ -256,20 +258,20 @@ if __name__ == '__main__':
         previous_franka_timestamp = sample.franka_timestamp
 
     # Feeding values
-    if len(sys.argv) == 1:
+    if len(sys.argv) != 2:
         # Live
         rospy.init_node('plotter')
         sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, callback)
         plotter.start()
         
-    elif len(sys.argv) == 2:
+    else:
         # Recorded
         start_time = float(sys.argv[1])
         duration = 3.0
         bag = rosbag.Bag(rospkg.RosPack().get_path("franka_pole") + "/temp/log.bag")
         for topic, sample, time in bag.read_messages(topics=['/franka_pole/sample']):
-            if sample.franka_timestamp > start_time and sample.franka_timestamp < start_time + duration: callback(sample)
+            if sample.franka_timestamp < start_time: continue
+            if sample.franka_timestamp > start_time + duration: break
+            callback(sample)
         bag.close()
         plotter.start()
-    
-    else: raise Exception("Invalid usage")
