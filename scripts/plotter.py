@@ -213,6 +213,17 @@ class Plotter:
         plt.show()
 
 if __name__ == '__main__':
+    # Get log name and start time
+    log_name = "log.bag"
+    start_time = None
+    next_log_name = False
+    next_start_time = False
+    for i in sys.argv:
+        if next_log_name: log_name = i
+        if next_start_time: start_time = float(i)
+        next_log_name = (i == "-I")
+        next_start_time = (i == "-S")
+
     # Plot structure
     pole_angle_x = Signal("Pole angle around X")
     pole_angle_y = Signal("Pole angle around Y")
@@ -258,7 +269,7 @@ if __name__ == '__main__':
         previous_franka_timestamp = sample.franka_timestamp
 
     # Feeding values
-    if len(sys.argv) != 2:
+    if start_time is None:
         # Live
         rospy.init_node('plotter')
         sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, callback)
@@ -266,7 +277,6 @@ if __name__ == '__main__':
         
     else:
         # Recorded
-        start_time = float(sys.argv[1])
         duration = 3.0
         bag = rosbag.Bag(rospkg.RosPack().get_path("franka_pole") + "/temp/log.bag")
         for topic, sample, time in bag.read_messages(topics=['/franka_pole/sample']):

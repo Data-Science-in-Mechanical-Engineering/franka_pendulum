@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Customization -->
+  <arg name="source"        default="gazebo"              doc="Source of data [gazebo/robot/record]" />
+  <arg name="model"         default="2Db"                 doc="Model to use [0D/1D/2D/2Db]" /> <!-- franka_pole's default is 0D -->
+  <arg name="acceleration"  default="true"                doc="Use acceleration controller" />
+  <arg name="paused"        default="false"               doc="Should the simulation directly be stopped at 0s?" />
+  
+  <arg name="gui"           default="true"                doc="Should the gazebo GUI be launched?" />
+  <arg name="plotter"       default="true"                doc="Should plotter be launched?" />
+  <arg name="rviz"          default="false"               doc="Should RVIZ be launched?" />
+  <arg name="resetter"      default="false"               doc="Should resetter be launched?" />
+  <arg name="logger"        default="false"               doc="Should logger be launched?" />
+  <arg name="recorder"      default="false"               doc="Should recorder (rosbag) be launched?" />
+
+  <arg name="log_name"  	  default="log"                 doc="Name of the log file" />
+  <arg name="record_name"   default="log"                 doc="Name of the the record (.bag) file" />
+  <arg name="arm_id"  	    default="panda"               doc="Name of the arm" />
+  <arg name="arm_ip"        default="192.168.0.1"         doc="IP address of the arm"/>
+  <arg name="vicon_ip"      default="134.130.192.68:801"  doc="IP address of the VICON system"/>
+
+  <!-- Load available controllers -->
+  <rosparam file="$(find franka_pole_example)/config/franka_pole_example_controllers.yaml" subst_value="true" />
+
+  <!-- Launch franka_pole.launch -->
+  <include file="$(find franka_pole)/launch/franka_pole.launch">
+    <arg name="source"        value="$(arg source)" />
+    <arg name="model"         value="$(arg model)" />
+    <arg name="type"          value="custom" /> <!-- franka_pole is fine with passing something else as type, it will just not launch a controller -->
+    <arg name="acceleration"  value="$(arg acceleration)" />
+    <arg name="paused"        value="$(arg paused)" />
+    
+    <arg name="gui"           value="$(arg gui)" />
+    <arg name="plotter"       value="$(arg plotter)" />
+    <arg name="rviz"          value="$(arg rviz)" />
+    <arg name="resetter"      value="$(arg resetter)" />
+    <arg name="logger"        value="$(arg logger)" />
+    <arg name="recorder"      value="$(arg recorder)" />
+
+    <arg name="log_name"  	  value="$(arg log_name)" />
+    <arg name="record_name"   value="$(arg record_name)" />
+    <arg name="arm_id"  	    value="$(arg arm_id)" />
+    <arg name="arm_ip"        value="$(arg arm_ip)" />
+    <arg name="vicon_ip"      value="$(arg vicon_ip)" />
+  </include>
+
+  <!-- Start custom controller -->
+  <node name="franka_pole_example_controller"
+    pkg="controller_manager"
+    type="spawner"
+    respawn="false" output="screen"
+    args="franka_pole_example_hybrid_controller"/>
+
+</launch>

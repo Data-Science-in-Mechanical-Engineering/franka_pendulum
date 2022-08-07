@@ -1,0 +1,2 @@
+franka_pole_example_hybrid_controller:
+  type: franka_pole_example/HybridController

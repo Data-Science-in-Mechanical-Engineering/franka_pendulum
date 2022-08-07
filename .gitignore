@@ -2,3 +2,4 @@
 *.FCStd1
 **/__pycache__
 temp/
+doc/

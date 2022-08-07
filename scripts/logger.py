@@ -8,11 +8,8 @@ if __name__ == '__main__':
     log_name = "log"
     next_log_name = False
     for i in sys.argv:
-        if next_log_name:
-            log_name = i
-            next_log_name  = False
-        elif i == "-O":
-            next_log_name = True
+        if next_log_name: log_name = i
+        next_log_name = (i == "-O")
 
     # Open log file
     rospy.init_node('logger')

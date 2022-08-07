@@ -3,12 +3,15 @@ project(franka_pole)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  std_msgs
+  message_generation
+  controller_interface
   franka_description
   franka_gazebo
-  message_generation
 )
-find_package(pinocchio REQUIRED)
 find_package(gazebo REQUIRED)
+find_package(pinocchio REQUIRED)
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -26,8 +29,7 @@ add_message_files(
 
 # Generate added messages and services with any dependencies listed here
 generate_messages(
-    DEPENDENCIES
-    std_msgs  # Or other packages containing msgs
+    DEPENDENCIES std_msgs
 )
 
 ###################################
@@ -35,7 +37,12 @@ generate_messages(
 ###################################
 
 ## The catkin_package macro generates cmake config files for your package
-catkin_package()
+catkin_package(
+  INCLUDE_DIRS include
+  LIBRARIES franka_pole_controllers
+  CATKIN_DEPENDS roscpp std_msgs message_generation controller_interface franka_description franka_gazebo
+  DEPENDS gazebo pinocchio
+)
 
 ###########
 ## Build ##
@@ -56,7 +63,7 @@ add_custom_target(franka_pole_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf")
 add_custom_target(franka_pole_xacro_2Db ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf")
 
-## Declare a C++ libraries
+## Declare C++ libraries
 add_library(franka_pole_common SHARED
 src/parameters.cpp
 src/parameter_reader.cpp
@@ -64,7 +71,8 @@ src/franka_model.cpp)
 target_include_directories(franka_pole_common PUBLIC include)
 target_compile_options(franka_pole_common PUBLIC -O3)
 target_include_directories(franka_pole_common PUBLIC ${catkin_INCLUDE_DIRS} ${pinocchio_INCLUDE_DIRS})
-target_link_libraries(franka_pole_common PUBLIC ${pinocchio_LIBRARIES})
+target_link_libraries(franka_pole_common PUBLIC ${catkin_LIBRARIES} ${pinocchio_LIBRARIES})
+add_dependencies(franka_pole_common ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_library(franka_pole_controllers SHARED
 src/franka_state.cpp
