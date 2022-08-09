@@ -8,9 +8,15 @@ void franka_pole::PoleState::_callback(const geometry_msgs::TransformStamped::Co
 {
     std::lock_guard<std::mutex> guard(*_mutex);
 
-    //Absolute angles
-    Eigen::Matrix<double, 3, 1> up = Eigen::Quaterniond(msg->transform.rotation.w, msg->transform.rotation.x, msg->transform.rotation.y, msg->transform.rotation.z) * Eigen::Vector3d::UnitZ();
-    Eigen::Matrix<double, 2, 1> angle = _parameters->pole_angle_filter * _angle + (1.0 - _parameters->pole_angle_filter) * Eigen::Matrix<double, 2, 1>(-atan2(up(1), up(2)), -atan2(up(0), up(2)));
+    //Measuring absolute angles + filtering
+    Eigen::Quaterniond pole_orientation(msg->transform.rotation.w, msg->transform.rotation.x, msg->transform.rotation.y, msg->transform.rotation.z);
+    Eigen::Matrix<double, 3, 1> up = pole_orientation * Eigen::Vector3d::UnitZ();
+    Eigen::Matrix<double, 2, 1> angle(-atan2(up(1), up(2)), -atan2(up(0), up(2)));
+    angle = _parameters->pole_angle_filter * _angle + (1.0 - _parameters->pole_angle_filter) * angle;
+
+    //Getting joint angles
+    Eigen::Matrix<double, 3, 1> euler = (pole_orientation.inverse() * _franka_state->get_effector_orientation()).toRotationMatrix().eulerAngles(0,1,2);
+    Eigen::Matrix<double, 2, 1> joint_angle(-euler(0), (_parameters->model == Model::D2 || _parameters->model == Model::D2b) ? -euler(1) : 0.0);
 
     //Differentiation & update
     if (_first)
@@ -21,14 +27,18 @@ void franka_pole::PoleState::_callback(const geometry_msgs::TransformStamped::Co
     else
     {
         _dangle = _parameters->pole_dangle_filter * _dangle + (1.0 - _parameters->pole_dangle_filter) * ((angle - _angle) / (msg->header.stamp.toSec() - _timestamp));
+        _joint_dangle = _parameters->pole_dangle_filter * _joint_dangle + (1.0 - _parameters->pole_dangle_filter) * ((joint_angle - _joint_angle) / (msg->header.stamp.toSec() - _timestamp));
     }
     _angle = angle;
+    _joint_angle = joint_angle;
     _timestamp = msg->header.stamp.toSec();
 
     //Publish
     _publisher->set_pole_timestamp(msg->header.stamp);
     _publisher->set_pole_angle(_angle);
     _publisher->set_pole_dangle(_dangle);
+    _publisher->set_pole_joint_angle(_joint_angle);
+    _publisher->set_pole_joint_dangle(_joint_dangle);
 }
 
 franka_pole::PoleState::PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, std::mutex *mutex, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) :
@@ -43,8 +53,8 @@ _parameters(parameters), _franka_model(franka_model), _franka_state(franka_state
     else
     {
         if (_parameters->model == Model::D1) _subscriber = node_handle.subscribe("/vicon/Pole_1D/Pole_1D", 10, &PoleState::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
-        if (_parameters->model == Model::D2) _subscriber = node_handle.subscribe("/vicon/Pole_1D/Pole_2D", 10, &PoleState::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
-        if (_parameters->model == Model::D2b) _subscriber = node_handle.subscribe("/vicon/Pole_1D/Pole_2Db", 10, &PoleState::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
+        if (_parameters->model == Model::D2) _subscriber = node_handle.subscribe("/vicon/Pole_2D/Pole_2D", 10, &PoleState::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
+        if (_parameters->model == Model::D2b) _subscriber = node_handle.subscribe("/vicon/Pole_2Db/Pole_2Db", 10, &PoleState::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
     }
 
     //Random
@@ -60,20 +70,20 @@ void franka_pole::PoleState::update(const ros::Time &time)
 {    
     if (_parameters->simulated)
     {
-        //Measuring joint angles + adding noise
-        Eigen::Matrix<double, 2, 1> joint_angle = _parameters->pole_angle_filter * _joint_angle + (1.0 - _parameters->pole_angle_filter) * Eigen::Matrix<double, 2, 1>(
+        //Measuring joint angles + adding noise + filtering
+        Eigen::Matrix<double, 2, 1> joint_angle(
             (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2b) ? -_joint_handles[0].getPosition() + _random_angle_distributions[0](_random_engine) : 0.0,
             (_parameters->model == Model::D2 || _parameters->model == Model::D2b) ? _joint_handles[1].getPosition() + _random_angle_distributions[1](_random_engine) : 0.0
         );
+        joint_angle = _parameters->pole_angle_filter * _joint_angle + (1.0 - _parameters->pole_angle_filter) * joint_angle;
 
         //Getting absolute angles
         Eigen::Quaterniond pole_orientation;
-        Eigen::Matrix<double, 3, 1> pole_position = _franka_model->pole_forward_kinematics(_franka_state->_exact_joint_positions, joint_angle, &pole_orientation);
-        Eigen::Matrix<double, 3, 3> rotation = _franka_state->get_effector_orientation().toRotationMatrix();
+        _franka_model->pole_forward_kinematics(_franka_state->_exact_joint_positions, joint_angle, &pole_orientation);
         Eigen::Matrix<double, 3, 1> up = pole_orientation * Eigen::Vector3d::UnitZ();
         Eigen::Matrix<double, 2, 1> angle(-atan2(up(1), up(2)), atan2(up(0), up(2)));
 
-        //Differentiation & update
+        //Differentiation + filtering + update
         if (_first)
         {
             _joint_dangle = Eigen::Matrix<double, 2, 1>::Zero();
