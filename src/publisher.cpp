@@ -7,6 +7,7 @@ _parameters(parameters)
     _sample_publisher = node_handle.advertise<franka_pole::Sample>("/franka_pole/sample", 10);
     _joint_state_publisher = node_handle.advertise<sensor_msgs::JointState>("/franka_pole/joint_state", 10);
     
+    
     if (_parameters->model == Model::D0)
     {
         _joint_state.name.resize(9);
@@ -20,7 +21,7 @@ _parameters(parameters)
         _joint_state.position.resize(10, 0.0);
         _joint_state.velocity.resize(10, 0.0);
         _joint_state.effort.resize(10, 0.0);
-        _joint_state.name[9] = "panda_pole_joint_x";
+        _joint_state.name[9] = _parameters->arm_id + "_pole_joint_x";
     }
     else if (_parameters->model == Model::D2 || _parameters->model == Model::D2b)
     {
@@ -28,8 +29,8 @@ _parameters(parameters)
         _joint_state.position.resize(11, 0.0);
         _joint_state.velocity.resize(11, 0.0);
         _joint_state.effort.resize(11, 0.0);
-        _joint_state.name[9] = "panda_pole_joint_x";
-        _joint_state.name[10] = "panda_pole_joint_y";
+        _joint_state.name[9] = _parameters->arm_id + "_pole_joint_x";
+        _joint_state.name[10] = _parameters->arm_id + "_pole_joint_y";
     }
     for (size_t i = 0; i < 7; i++) _joint_state.name[i] = _parameters->arm_id + "_joint" + std::to_string(i+1);
     for (size_t i = 0; i < 2; i++) _joint_state.name[7+i] = _parameters->arm_id + "_finger_joint" + std::to_string(i+1);
@@ -110,14 +111,14 @@ void franka_pole::Publisher::set_pole_dangle(const Eigen::Matrix<double, 2, 1> &
 void franka_pole::Publisher::set_pole_joint_angle(const Eigen::Matrix<double, 2, 1> &angle)
 {
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_angle[0]) = angle;
-    _joint_state.position[9] = -angle(0);
+    if (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.position[9] = -angle(0);
     if (_parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.position[10] = angle(1);
 }
 
 void franka_pole::Publisher::set_pole_joint_dangle(const Eigen::Matrix<double, 2, 1> &dangle)
 {
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_dangle[0]) = dangle;
-    _joint_state.velocity[9] = -dangle(0);
+    if (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.velocity[9] = -dangle(0);
     if (_parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.velocity[10] = dangle(1);
 }
 
@@ -135,6 +136,7 @@ void franka_pole::Publisher::set_command_effector_velocity(const Eigen::Matrix<d
 {
     Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_velocity[0]) = velocity;
 }
+
 void franka_pole::Publisher::set_command_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration)
 {
     Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_acceleration[0]) = acceleration;

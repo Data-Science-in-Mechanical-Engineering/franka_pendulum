@@ -58,7 +58,7 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
 
         //Opening reset subscribers
         _reset_subscriber = node_handle.subscribe("/franka_pole/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
-        _software_reset_semaphore = sem_open("/franka_pole_software_reset", O_CREAT, 0644, 0);
+        _software_reset_semaphore = sem_open(("/franka_pole_" + parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
         _software_reset = true;
         _hardware_reset = false;
     }

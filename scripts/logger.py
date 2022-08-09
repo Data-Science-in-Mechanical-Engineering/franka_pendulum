@@ -5,16 +5,16 @@ from franka_pole.msg import Sample
 
 if __name__ == '__main__':
     # Get log name
-    log_name = "log"
-    next_log_name = False
+    log_path = rospkg.RosPack().get_path("franka_pole") + "/temp/log"
+    next_log_path = False
     for i in sys.argv:
-        if next_log_name: log_name = i
-        next_log_name = (i == "-O")
+        if next_log_path: log_path = i
+        next_log_path = (i == "-O")
 
     # Open log file
     rospy.init_node('logger')
-    print(sys.argv)
-    file = open(rospkg.RosPack().get_path("franka_pole") + "/temp/" + log_name, "w")
+    rospy.sleep(1.0)
+    file = open(log_path, "w")
 
     # Write
     def callback(sample):
@@ -27,6 +27,5 @@ if __name__ == '__main__':
             "command_timestamp:             " + str(sample.command_timestamp) + "\n" +
             "command_effector_acceleration: " + str(sample.command_effector_acceleration) + "\n\n"
         )
-    
     sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, callback)
     rospy.spin()

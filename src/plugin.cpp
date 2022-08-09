@@ -62,17 +62,18 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
         _franka_model = new FrankaModel(_parameters);
         
         //Init semaphore
-        _software_reset_semaphore = sem_open("/franka_pole_software_reset", O_CREAT, 0644, 0);
+        _software_reset_semaphore = sem_open(("/franka_pole_" + _parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
         if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_emulator::emulator::Semaphore::Semaphore: sem_open failed");
         int value;
         sem_getvalue(_software_reset_semaphore, &value);
         while (value > 0) { sem_wait(_software_reset_semaphore); value--; }
 
         //Initializing joints
-        for (size_t i = 0; i < 7; i++) _joints[i] = model->GetJoint(std::string("panda::panda_joint") + std::to_string(i + 1));
-        for (size_t i = 0; i < 2; i++) _fingers[i] = model->GetJoint(std::string("panda::panda_finger_joint") + std::to_string(i + 1));
-        _pole[0] = (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2) ? model->GetJoint("panda::panda_pole_joint_x") : nullptr;
-        _pole[1] = (_parameters->model == Model::D2 || _parameters->model == Model::D2) ? model->GetJoint("panda::panda_pole_joint_y") : nullptr;
+        std::string name_base = _parameters->arm_id + "::" + _parameters->arm_id;
+        for (size_t i = 0; i < 7; i++) _joints[i] = model->GetJoint(name_base + "_joint" + std::to_string(i + 1));
+        for (size_t i = 0; i < 2; i++) _fingers[i] = model->GetJoint(name_base + "_finger_joint" + std::to_string(i + 1));
+        _pole[0] = (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2) ? model->GetJoint(name_base + "_pole_joint_x") : nullptr;
+        _pole[1] = (_parameters->model == Model::D2 || _parameters->model == Model::D2) ? model->GetJoint(name_base + "_pole_joint_y") : nullptr;
         
         //Initializing
         Reset();
