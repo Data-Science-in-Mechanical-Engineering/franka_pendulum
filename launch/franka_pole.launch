@@ -15,6 +15,7 @@
   <arg name="logger"        default="false"               doc="Should logger be launched?" />
   <arg name="recorder"      default="false"               doc="Should recorder (rosbag) be launched?" />
 
+  <arg name="namespace"  	  default="franka_pole"         doc="Namespace of parameters and topics" />
   <arg name="log_name"  	  default="log"                 doc="Name of the log file" />
   <arg name="record_name"   default="log"                 doc="Name of the the record (.bag) file" />
   <arg name="arm_id"  	    default="panda"               doc="Name of the arm" />
@@ -69,16 +70,15 @@
 
     <!-- Create robot -->
     <arg name="unpaused" value="$(eval '' if arg('paused') else '-unpause')" />
-    <node name="$(arg arm_id)_model_spawner"
+    <node name="$(arg namespace)_model_spawner"
      pkg="gazebo_ros"
      type="spawn_model"
      args="-param robot_description -urdf -model $(arg arm_id) $(arg unpaused)"/>
 
      <!-- Gripper controller -->
-    <node name="$(arg arm_id)_gripper_controller_spawner"
+    <node name="$(arg namespace)_gripper_controller_spawner"
       pkg="controller_manager"
       type="spawner"
-      respawn="false" output="screen"
       args="franka_gripper"/>
   </group>
 
@@ -96,63 +96,67 @@
 
   <!-- Option 3: Record -->
   <group if="$(eval arg('source') == 'record')">
-    <node name="player" pkg="rosbag" type="play" args="$(find franka_pole)/temp/$(arg record_name).bag"/>
+    <node name="$(arg namespace)_player" pkg="rosbag" type="play" args="$(find franka_pole)/temp/$(arg record_name).bag"/>
   </group>
 
   <group unless="$(eval arg('source') == 'record')">
     <!-- Main controller -->
-    <node name="$(arg arm_id)_controller_spawner"
+    <node name="$(arg namespace)_controller_spawner"
       pkg="controller_manager"
       type="spawner"
-      respawn="false" output="screen"
-      args="franka_pole_$(arg type)_acceleration_controller"
-      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and arg('acceleration')))"/>
+      args="$(arg namespace)_$(arg type)_acceleration_controller"
+      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and arg('acceleration')))">
+      <param name="namespace" value="$(arg namespace)"/>
+    </node>
 
-    <node name="$(arg arm_id)_controller_spawner"
+    <node name="$(arg namespace)_controller_spawner"
       pkg="controller_manager"
       type="spawner"
-      respawn="false" output="screen"
-      args="franka_pole_$(arg type)_position_controller"
-      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and not arg('acceleration')))"/>
+      args="$(arg namespace)_$(arg type)_position_controller"
+      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and not arg('acceleration')))">
+      <param name="namespace" value="$(arg namespace)"/>
+    </node>
 
-    <node name="$(arg arm_id)_controller_spawner"
+    <node name="$(arg namespace)_controller_spawner"
       pkg="controller_manager"
       type="spawner"
-      respawn="false" output="screen"
-      args="franka_pole_external_acceleration_controller"
-      if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
+      args="$(arg namespace)_external_acceleration_controller"
+      if="$(eval arg('type') == 'python' and arg('acceleration'))">
+      <param name="namespace" value="$(arg namespace)"/>
+    </node>
 
-    <node name="$(arg arm_id)_controller_spawner"
+    <node name="$(arg namespace)_controller_spawner"
       pkg="controller_manager"
       type="spawner"
-      respawn="false" output="screen"
-      args="franka_pole_external_position_controller"
-      if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
+      args="$(arg namespace)_external_position_controller"
+      if="$(eval arg('type') == 'python' and not arg('acceleration'))">
+      <param name="namespace" value="$(arg namespace)"/>
+    </node>
 
     <!-- External python controllers -->
-    <node name="python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" required="true" output="screen" if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
-    <node name="python_position_controller" pkg="franka_pole" type="position_controller.py" required="true" output="screen" if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
+    <node name="$(arg namespace)_python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" args="-N $(arg namespace)" if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
+    <node name="$(arg namespace)_python_position_controller" pkg="franka_pole" type="position_controller.py" args="-N $(arg namespace)" if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
 
     <!-- Recorder -->
-    <node name="recorder" pkg="rosbag" type="record" args="record /franka_pole/sample /franka_pole/joint_state -O $(find franka_pole)/temp/$(arg record_name)" if="$(arg recorder)"/>
+    <node name="$(arg namespace)_recorder" pkg="rosbag" type="record" args="record /$(arg namespace)/sample /$(arg namespace)/joint_state -O $(find franka_pole)/temp/$(arg record_name)" if="$(arg recorder)"/>
   </group>
 
   <!-- Plotter -->
-  <node name="plotter" pkg="franka_pole" type="plotter.py" required="true" output="screen" if="$(arg plotter)"/>
+  <node name="$(arg namespace)_plotter" pkg="franka_pole" type="plotter.py" args="-N $(arg namespace)" if="$(arg plotter)"/>
 
   <!-- Resetter -->
-  <node name="resetter" pkg="franka_pole" type="resetter.py" required="true" output="screen" if="$(arg resetter)"/>
+  <node name="$(arg namespace)_resetter" pkg="franka_pole" type="resetter.py" args="-N $(arg namespace)" if="$(arg resetter)"/>
 
   <!-- Logger -->
-  <node name="logger" pkg="franka_pole" type="logger.py"  args="-O $(find franka_pole)/temp/$(arg log_name)" required="true" output="screen" if="$(arg logger)"/>
+  <node name="$(arg namespace)_logger" pkg="franka_pole" type="logger.py" args="-N $(arg namespace) -O $(find franka_pole)/temp/$(arg log_name)" if="$(arg logger)"/>
 
   <!-- RVIZ -->
   <group if="$(arg rviz)">
-    <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find franka_pole)/config/robot.rviz" if="$(eval arg('arm_id') == 'panda')"/>
-    <node pkg="franka_pole" type="rviz.sh" output="screen" name="rviz" args="$(arg arm_id)" if="$(eval arg('arm_id') != 'panda')"/>
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
-    <node name="joint_state_publisher" type="joint_state_publisher" pkg="joint_state_publisher">
-      <rosparam param="source_list">[franka_pole/joint_state] </rosparam>
+    <node name="$(arg namespace)_rviz" pkg="rviz" type="rviz" args="-d $(find franka_pole)/config/robot.rviz" if="$(eval arg('arm_id') == 'panda')"/>
+    <node name="$(arg namespace)_rviz" pkg="franka_pole" type="rviz.sh"  args="$(arg arm_id)" if="$(eval arg('arm_id') != 'panda')"/>
+    <node name="$(arg namespace)_robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="$(arg namespace)_joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+      <rosparam param="source_list" subst_value="True">[$(arg namespace)/joint_state]</rosparam>
       <param name="rate" value="100"/>
     </node>
   </group>

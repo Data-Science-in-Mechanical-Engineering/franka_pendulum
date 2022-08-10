@@ -212,16 +212,21 @@ class Plotter:
         self.animation = animation.FuncAnimation(self._figure, lambda i: self._animate_callback(), interval=1000/self.frequency, blit=True)
         plt.show()
 
+# Main
 if __name__ == '__main__':
-    # Get log name and start time
+    # Get aruments
     log_name = "log.bag"
+    namespace = "franka_pole"
     start_time = None
     next_log_name = False
     next_start_time = False
+    next_namespace = False
     for i in sys.argv:
         if next_log_name: log_name = i
-        if next_start_time: start_time = float(i)
+        elif next_namespace: namespace = i
+        elif next_start_time: start_time = float(i)
         next_log_name = (i == "-I")
+        next_namespace = (i == "-N")
         next_start_time = (i == "-S")
 
     # Plot structure
@@ -239,7 +244,7 @@ if __name__ == '__main__':
     acceleration_plot_x = Plot("Acceleration X", 1, 0, [ franka_effector_ddx, command_effector_ddx ], -10, 10, 3)
     acceleration_plot_y = Plot("Acceleration Y", 1, 1, [ franka_effector_ddy, command_effector_ddy ], -10, 10, 3)
     
-    plotter = Plotter("Plotter", [ position_plot_x, position_plot_y, acceleration_plot_x, acceleration_plot_y ], 200)
+    plotter = Plotter(namespace, [ position_plot_x, position_plot_y, acceleration_plot_x, acceleration_plot_y ], 200)
 
     # Message processing
     previous_franka_timestamp = -np.Inf
@@ -271,15 +276,15 @@ if __name__ == '__main__':
     # Feeding values
     if start_time is None:
         # Live
-        rospy.init_node('plotter')
-        sample_subscriber = rospy.Subscriber("/franka_pole/sample", Sample, callback)
+        rospy.init_node(namespace + "_plotter")
+        sample_subscriber = rospy.Subscriber("/" + namespace + "/sample", Sample, callback)
         plotter.start()
         
     else:
         # Recorded
         duration = 3.0
         bag = rosbag.Bag(rospkg.RosPack().get_path("franka_pole") + "/temp/log.bag")
-        for topic, sample, time in bag.read_messages(topics=['/franka_pole/sample']):
+        for topic, sample, time in bag.read_messages(topics=["/" + namespace + "/sample"]):
             if sample.franka_timestamp < start_time: continue
             if sample.franka_timestamp > start_time + duration: break
             callback(sample)

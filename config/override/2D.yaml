@@ -1,2 +1,2 @@
-franka_pole:
+$(arg namespace):
   target_effector_orientation: { w: 0.9659258, x: 0.0, y: -0.258819, z: 0.0 }

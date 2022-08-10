@@ -4,8 +4,8 @@
 franka_pole::Publisher::Publisher(const Parameters *parameters, ros::NodeHandle &node_handle) :
 _parameters(parameters)
 {
-    _sample_publisher = node_handle.advertise<franka_pole::Sample>("/franka_pole/sample", 10);
-    _joint_state_publisher = node_handle.advertise<sensor_msgs::JointState>("/franka_pole/joint_state", 10);
+    _sample_publisher = node_handle.advertise<franka_pole::Sample>("/" + _parameters->namespacee + "/sample", 10);
+    _joint_state_publisher = node_handle.advertise<sensor_msgs::JointState>("/" + _parameters->namespacee + "/joint_state", 10);
     
     
     if (_parameters->model == Model::D0)

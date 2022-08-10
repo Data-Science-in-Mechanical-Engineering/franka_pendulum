@@ -38,6 +38,7 @@ namespace franka_pole
         Parameters(std::mutex *mutex, const ParameterReader &reader, ros::NodeHandle &node_handle, bool publish);
         
         // Essential
+        std::string namespacee;
         std::string arm_id;
         bool simulated;
         Model model;

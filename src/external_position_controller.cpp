@@ -12,7 +12,7 @@ bool franka_pole::ExternalPositionController::_init_level2(hardware_interface::R
 {
     _position_target = parameters->target_effector_position;
     _velocity_target = Eigen::Matrix<double, 3, 1>::Zero();
-    _subscriber = node_handle.subscribe("/franka_pole/command_position", 10, &ExternalPositionController::_callback, this);
+    _subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_position", 10, &ExternalPositionController::_callback, this);
     return true;
 }
 

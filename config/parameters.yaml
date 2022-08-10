@@ -1,4 +1,4 @@
-franka_pole:
+$(arg namespace):
   # Essential
   arm_id: "$(arg arm_id)"
   simulated: $(arg simulated)

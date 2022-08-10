@@ -10,6 +10,7 @@ namespace franka_pole
     class ParameterReader
     {
     private:
+        std::string _namespace;
         ros::NodeHandle &_node_handle;
 
         std::string _read_string(const std::string name) const;
@@ -30,6 +31,7 @@ namespace franka_pole
         ParameterReader(ros::NodeHandle &node_handle);
 
         // Essential
+        std::string namespacee() const;
         std::string arm_id() const;
         bool simulated() const;
         Model model() const;

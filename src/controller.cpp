@@ -57,8 +57,8 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
         if (parameters->model != Model::D0) pole_state = new PoleState(parameters, franka_model, franka_state, publisher, &mutex, robot_hw, node_handle);    
 
         //Opening reset subscribers
-        _reset_subscriber = node_handle.subscribe("/franka_pole/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
-        _software_reset_semaphore = sem_open(("/franka_pole_" + parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
+        _reset_subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
+        _software_reset_semaphore = sem_open(("/" + parameters->namespacee + "_" + parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
         _software_reset = true;
         _hardware_reset = false;
     }

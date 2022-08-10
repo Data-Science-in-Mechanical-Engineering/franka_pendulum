@@ -187,6 +187,7 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     _publish(publish),
     _changed(false),
 
+    namespacee(reader.namespacee()),
     arm_id(reader.arm_id()),
     simulated(reader.simulated()),
     model(reader.model()),
@@ -242,10 +243,10 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     // Publishing parameters once
     if (publish)
     {
-        _publisher = node_handle.advertise<franka_pole::CommandParameters>("/franka_pole/command_parameters", 10, true);
+        _publisher = node_handle.advertise<franka_pole::CommandParameters>("/" + namespacee + "/command_parameters", 10, true);
         _send();
     }
 
     // Subscribing
-    _subscriber = node_handle.subscribe("/franka_pole/command_parameters", 10, &Parameters::_receive, this, ros::TransportHints().reliable().tcpNoDelay());
+    _subscriber = node_handle.subscribe("/" + namespacee + "/command_parameters", 10, &Parameters::_receive, this, ros::TransportHints().reliable().tcpNoDelay());
 }

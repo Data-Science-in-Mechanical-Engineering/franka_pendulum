@@ -3,28 +3,28 @@
 std::string franka_pole::ParameterReader::_read_string(const std::string name) const
 {
     std::string s;
-    if (!_node_handle.getParam("/franka_pole/" + name, s)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
+    if (!_node_handle.getParam("/" + _namespace + "/" + name, s)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
     return s;
 }
 
 bool franka_pole::ParameterReader::_read_bool(const std::string name) const
 {
     bool b;
-    if (!_node_handle.getParam("/franka_pole/" + name, b)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
+    if (!_node_handle.getParam("/" + _namespace + "/" + name, b)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
     return b;
 }
 
 unsigned int franka_pole::ParameterReader::_read_uint(const std::string name) const
 {
     int u;
-    if (!_node_handle.getParam("/franka_pole/" + name, u)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
+    if (!_node_handle.getParam("/" + _namespace + "/" + name, u)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
     return u;
 }
 
 double franka_pole::ParameterReader::_read_double(const std::string name) const
 {
     double d;
-    if (!_node_handle.getParam("/franka_pole/" + name, d)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
+    if (!_node_handle.getParam("/" + _namespace + "/" + name, d)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
     return d;
 }
 
@@ -37,7 +37,7 @@ double franka_pole::ParameterReader::_check_double(const std::string name, doubl
 template<int N> Eigen::Matrix<double, N, 1> franka_pole::ParameterReader::_read_vector(const std::string name) const
 {
     std::vector<double> v;
-    if (!_node_handle.getParam("/franka_pole/" + name, v)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
+    if (!_node_handle.getParam("/" + _namespace + "/" + name, v)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
     if (v.size() != N) throw std::runtime_error("franka_pole::ParameterReader: Parameter " + name + " has invalid dimension");
     return Eigen::Matrix<double, N, 1>::Map(v.data());
 }
@@ -70,7 +70,7 @@ template<int N> Eigen::Matrix<double, N, 1> franka_pole::ParameterReader::_check
 Eigen::Quaterniond franka_pole::ParameterReader::_read_quaternion(const std::string name) const
 {
     std::map<std::string, double> q;
-    if (!_node_handle.getParam("/franka_pole/" + name, q)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
+    if (!_node_handle.getParam("/" + _namespace + "/" + name, q)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter " + name);
     if (q.size() != 4 || q.count("w") != 1 || q.count("x") != 1 || q.count("y") != 1 || q.count("z") != 1) throw std::runtime_error("franka_pole::ParameterReader: Parameter " + name + " is invalid");
     return Eigen::Quaterniond(q["w"], q["x"], q["y"], q["z"]);
 }
@@ -98,21 +98,29 @@ Eigen::Quaterniond franka_pole::ParameterReader::_check_quaternion(const std::st
 
 franka_pole::ParameterReader::ParameterReader(ros::NodeHandle &node_handle) : _node_handle(node_handle)
 {
+    if (node_handle.getNamespace().find("controller") != std::string::npos)
+    {
+        if (!_node_handle.getParam("namespace", _namespace)) throw std::runtime_error("franka_pole::ParameterReader::ParameterReader(): Could not read parameter namespace");
+    }
+    else
+    {
+        if (!_node_handle.getParam("/gazebo/namespace", _namespace)) throw std::runtime_error("franka_pole::ParameterReader::ParameterReader(): Could not read parameter namespace");
+    }
 }
 
+std::string franka_pole::ParameterReader::namespacee() const { return _namespace; }
+std::string franka_pole::ParameterReader::arm_id() const { return _read_string("arm_id"); }
+bool franka_pole::ParameterReader::simulated() const { return _read_bool("simulated"); }
 franka_pole::Model franka_pole::ParameterReader::model() const
 {
     std::string s;
-    if (!_node_handle.getParam("/franka_pole/model", s)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter model");
+    if (!_node_handle.getParam("/" + _namespace + "/model", s)) throw std::runtime_error("franka_pole::ParameterReader: Could not read parameter model");
     if (s == "0D") return Model::D0;
     else if (s == "1D") return Model::D1;
     else if (s == "2D") return Model::D2;
     else if (s == "2Db") return Model::D2b;
     else throw std::runtime_error("franka_pole::ParameterReader: Invalid parameter model");
 }
-
-std::string franka_pole::ParameterReader::arm_id() const { return _read_string("arm_id"); }
-bool franka_pole::ParameterReader::simulated() const { return _read_bool("simulated"); }
 
 unsigned int franka_pole::ParameterReader::franka_period() const { return _read_uint("franka_period"); }
 unsigned int franka_pole::ParameterReader::pole_period() const { return _read_uint("pole_period"); }

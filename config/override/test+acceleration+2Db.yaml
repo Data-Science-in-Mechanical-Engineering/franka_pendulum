@@ -1,2 +1,2 @@
-franka_pole:
+$(arg namespace):
   translation_stiffness: [ 0.0, .NaN, .NaN ]

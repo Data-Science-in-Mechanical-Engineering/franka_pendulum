@@ -1,30 +1,23 @@
-franka_state_controller:
-  type: franka_control/FrankaStateController
-  publish_rate: 30  # [Hz]
-  arm_id: $(arg arm_id)
-  joint_names:
-    - $(arg arm_id)_joint1
-    - $(arg arm_id)_joint2
-    - $(arg arm_id)_joint3
-    - $(arg arm_id)_joint4
-    - $(arg arm_id)_joint5
-    - $(arg arm_id)_joint6
-    - $(arg arm_id)_joint7
-
-franka_pole_external_position_controller:
+$(arg namespace)_external_position_controller:
+  namespace: $(arg namespace)
   type: franka_pole/ExternalPositionController
 
-franka_pole_simple_position_controller:
+$(arg namespace)_simple_position_controller:
+  namespace: $(arg namespace)
   type: franka_pole/SimplePositionController
 
-franka_pole_test_position_controller:
+$(arg namespace)_test_position_controller:
+  namespace: $(arg namespace)
   type: franka_pole/TestPositionController
 
-franka_pole_external_acceleration_controller:
+$(arg namespace)_external_acceleration_controller:
+  namespace: $(arg namespace)
   type: franka_pole/ExternalAccelerationController
 
-franka_pole_simple_acceleration_controller:
+$(arg namespace)_simple_acceleration_controller:
+  namespace: $(arg namespace)
   type: franka_pole/SimpleAccelerationController
 
-franka_pole_test_acceleration_controller:
+$(arg namespace)_test_acceleration_controller:
+  namespace: $(arg namespace)
   type: franka_pole/TestAccelerationController

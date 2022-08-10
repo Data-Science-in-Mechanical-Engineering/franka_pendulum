@@ -62,7 +62,7 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
         _franka_model = new FrankaModel(_parameters);
         
         //Init semaphore
-        _software_reset_semaphore = sem_open(("/franka_pole_" + _parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
+        _software_reset_semaphore = sem_open(("/" + _parameters->namespacee + "_" + _parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
         if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_emulator::emulator::Semaphore::Semaphore: sem_open failed");
         int value;
         sem_getvalue(_software_reset_semaphore, &value);
