@@ -24,7 +24,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     _controller_period_counter += parameters->command_period;
     if (_controller_period_counter >= parameters->controller_period)
     {
-        _acceleration_target = _get_acceleration_level2(time, ros::Duration(0,1000*parameters->controller_period));
+        _acceleration_target = _get_acceleration_level2(time, ros::Duration(0,1000000*parameters->controller_period));
         _controller_period_counter = 0;
     }
     Eigen::Matrix<double, 7, 1> torque = Eigen::Matrix<double, 7, 1>::Zero();

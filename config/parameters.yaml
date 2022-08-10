@@ -15,8 +15,8 @@ $(arg namespace):
   target_effector_position: [ 0.6, 0.0, 0.6 ]
   target_effector_orientation: { w: 1.0, x: 0.0, y: 0.0, z: 0.0 }
   target_joint0_position: .NaN # fallbacks to atan2(target_effector_position[1] / target_effector_position[0])
-  min_effector_position: [ 0.4, -0.3, 0.6 ]
-  max_effector_position: [ 0.8, 0.3, 0.6 ]
+  min_effector_position: [ 0.4, -0.3, 0.5 ]
+  max_effector_position: [ 0.8, 0.3, 0.7 ]
 
   # Initial state
   initial_effector_position: [ .NaN, .NaN, .NaN ] # fallbacks to target_effector_position
@@ -44,8 +44,8 @@ $(arg namespace):
   dynamics: 1.0
   
   # Filters
-  pole_angle_filter: 0.0
-  pole_dangle_filter: 0.7 # fallbacks to pole_angle_filter
+  pole_angle_filter: 0.5
+  pole_dangle_filter: .NaN # fallbacks to pole_angle_filter
 
   # Noise
   joint_position_standard_deviation: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]

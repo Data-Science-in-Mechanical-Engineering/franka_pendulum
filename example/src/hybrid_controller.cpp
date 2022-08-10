@@ -33,7 +33,7 @@ void franka_pole_example::HybridController::_callback(const franka_pole::Command
 bool franka_pole_example::HybridController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     _acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
-    _subscriber = node_handle.subscribe("/franka_pole/command_acceleration", 10, &HybridController::_callback, this);
+    _subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_acceleration", 10, &HybridController::_callback, this);
     return true;
 }
 

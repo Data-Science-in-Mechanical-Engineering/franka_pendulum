@@ -1,2 +1,3 @@
-franka_pole_example_hybrid_controller:
+$(namespace)_example_hybrid_controller:
+  namespace: $(arg namespace)
   type: franka_pole_example/HybridController

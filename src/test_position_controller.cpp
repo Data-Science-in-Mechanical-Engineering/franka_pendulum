@@ -10,7 +10,7 @@ Eigen::Matrix<double, 3, 1> franka_pole::TestPositionController::_get_position_l
 {
     Eigen::Matrix<double, 3, 1> position_target = parameters->target_effector_position;
     unsigned int axis = (parameters->model == Model::D2 || parameters->model == Model::D2b) ? 0 : 1;
-    position_target(axis) += 0.1 * (2*M_PI) * (2*M_PI) * sin(2 * M_PI * time.toSec());
+    position_target(axis) += 0.1 * sin(2 * M_PI * time.toSec());
     return position_target;
 }
 

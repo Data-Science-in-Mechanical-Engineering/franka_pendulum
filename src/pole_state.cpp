@@ -15,8 +15,12 @@ void franka_pole::PoleState::_callback(const geometry_msgs::TransformStamped::Co
     angle = _parameters->pole_angle_filter * _angle + (1.0 - _parameters->pole_angle_filter) * angle;
 
     //Getting joint angles
-    Eigen::Matrix<double, 3, 1> euler = (pole_orientation.inverse() * _franka_state->get_effector_orientation()).toRotationMatrix().eulerAngles(0,1,2);
-    Eigen::Matrix<double, 2, 1> joint_angle(-euler(0), (_parameters->model == Model::D2 || _parameters->model == Model::D2b) ? -euler(1) : 0.0);
+    Eigen::Matrix<double, 3, 1> euler = (pole_orientation * _franka_state->get_effector_orientation()).toRotationMatrix().eulerAngles(0,1,2);
+    if (euler(0) > M_PI/2) euler(0) -= M_PI;
+    else if (euler(0) < -M_PI/2) euler(0) += M_PI;
+    if (euler(1) > M_PI/2) euler(1) -= M_PI;
+    else if (euler(1) < -M_PI/2) euler(1) += M_PI;
+    Eigen::Matrix<double, 2, 1> joint_angle(euler(0), (_parameters->model == Model::D2 || _parameters->model == Model::D2b) ? euler(1) : 0.0);
 
     //Differentiation & update
     if (_first)

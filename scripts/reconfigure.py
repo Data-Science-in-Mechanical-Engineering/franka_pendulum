@@ -20,8 +20,8 @@ if __name__ == '__main__':
 
     # Edit parameters
     parameters.target_effector_position = np.array(parameters.target_effector_position)
-    if parameters.target_effector_position[1] > 0: parameters.target_effector_position[1] = -0.1
-    else: parameters.target_effector_position[1] = 0.1
+    if parameters.target_effector_position[2] > 0.6: parameters.target_effector_position[2] -= 0.1
+    else: parameters.target_effector_position[2] += 0.1
 
     # Publish
     rospy.sleep(1.0)

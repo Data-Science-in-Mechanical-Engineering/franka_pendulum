@@ -84,10 +84,10 @@
 
   <!-- Option 2: Real robot -->
   <group if="$(eval arg('source') == 'robot')">
-    <include file="$(find franka_control)/launch/franka_control.launch">
-      <arg name="robot_ip" value="$(arg arm_ip)" />
-      <arg name="load_gripper" value="true" />
-    </include>
+    <node name="franka_control" pkg="franka_control" type="franka_control_node">
+      <rosparam command="load" file="$(find franka_control)/config/franka_control_node.yaml" />
+      <param name="robot_ip" value="$(arg arm_ip)" />
+    </node>
 
     <include file="$(find vicon_bridge)/launch/vicon.launch">
       <arg name="datastream_hostport" value="$(arg vicon_ip)" />
@@ -105,33 +105,25 @@
       pkg="controller_manager"
       type="spawner"
       args="$(arg namespace)_$(arg type)_acceleration_controller"
-      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and arg('acceleration')))">
-      <param name="namespace" value="$(arg namespace)"/>
-    </node>
+      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and arg('acceleration')))"/>
 
     <node name="$(arg namespace)_controller_spawner"
       pkg="controller_manager"
       type="spawner"
       args="$(arg namespace)_$(arg type)_position_controller"
-      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and not arg('acceleration')))">
-      <param name="namespace" value="$(arg namespace)"/>
-    </node>
+      if="$(eval ((arg('type') == 'simple' or arg('type') == 'external' or arg('type') == 'test') and not arg('acceleration')))"/>
 
     <node name="$(arg namespace)_controller_spawner"
       pkg="controller_manager"
       type="spawner"
       args="$(arg namespace)_external_acceleration_controller"
-      if="$(eval arg('type') == 'python' and arg('acceleration'))">
-      <param name="namespace" value="$(arg namespace)"/>
-    </node>
+      if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
 
     <node name="$(arg namespace)_controller_spawner"
       pkg="controller_manager"
       type="spawner"
       args="$(arg namespace)_external_position_controller"
-      if="$(eval arg('type') == 'python' and not arg('acceleration'))">
-      <param name="namespace" value="$(arg namespace)"/>
-    </node>
+      if="$(eval arg('type') == 'python' and not arg('acceleration'))"/>
 
     <!-- External python controllers -->
     <node name="$(arg namespace)_python_acceleration_controller" pkg="franka_pole" type="acceleration_controller.py" args="-N $(arg namespace)" if="$(eval arg('type') == 'python' and arg('acceleration'))"/>
@@ -152,7 +144,7 @@
 
   <!-- RVIZ -->
   <group if="$(arg rviz)">
-    <node name="$(arg namespace)_rviz" pkg="rviz" type="rviz" args="-d $(find franka_pole)/config/robot.rviz" if="$(eval arg('arm_id') == 'panda')"/>
+    <node name="$(arg namespace)_rviz" pkg="rviz" type="rviz" args="-d $(find franka_example_controllers)/launch/robot.rviz" if="$(eval arg('arm_id') == 'panda')"/>
     <node name="$(arg namespace)_rviz" pkg="franka_pole" type="rviz.sh"  args="$(arg arm_id)" if="$(eval arg('arm_id') != 'panda')"/>
     <node name="$(arg namespace)_robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
     <node name="$(arg namespace)_joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
