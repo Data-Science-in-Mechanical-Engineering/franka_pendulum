@@ -23,8 +23,8 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     _controller_period_counter += parameters->command_period;
     if (_controller_period_counter >= parameters->controller_period)
     {
-        _position_target = _get_position_level2(time, period);
-        _velocity_target = _get_velocity_level2(time, period);
+        _position_target = _get_position_level2(time, ros::Duration(0,1000*parameters->controller_period));
+        _velocity_target = _get_velocity_level2(time, ros::Duration(0,1000*parameters->controller_period));
         _controller_period_counter = 0;
     }
     Eigen::Matrix<double, 7, 1> torque = Eigen::Matrix<double, 7, 1>::Zero();
