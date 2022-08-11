@@ -23,5 +23,6 @@
 
   <export>
     <controller_interface plugin="${prefix}/config/franka_pole_controllers_plugin.xml"/>
+    <rosdoc config="${prefix}/config/rosdoc.yaml" />
   </export>
 </package>

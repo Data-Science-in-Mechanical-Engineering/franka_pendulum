@@ -111,7 +111,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     }
 
     // anti-damping
-    torque += franka_state->get_joint_velocities() * 0.003;
+    if (parameters->simulated) torque += franka_state->get_joint_velocities() * 0.003;
 
     // inverse dynamics
     Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
@@ -173,6 +173,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     publisher->set_command_effector_position(_position_target);
     publisher->set_command_effector_velocity(_velocity_target);
     publisher->set_command_effector_acceleration(_acceleration_target);
+    publisher->set_command_joint_torques(torque);
 
     return torque;
 }

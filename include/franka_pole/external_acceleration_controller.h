@@ -8,6 +8,7 @@
 
 namespace franka_pole
 {
+    ///High-level acceleration controller that returns acceleration set by ROS topic as target acceleration
     class ExternalAccelerationController : public AccelerationController
     {
     private:        

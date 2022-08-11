@@ -38,7 +38,6 @@ _parameters(parameters)
     set_franka_timestamp(ros::Time(0.0));
     set_franka_joint_positions(Eigen::Matrix<double, 7, 1>::Zero());
     set_franka_joint_velocities(Eigen::Matrix<double, 7, 1>::Zero());
-    set_franka_joint_torques(Eigen::Matrix<double, 7, 1>::Zero());
     set_franka_effector_position(Eigen::Matrix<double, 3, 1>::Zero());
     set_franka_effector_velocity(Eigen::Matrix<double, 3, 1>::Zero());
     set_franka_effector_orientation(Eigen::Quaterniond(0.0, 1.0, 0.0, 0.0));
@@ -50,6 +49,7 @@ _parameters(parameters)
     set_command_effector_position(Eigen::Matrix<double, 3, 1>::Zero());
     set_command_effector_velocity(Eigen::Matrix<double, 3, 1>::Zero());
     set_command_effector_acceleration(Eigen::Matrix<double, 3, 1>::Zero());
+    set_command_joint_torques(Eigen::Matrix<double, 7, 1>::Zero());
     set_reset(false);
 }
 
@@ -72,11 +72,6 @@ void franka_pole::Publisher::set_franka_joint_positions(const Eigen::Matrix<doub
 void franka_pole::Publisher::set_franka_joint_velocities(const Eigen::Matrix<double, 7, 1> &velocities)
 {
     Eigen::Matrix<double, 7, 1>::Map(&_joint_state.velocity[0]) = velocities;
-}
-
-void franka_pole::Publisher::set_franka_joint_torques(const Eigen::Matrix<double, 7, 1> &torques)
-{
-    Eigen::Matrix<double, 7, 1>::Map(&_joint_state.effort[0]) = torques;
 }
 
 void franka_pole::Publisher::set_franka_effector_position(const Eigen::Matrix<double, 3, 1> &position)
@@ -140,6 +135,11 @@ void franka_pole::Publisher::set_command_effector_velocity(const Eigen::Matrix<d
 void franka_pole::Publisher::set_command_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration)
 {
     Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_acceleration[0]) = acceleration;
+}
+
+void franka_pole::Publisher::set_command_joint_torques(const Eigen::Matrix<double, 7, 1> &torques)
+{
+    Eigen::Matrix<double, 7, 1>::Map(&_joint_state.effort[0]) = torques;
 }
 
 void franka_pole::Publisher::set_reset(bool reset)

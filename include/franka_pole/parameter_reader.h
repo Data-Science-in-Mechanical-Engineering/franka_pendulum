@@ -7,6 +7,7 @@
 
 namespace franka_pole
 {
+    ///Parameter reader, responsible for reading parameters from ROS parameters and managing fallbacks
     class ParameterReader
     {
     private:
@@ -28,68 +29,71 @@ namespace franka_pole
         static Eigen::Quaterniond _check_quaternion(const std::string name, const Eigen::Quaterniond &quaternion);
 
     public:
+        ///Creates parameter reader
+        ///@param node_handle ROS node handle
         ParameterReader(ros::NodeHandle &node_handle);
 
         // Essential
-        std::string namespacee() const;
-        std::string arm_id() const;
-        bool simulated() const;
-        Model model() const;
+
+        std::string namespacee() const; ///< Namespace of all ROS topics and parameters
+        std::string arm_id() const;     ///< Arm name
+        bool simulated() const;         ///< `true` if is a Gazebo simulation, `false` if is real hardware
+        Model model() const;            ///< Hardware configuration
 
         // Periods
-        unsigned int franka_period() const;
-        unsigned int pole_period() const;
-        unsigned int command_period() const;
-        unsigned int publish_period() const;
-        unsigned int controller_period() const;
+        unsigned int franka_period() const;     ///< Period of franka state update, milliseconds
+        unsigned int pole_period() const;       ///< Period of pole state update, milliseconds
+        unsigned int command_period() const;    ///< Period of franka torque update (and helper contollers), milliseconds
+        unsigned int publish_period() const;    ///< Period between publishing to ROS topics, milliseconds
+        unsigned int controller_period() const; ///< Period of high-level controllers
 
         // Target state and constraints
-        Eigen::Matrix<double, 3, 1> target_effector_position() const;
-        Eigen::Quaterniond target_effector_orientation() const;
-        double target_joint0_position() const;
-        Eigen::Matrix<double, 3, 1> min_effector_position() const;
-        Eigen::Matrix<double, 3, 1> max_effector_position() const;
+        Eigen::Matrix<double, 3, 1> target_effector_position() const;   ///< Effector's target position
+        Eigen::Quaterniond target_effector_orientation() const;         ///< Effector's target orientation
+        double target_joint0_position() const;                          ///< Effector's target angle of first joint
+        Eigen::Matrix<double, 3, 1> min_effector_position() const;      ///< Higher boundary for effector position
+        Eigen::Matrix<double, 3, 1> max_effector_position() const;      ///< Lower boundary for effector position
 
         // Initial state
-        Eigen::Matrix<double, 3, 1> initial_effector_position() const;
-        Eigen::Quaterniond initial_effector_orientation() const;
-        double initial_joint0_position() const;
-        Eigen::Matrix<double, 2, 1> initial_pole_positions() const;
-        Eigen::Matrix<double, 2, 1> initial_pole_velocities() const;
+        Eigen::Matrix<double, 3, 1> initial_effector_position() const;  ///< Effector's initial position
+        Eigen::Quaterniond initial_effector_orientation() const;        ///< Effector's initial orientation
+        double initial_joint0_position() const;                         ///< Effector's initial angle of first joint
+        Eigen::Matrix<double, 2, 1> initial_pole_positions() const;     ///< Pole's initial joint angles
+        Eigen::Matrix<double, 2, 1> initial_pole_velocities() const;    ///< Pole's initial joint angular velocities
 
         // Stiffness
-        Eigen::Matrix<double, 3, 1> outbound_translation_stiffness() const;
-        Eigen::Matrix<double, 3, 1> outbound_translation_damping() const;
-        Eigen::Matrix<double, 3, 1> outbound_rotation_stiffness() const;
-        Eigen::Matrix<double, 3, 1> outbound_rotation_damping() const;
-        Eigen::Matrix<double, 3, 1> translation_stiffness() const;
-        Eigen::Matrix<double, 3, 1> translation_damping() const;
-        Eigen::Matrix<double, 3, 1> rotation_stiffness() const;
-        Eigen::Matrix<double, 3, 1> rotation_damping() const;
+        Eigen::Matrix<double, 3, 1> outbound_translation_stiffness() const; ///< Translational stiffness gain when the effector is out of it's boundaries
+        Eigen::Matrix<double, 3, 1> outbound_translation_damping() const;   ///< Translational damping gain when the effector is out of it's boundaries
+        Eigen::Matrix<double, 3, 1> outbound_rotation_stiffness() const;    ///< Rotational stiffness gain when the effector is out of it's boundaries
+        Eigen::Matrix<double, 3, 1> outbound_rotation_damping() const;      ///< Rotational damping gain when the effector is out of it's boundaries
+        Eigen::Matrix<double, 3, 1> translation_stiffness() const;          ///< Translational stiffness gain when the effector is in it's boundaries
+        Eigen::Matrix<double, 3, 1> translation_damping() const;            ///< Translational damping gain when the effector is in it's boundaries
+        Eigen::Matrix<double, 3, 1> rotation_stiffness() const;             ///< Rotational stiffness gain when the effector is in it's boundaries
+        Eigen::Matrix<double, 3, 1> rotation_damping() const;               ///< Rotational damping gain when the effector is in it's boundaries
 
-        Eigen::Matrix<double, 7, 1> joint_stiffness() const;
-        Eigen::Matrix<double, 7, 1> joint_damping() const;
+        Eigen::Matrix<double, 7, 1> joint_stiffness() const;                ///< Joint-space stiffness gain
+        Eigen::Matrix<double, 7, 1> joint_damping() const;                  ///< Joint-space damping gain
 
-        Eigen::Matrix<double, 7, 1> nullspace_stiffness() const;
-        Eigen::Matrix<double, 7, 1> nullspace_damping() const;
+        Eigen::Matrix<double, 7, 1> nullspace_stiffness() const;            ///< Nullspace stiffness gain
+        Eigen::Matrix<double, 7, 1> nullspace_damping() const;              ///< Nullspace damping gain
 
-        double dynamics() const;
+        double dynamics() const;                                            ///< Multiplier of torque calculated bt inverse dynamics
 
         // Filters
-        double pole_angle_filter() const;
-        double pole_dangle_filter() const;
+        double pole_angle_filter() const;   ///< Filter factor of pole angle. 0.0 for no filter
+        double pole_dangle_filter() const;  ///< Filter factor of pole anglular velocity. 0.0 for no filter
 
         // Noise
-        Eigen::Matrix<double, 7, 1> joint_position_standard_deviation() const;
-        Eigen::Matrix<double, 7, 1> joint_velocity_standard_deviation() const;
-        Eigen::Matrix<double, 2, 1> pole_angle_standard_deviation() const;
+        Eigen::Matrix<double, 7, 1> joint_position_standard_deviation() const;  ///< Standard deviation of noise added to joint position measurements
+        Eigen::Matrix<double, 7, 1> joint_velocity_standard_deviation() const;  ///< Standard deviation of noise added to joint velocity measurements
+        Eigen::Matrix<double, 2, 1> pole_angle_standard_deviation() const;      ///< Standard deviation of noise added to pole angle measurements
         
         // Reset
-        double hardware_reset_duration() const;
-        Eigen::Matrix<double, 7, 1> hardware_reset_stiffness() const;
-        Eigen::Matrix<double, 7, 1> hardware_reset_damping() const;
+        double hardware_reset_duration() const;                         ///< Duration of hardware reset
+        Eigen::Matrix<double, 7, 1> hardware_reset_stiffness() const;   ///< Joint-space stiffness gain during hardware reset
+        Eigen::Matrix<double, 7, 1> hardware_reset_damping() const;     ///< Joint-space damping gain during hardware reset
 
         // Control
-        Eigen::Matrix<double, 8, 1> control() const;
+        Eigen::Matrix<double, 8, 1> control() const;    ///< Gain to be multiplied with observation vector
     };
 }

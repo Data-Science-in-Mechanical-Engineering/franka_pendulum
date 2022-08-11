@@ -105,7 +105,7 @@ void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::D
     if (++_command_period_counter >= parameters->command_period) { if (!_software_reset && !_hardware_reset) _torque = _get_torque_level1(time, ros::Duration(0,1000000*parameters->command_period)); _command_period_counter = 0; }
     if (++_publish_period_counter >= parameters->publish_period) { publisher->publish(); _publish_period_counter = 0; }
 
-    franka_state->set_torque(_torque);
+    franka_state->_set_torque(_torque);
 }
 
 franka_pole::Controller::~Controller()

@@ -1,0 +1,4 @@
+- builder: doxygen
+  name: franka_pole
+  file_patterns: '*.h'
+  exclude_patterns: '*/example/*'

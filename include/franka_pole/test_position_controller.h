@@ -4,6 +4,7 @@
 
 namespace franka_pole
 {
+    ///High-level position controller that returns sinewave as target position and zero as target velocity
     class TestPositionController : public PositionController
     {
     private:

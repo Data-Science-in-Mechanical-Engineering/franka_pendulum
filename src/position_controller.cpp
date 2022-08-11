@@ -112,7 +112,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     }
 
     // anti-damping
-    torque += franka_state->get_joint_velocities() * 0.003;
+    if (parameters->simulated) torque += franka_state->get_joint_velocities() * 0.003;
 
     // gravit and coriolis
     if (parameters->model == Model::D0)
@@ -139,6 +139,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     publisher->set_command_effector_position(_position_target);
     publisher->set_command_effector_velocity(_velocity_target);
     publisher->set_command_effector_acceleration(Eigen::Matrix<double, 3, 1>::Zero());
+    publisher->set_command_joint_torques(torque);
 
     return torque;
 }

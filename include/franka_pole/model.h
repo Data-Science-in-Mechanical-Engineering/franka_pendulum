@@ -2,11 +2,12 @@
 
 namespace franka_pole
 {
+    ///Available hardware configurations
     enum class Model
     {
-        D0,
-        D1,
-        D2,
-        D2b
+        D0, ///< Franka with no pole
+        D1, ///< Franka holding 1-DOF pole with one revolute joint
+        D2, ///< Franka holding 2-DOF pole with two revolute joints
+        D2b ///< Franka holding 3-DOF pole (2-DOF + rotation) with "needle in cup" design
     };
 }

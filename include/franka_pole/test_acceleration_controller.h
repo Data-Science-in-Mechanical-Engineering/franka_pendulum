@@ -4,6 +4,7 @@
 
 namespace franka_pole
 {
+    ///High-level position controller that returns cosinewave as target acceleration
     class TestAccelerationController : public AccelerationController
     {
     private:

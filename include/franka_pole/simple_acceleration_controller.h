@@ -4,6 +4,7 @@
 
 namespace franka_pole
 {
+    ///Acceleration controller that reads state (effector position, effector velocity, pole inclination, pole angular velocity), multiplies it by gain ("control" parameter) and returns as acceleration
     class SimpleAccelerationController : public AccelerationController
     {
     private:

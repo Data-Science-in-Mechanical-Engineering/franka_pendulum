@@ -4,6 +4,7 @@
 
 namespace franka_pole
 {
+    ///Posiiton controller that reads state (effector position, effector velocity, pole inclination, pole angular velocity), multiplies it by gain ("control" parameter) and returns as target position. Target velocity is always zero.
     class SimplePositionController : public PositionController
     {
     private:

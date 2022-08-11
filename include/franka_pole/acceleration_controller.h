@@ -8,6 +8,7 @@ namespace franka_pole
 {
     class Parameters;
 
+    ///Acceleration controllers is a mid-level helper controller, responsible for getting acceleration from higher level controller and returning torque to low-level controller
     class AccelerationController : public Controller
     {
     private:
@@ -28,7 +29,15 @@ namespace franka_pole
 
     protected:
         //Interface for higher level controllers
+        ///Initializes higher level controllers
+        ///@param robot_hw `hardware_interface::RobotHW` object
+        ///@param node_handle ROS node handle
+        ///@return `true` if initialization was successfull
         virtual bool _init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) = 0;
+        ///Gets acceleration command from higher level controllers
+        ///@param time Current time
+        ///@param period Time from previous update
+        ///@return acceleration target
         virtual Eigen::Matrix<double, 3, 1> _get_acceleration_level2(const ros::Time &time, const ros::Duration &period) = 0;
     };
 }

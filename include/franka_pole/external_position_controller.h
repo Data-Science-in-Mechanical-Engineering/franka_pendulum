@@ -8,6 +8,7 @@
 
 namespace franka_pole
 {
+    ///High-level position controller that returns position and acceleration set by ROS topic as target position and acceleration
     class ExternalPositionController : public PositionController
     {
     private:

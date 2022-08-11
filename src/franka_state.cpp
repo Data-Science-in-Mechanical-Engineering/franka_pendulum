@@ -92,7 +92,7 @@ Eigen::Matrix<double, 6, 1> franka_pole::FrankaState::get_effector_velocity() co
     return _effector_velocity;
 }
 
-void franka_pole::FrankaState::set_torque(const Eigen::Matrix<double, 7, 1> &torque)
+void franka_pole::FrankaState::_set_torque(const Eigen::Matrix<double, 7, 1> &torque)
 {
     for (size_t i = 0; i < 7; i++) _joint_handles[i].setCommand(torque(i));
 }
