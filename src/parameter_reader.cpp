@@ -156,6 +156,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::ParameterReader::nullspace_stiffness() 
 Eigen::Matrix<double, 7, 1> franka_pole::ParameterReader::nullspace_damping() const { auto v = _read_vector<7>("nullspace_damping"); if (_nan_vector(v)) v = _replace_vector<7>(v, 2*nullspace_stiffness().array().sqrt().matrix()); return _check_vector("nullspace_damping", v); }
 
 double franka_pole::ParameterReader::dynamics() const { return _check_double("dynamics", _read_double("dynamics")); }
+bool franka_pole::ParameterReader::pure_dynamics() const { return _read_bool("pure_dynamics"); }
 
 double franka_pole::ParameterReader::pole_angle_filter() const { return _check_double("pole_angle_filter", _read_double("pole_angle_filter")); }
 double franka_pole::ParameterReader::pole_dangle_filter() const { double d = _read_double("pole_angle_filter"); if (isnan(d)) d = pole_angle_filter(); return _check_double("pole_angle_filter", d); }

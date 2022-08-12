@@ -29,6 +29,7 @@ float64[7] joint_damping
 float64[7] nullspace_stiffness
 float64[7] nullspace_damping
 float64 dynamics
+bool pure_dynamics
 
 float64 pole_angle_filter
 float64 pole_dangle_filter

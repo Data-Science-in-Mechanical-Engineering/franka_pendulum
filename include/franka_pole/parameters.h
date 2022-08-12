@@ -87,6 +87,7 @@ namespace franka_pole
         Eigen::Matrix<double, 7, 1> nullspace_damping;              ///< Nullspace damping gain
 
         double dynamics;                                            ///< Multiplier of torque calculated bt inverse dynamics
+        bool pure_dynamics;                                         ///< `true` if cartesian control should not be applied as force directly, but passed to inverse dynamics control instead
 
         // Filters
         double pole_angle_filter;   ///< Filter factor of pole angle. 0.0 for no filter

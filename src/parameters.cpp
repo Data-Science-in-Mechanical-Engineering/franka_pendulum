@@ -46,6 +46,7 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     _receive_vector<7>(&nullspace_damping, msg->nullspace_damping);
 
     _receive_double(&dynamics, msg->dynamics);
+    pure_dynamics = msg->pure_dynamics;
 
     // Filters
     _receive_double(&pole_angle_filter, msg->pole_angle_filter);
@@ -109,6 +110,7 @@ void franka_pole::Parameters::_send()
     _send_vector<7>(nullspace_damping, &command.nullspace_damping);
 
     _send_double(dynamics, &command.dynamics);
+    command.pure_dynamics = pure_dynamics;
 
     // Filters
     _send_double(pole_angle_filter, &command.pole_angle_filter);
@@ -226,6 +228,7 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     nullspace_damping(reader.nullspace_damping()),
 
     dynamics(reader.dynamics()),
+    pure_dynamics(reader.pure_dynamics()),
 
     pole_angle_filter(reader.pole_angle_filter()),
     pole_dangle_filter(reader.pole_dangle_filter()),

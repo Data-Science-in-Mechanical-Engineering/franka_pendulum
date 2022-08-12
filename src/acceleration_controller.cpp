@@ -77,6 +77,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     Eigen::Matrix<double, 6, 7> jacobian_transpose_inverse = pseudo_inverse(jacobian_transpose, true);
 
     // cartesian control
+    Eigen::Matrix<double, 6, 1> cartesian_control = Eigen::Matrix<double, 6, 1>::Zero(); //Calculate, but don't apply in pure dynamics mode
     if (!cartesian_stiffness.isZero() || !cartesian_damping.isZero())
     {
         Eigen::Matrix<double, 6, 1> error = Eigen::Matrix<double, 6, 1>::Zero();
@@ -87,7 +88,8 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
         error.segment<3>(3) = -(franka_state->get_effector_orientation() * Eigen::Matrix<double, 3, 1>(error_quaternion.x(), error_quaternion.y(), error_quaternion.z()));
         Eigen::Matrix<double, 6, 1> v6 = Eigen::Matrix<double, 6, 1>::Zero();
         v6.segment<3>(0) = _velocity_target;
-        torque += jacobian_transpose * (-cartesian_stiffness.array() * error.array() - cartesian_damping.array() * (franka_state->get_effector_velocity() - v6).array()).matrix();
+        cartesian_control = (-cartesian_stiffness.array() * error.array() - cartesian_damping.array() * (franka_state->get_effector_velocity() - v6).array()).matrix();
+        if (!parameters->pure_dynamics) torque += jacobian_transpose * cartesian_control;
     }
 
     // joints-space control
@@ -115,7 +117,12 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
 
     // inverse dynamics
     Eigen::Matrix<double, 6, 1> a6 = Eigen::Matrix<double, 6, 1>::Zero();
-    if (parameters->dynamics > 0.0) a6.segment<3>(0) = _acceleration_target + franka_model->get_effector_centroidal_acceleration(franka_state->get_joint_positions(), franka_state->get_joint_velocities());
+    if (parameters->dynamics > 0.0)
+    {
+        a6.segment<3>(0) += _acceleration_target;
+        a6.segment<3>(0) += franka_model->get_effector_centroidal_acceleration(franka_state->get_joint_positions(), franka_state->get_joint_velocities());
+        if (parameters->pure_dynamics) a6 += cartesian_control; //Apply cartesian control here instread
+    }
     if (parameters->model == Model::D0)
     {
         // calculate all (7+2) of acceleration

@@ -42,6 +42,7 @@ $(arg namespace):
   nullspace_damping: [ .NaN, .NaN, .NaN, .NaN, .NaN, .NaN, .NaN ]
 
   dynamics: 1.0
+  pure_dynamics: false
   
   # Filters
   pole_angle_filter: 0.5
