@@ -9,6 +9,8 @@ float64[4] target_effector_orientation
 float64 target_joint0_position
 float64[3] min_effector_position
 float64[3] max_effector_position
+float64[3] min_effector_velocity
+float64[3] max_effector_velocity
 
 float64[3] initial_effector_position
 float64[4] initial_effector_orientation

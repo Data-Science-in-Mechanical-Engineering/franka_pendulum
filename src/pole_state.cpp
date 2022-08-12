@@ -70,16 +70,16 @@ _parameters(parameters), _franka_model(franka_model), _franka_state(franka_state
     _random_engine.seed(time(nullptr));
 
     //Set zeros
-    reset();
+    reset(Eigen::Matrix<double, 2, 1>::Zero(), Eigen::Matrix<double, 2, 1>::Zero());
 }
 
-void franka_pole::PoleState::reset()
+void franka_pole::PoleState::reset(const Eigen::Matrix<double, 2, 1> &joint_angle, const Eigen::Matrix<double, 2, 1> &joint_dangle)
 {
     bool _first = true;
-    _angle.setZero();
-    _dangle.setZero();
-    _joint_angle.setZero();
-    _joint_dangle.setZero();
+    _joint_angle = joint_angle;
+    _joint_dangle = joint_dangle;
+    _angle = joint_angle;
+    _dangle = joint_dangle;
 }
 
 void franka_pole::PoleState::update(const ros::Time &time)

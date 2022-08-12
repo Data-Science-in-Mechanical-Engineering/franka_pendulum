@@ -62,6 +62,8 @@ namespace franka_pole
         double target_joint0_position;                          ///< Effector's target angle of first joint
         Eigen::Matrix<double, 3, 1> min_effector_position;      ///< Higher boundary for effector position
         Eigen::Matrix<double, 3, 1> max_effector_position;      ///< Lower boundary for effector position
+        Eigen::Matrix<double, 3, 1> min_effector_velocity;      ///< Higher boundary for effector velocity
+        Eigen::Matrix<double, 3, 1> max_effector_velocity;      ///< Lower boundary for effector velocity
 
         // Initial state
         Eigen::Matrix<double, 3, 1> initial_effector_position;  ///< Effector's initial position

@@ -35,7 +35,7 @@ void franka_pole::Controller::_reset()
     if (parameters->model == Model::D0) _torque = franka_model->get_gravity9(_initial_joint_positions).segment<7>(0);
     else if (parameters->model == Model::D1) _torque = franka_model->get_gravity10(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
     else _torque = franka_model->get_gravity11(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
-    if (pole_state != nullptr) pole_state->reset();
+    if (pole_state != nullptr) pole_state->reset(parameters->initial_pole_positions, parameters->initial_pole_velocities);
     _init_level1(_robot_hw, _node_handle);
 }
 
@@ -55,7 +55,11 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
         franka_model = new FrankaModel(parameters);
         publisher = new Publisher(parameters, node_handle);
         franka_state = new FrankaState(parameters, franka_model, publisher, robot_hw);
-        if (parameters->model != Model::D0) pole_state = new PoleState(parameters, franka_model, franka_state, publisher, &mutex, robot_hw, node_handle);    
+        if (parameters->model != Model::D0)
+        {
+            pole_state = new PoleState(parameters, franka_model, franka_state, publisher, &mutex, robot_hw, node_handle);
+            pole_state->reset(parameters->initial_pole_positions, parameters->initial_pole_velocities);
+        }
 
         //Opening reset subscribers
         _reset_subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
@@ -101,12 +105,11 @@ void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::D
         }
         else _reset();
     }
-    
     if (++_franka_period_counter >= parameters->franka_period) { franka_state->update(time); _franka_period_counter = 0; }
     if (pole_state != nullptr && ++_pole_period_counter >= parameters->pole_period) { pole_state->update(time); _pole_period_counter = 0; }
     if (++_command_period_counter >= parameters->command_period) { if (!_software_reset && !_hardware_reset) _torque = _get_torque_level1(time, ros::Duration(0,1000000*parameters->command_period)); _command_period_counter = 0; }
     if (++_publish_period_counter >= parameters->publish_period) { publisher->publish(); _publish_period_counter = 0; }
-
+    
     franka_state->_set_torque(_torque);
 }
 

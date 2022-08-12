@@ -40,14 +40,11 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     for (size_t i = 0; i < 3; i++)
     {
         // target
-        if (_position_target(i) > parameters->max_effector_position(i))
-        {
-            _position_target(i) = parameters->max_effector_position(i);
-        }
-        else if (_position_target(i) < parameters->min_effector_position(i))
-        {
-            _position_target(i) = parameters->min_effector_position(i);
-        }
+        if (_position_target(i) > parameters->max_effector_position(i)) _position_target(i) = parameters->max_effector_position(i);
+        else if (_position_target(i) < parameters->min_effector_position(i)) _position_target(i) = parameters->min_effector_position(i);
+
+        if (_velocity_target(i) > parameters->max_effector_velocity(i)) _velocity_target(i) = parameters->min_effector_velocity(i);
+        else if (_velocity_target(i) < parameters->min_effector_velocity(i)) _velocity_target(i) = parameters->min_effector_velocity(i);
 
         // real state
         bool axis_outbound = false;
@@ -63,7 +60,6 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
             if (_acceleration_target(i) < 0.0) _acceleration_target (i) = 0.0;
             axis_outbound = outbound = true;
         }
-
         cartesian_stiffness(i) = axis_outbound ? parameters->outbound_translation_stiffness(i) : parameters->translation_stiffness(i);
         cartesian_damping(i) = axis_outbound ? parameters->outbound_translation_damping(i) : parameters->translation_damping(i);
     }

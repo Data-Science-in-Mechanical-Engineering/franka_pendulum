@@ -36,14 +36,11 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     for (size_t i = 0; i < 3; i++)
     {
         // target
-        if (_position_target(i) > parameters->max_effector_position(i))
-        {
-            _position_target(i) = parameters->max_effector_position(i);
-        }
-        else if (_position_target(i) < parameters->min_effector_position(i))
-        {
-            _position_target(i) = parameters->min_effector_position(i);
-        }
+        if (_position_target(i) > parameters->max_effector_position(i)) _position_target(i) = parameters->max_effector_position(i);
+        else if (_position_target(i) < parameters->min_effector_position(i)) _position_target(i) = parameters->min_effector_position(i);
+
+        if (_velocity_target(i) > parameters->max_effector_velocity(i)) _velocity_target(i) = parameters->min_effector_velocity(i);
+        else if (_velocity_target(i) < parameters->min_effector_velocity(i)) _velocity_target(i) = parameters->min_effector_velocity(i);
 
         // real state
         bool axis_outbound = false;
