@@ -35,6 +35,7 @@ void franka_pole::Controller::_reset()
     if (parameters->model == Model::D0) _torque = franka_model->get_gravity9(_initial_joint_positions).segment<7>(0);
     else if (parameters->model == Model::D1) _torque = franka_model->get_gravity10(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
     else _torque = franka_model->get_gravity11(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
+    if (pole_state != nullptr) pole_state->reset();
     _init_level1(_robot_hw, _node_handle);
 }
 
@@ -59,6 +60,7 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
         //Opening reset subscribers
         _reset_subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
         _software_reset_semaphore = sem_open(("/" + parameters->namespacee + "_" + parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
+        if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_pole::Controller::_init_level0(): sem_open failed");
         _software_reset = true;
         _hardware_reset = false;
     }

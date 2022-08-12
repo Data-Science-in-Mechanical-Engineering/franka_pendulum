@@ -68,6 +68,18 @@ _parameters(parameters), _franka_model(franka_model), _franka_state(franka_state
         _random_angle_distributions[i] = std::normal_distribution<double>(0.0, pole_angle_standard_deviation(i));
     }
     _random_engine.seed(time(nullptr));
+
+    //Set zeros
+    reset();
+}
+
+void franka_pole::PoleState::reset()
+{
+    bool _first = true;
+    _angle.setZero();
+    _dangle.setZero();
+    _joint_angle.setZero();
+    _joint_dangle.setZero();
 }
 
 void franka_pole::PoleState::update(const ros::Time &time)

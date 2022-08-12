@@ -63,17 +63,33 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
         
         //Init semaphore
         _software_reset_semaphore = sem_open(("/" + _parameters->namespacee + "_" + _parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
-        if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_emulator::emulator::Semaphore::Semaphore: sem_open failed");
+        if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_pole::Plugin::Load(): sem_open failed");
         int value;
         sem_getvalue(_software_reset_semaphore, &value);
         while (value > 0) { sem_wait(_software_reset_semaphore); value--; }
 
         //Initializing joints
         std::string name_base = _parameters->arm_id + "::" + _parameters->arm_id;
-        for (size_t i = 0; i < 7; i++) _joints[i] = model->GetJoint(name_base + "_joint" + std::to_string(i + 1));
-        for (size_t i = 0; i < 2; i++) _fingers[i] = model->GetJoint(name_base + "_finger_joint" + std::to_string(i + 1));
-        _pole[0] = (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2) ? model->GetJoint(name_base + "_pole_joint_x") : nullptr;
-        _pole[1] = (_parameters->model == Model::D2 || _parameters->model == Model::D2) ? model->GetJoint(name_base + "_pole_joint_y") : nullptr;
+        for (size_t i = 0; i < 7; i++)
+        {
+            _joints[i] = model->GetJoint(name_base + "_joint" + std::to_string(i + 1));
+            if (_joints[i] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
+        }
+        for (size_t i = 0; i < 2; i++)
+        {
+            _fingers[i] = model->GetJoint(name_base + "_finger_joint" + std::to_string(i + 1));
+            if (_fingers[i] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
+        }
+        if (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2b)
+        {
+            _pole[0] = model->GetJoint(name_base + "_pole_joint_x");
+            if (_pole[0] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
+        }
+        if (_parameters->model == Model::D2 || _parameters->model == Model::D2b)
+        {
+            _pole[1] = model->GetJoint(name_base + "_pole_joint_y");
+            if (_pole[1] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
+        }
         
         //Initializing
         Reset();

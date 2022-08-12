@@ -42,11 +42,11 @@ namespace franka_pole
         double _timestamp = 0.0;
 
         //Angles
-        bool _first = true;
-        Eigen::Matrix<double, 2, 1> _angle = Eigen::Matrix<double, 2, 1>::Zero();
-        Eigen::Matrix<double, 2, 1> _dangle = Eigen::Matrix<double, 2, 1>::Zero();
-        Eigen::Matrix<double, 2, 1> _joint_angle = Eigen::Matrix<double, 2, 1>::Zero();
-        Eigen::Matrix<double, 2, 1> _joint_dangle = Eigen::Matrix<double, 2, 1>::Zero();
+        bool _first;
+        Eigen::Matrix<double, 2, 1> _angle;
+        Eigen::Matrix<double, 2, 1> _dangle;
+        Eigen::Matrix<double, 2, 1> _joint_angle;
+        Eigen::Matrix<double, 2, 1> _joint_dangle;
 
     public:
         ///Creates pole state object
@@ -58,6 +58,8 @@ namespace franka_pole
         ///@param robot_hw `hardware_interface::RobotHW` object
         ///@param node_handle ROS node handle
         PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, std::mutex *mutex, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
+        ///Resets pole state filters
+        void reset();
         ///Updates pole state
         ///@param time Current time
         void update(const ros::Time &time);
