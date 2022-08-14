@@ -38,11 +38,12 @@ void franka_pole::PoleState::_callback(const geometry_msgs::TransformStamped::Co
     _timestamp = msg->header.stamp.toSec();
 
     //Publish
-    _publisher->set_pole_timestamp(msg->header.stamp);
-    _publisher->set_pole_angle(_angle);
-    _publisher->set_pole_dangle(_dangle);
-    _publisher->set_pole_joint_angle(_joint_angle);
-    _publisher->set_pole_joint_dangle(_joint_dangle);
+    _publisher->set_pole(
+        msg->header.stamp,
+        _angle,
+        _dangle,
+        _joint_angle,
+        _joint_dangle);
 }
 
 franka_pole::PoleState::PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, std::mutex *mutex, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) :
@@ -122,11 +123,12 @@ void franka_pole::PoleState::update(const ros::Time &time)
         */
 
         //Publish
-        _publisher->set_pole_timestamp(time);
-        _publisher->set_pole_angle(_angle);
-        _publisher->set_pole_dangle(_dangle);
-        _publisher->set_pole_joint_angle(_joint_angle);
-        _publisher->set_pole_joint_dangle(_joint_dangle);
+        _publisher->set_pole(
+            time,
+            _angle,
+            _dangle,
+            _joint_angle,
+            _joint_dangle);
     }
 }
 

@@ -29,59 +29,55 @@ namespace franka_pole
         ///Publisher data
         void publish();
 
-        //Franka
-        ///Notifies publisher about franka position update
-        ///@param timestamp Latest franka position update time
-        void set_franka_timestamp(const ros::Time &timestamp);
-        ///Notifies publisher about franka's joint positions
-        ///@param positions Latest franka's joint positions
-        void set_franka_joint_positions(const Eigen::Matrix<double, 7, 1> &positions);
-        ///Notifies publisher about franka's joint velocities
-        ///@param velocities Latest franka's joint velocities
-        void set_franka_joint_velocities(const Eigen::Matrix<double, 7, 1> &velocities);
-        ///Notifies publisher about franka's end effector position
-        ///@param position Latest franka's end effector position
-        void set_franka_effector_position(const Eigen::Matrix<double, 3, 1> &position);
-        ///Notifies publisher about franka's end effector velocity
-        ///@param velocity Latest franka's end effector velocity
-        void set_franka_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity);
-        ///Notifies publisher about franka's end effector orientation
-        ///@param orientation Latest franka's end effector orientation
-        void set_franka_effector_orientation(const Eigen::Quaterniond &orientation);
-        
         //Pole
         ///Notifies publisher about pole update
         ///@param timestamp Latest pole update time
-        void set_pole_timestamp(const ros::Time &timestamp);
-        ///Notifies publisher about pole's position
         ///@param angle Angles betweeeen the pole and the planes
-        void set_pole_angle(const Eigen::Matrix<double, 2, 1> &angle);
-        ///Notifies publisher about pole's velocity
         ///@param dangle Derivative of the angle betweeeen the pole and the planes
-        void set_pole_dangle(const Eigen::Matrix<double, 2, 1> &dangle);
-        ///Notifies publisher about pole's joint angle
-        ///@param angle Angles of revolute joints in the pole
-        void set_pole_joint_angle(const Eigen::Matrix<double, 2, 1> &angle);
-        ///Notifies publisher about pole's joint velocity
-        ///@param dangle Angular velocities of revolute joints in the pole
-        void set_pole_joint_dangle(const Eigen::Matrix<double, 2, 1> &dangle);
+        ///@param joint_angle Angles of revolute joints in the pole
+        ///@param joint_dangle Angular velocities of revolute joints in the pole
+        void set_pole(
+            const ros::Time &timestamp,
+            const Eigen::Matrix<double, 2, 1> &angle,
+            const Eigen::Matrix<double, 2, 1> &dangle,
+            const Eigen::Matrix<double, 2, 1> &joint_angle,
+            const Eigen::Matrix<double, 2, 1> &joint_dangle);
+        
+        //Franka
+        ///Notifies publisher about franka position update
+        ///@param timestamp Latest franka position update time
+        ///@param position Latest franka's end effector position
+        ///@param orientation Latest franka's end effector orientation
+        ///@param velocity Latest franka's end effector velocity
+        ///@param positions Latest franka's joint positions
+        ///@param velocities Latest franka's joint velocities
+        void set_franka(const ros::Time &timestamp,
+            const Eigen::Matrix<double, 3, 1> &position,
+            const Eigen::Quaterniond &orientation,
+            const Eigen::Matrix<double, 6, 1> &velocity,
+            const Eigen::Matrix<double, 7, 1> &positions,
+            const Eigen::Matrix<double, 7, 1> &velocities);
 
         //Controller
         ///Notifies publisher about franka's torque update
         ///@param timestamp Latest franka's torque update time
-        void set_command_timestamp(const ros::Time &timestamp);
-        ///Notifies publisher about franka's commanded position
         ///@param position Latest franka's commanded position
-        void set_command_effector_position(const Eigen::Matrix<double, 3, 1> &position);
-        ///Notifies publisher about franka's commanded velocity
+        ///@param orientation Latest franka's commanded orientation
         ///@param velocity Latest franka's commanded velocity
-        void set_command_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity);
-        ///Notifies publisher about franka's commanded acceleration
         ///@param acceleration Latest franka's commanded acceleration
-        void set_command_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration);
-        ///Notifies publisher about franka's commanded torques
-        ///@param torques Latest franka's commanded torques
-        void set_command_joint_torques(const Eigen::Matrix<double, 7, 1> &torques);
+        ///@param positions Latest franka's commanded joint positions
+        ///@param velocities Latest franka's commanded joint velocities
+        ///@param accelerations Latest franka's commanded joint accelerations
+        ///@param torque Latest franka's commanded torque
+        void set_command(const ros::Time &timestamp,
+            const Eigen::Matrix<double, 3, 1> &position,
+            const Eigen::Quaterniond &orientation,
+            const Eigen::Matrix<double, 6, 1> &velocity,
+            const Eigen::Matrix<double, 6, 1> &acceleration,
+            const Eigen::Matrix<double, 7, 1> &positions,
+            const Eigen::Matrix<double, 7, 1> &velocities,
+            const Eigen::Matrix<double, 7, 1> &accelerations,
+            const Eigen::Matrix<double, 7, 1> &torques);
 
         //Reset
         ///Notifies publisher whether the robot is being resetted

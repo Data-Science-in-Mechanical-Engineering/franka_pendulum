@@ -68,6 +68,8 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     Eigen::Matrix<double, 6, 7> jacobian_transpose_inverse = pseudo_inverse(jacobian_transpose, true);
     
     // cartesian control
+    Eigen::Matrix<double, 6, 1> velocity_command = Eigen::Matrix<double, 6, 1>::Zero(); // --> to publisher
+    velocity_command.segment<3>(0) = _velocity_target;
     if (!cartesian_stiffness.isZero() || !cartesian_damping.isZero())
     {
         Eigen::Matrix<double, 6, 1> error = Eigen::Matrix<double, 6, 1>::Zero();
@@ -76,21 +78,21 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
         if (parameters->target_effector_orientation.coeffs().dot(orientation.coeffs()) < 0.0) orientation.coeffs() = -orientation.coeffs();
         Eigen::Quaterniond error_quaternion(orientation.inverse() * parameters->target_effector_orientation);
         error.segment<3>(3) = -(franka_state->get_effector_orientation() * Eigen::Matrix<double, 3, 1>(error_quaternion.x(), error_quaternion.y(), error_quaternion.z()));
-        Eigen::Matrix<double, 6, 1> v6 = Eigen::Matrix<double, 6, 1>::Zero();
-        v6.segment<3>(0) = _velocity_target;
-        torque += jacobian_transpose * (-cartesian_stiffness.array() * error.array() - cartesian_damping.array() * (franka_state->get_effector_velocity() - v6).array()).matrix();
+        torque += jacobian_transpose * (-cartesian_stiffness.array() * error.array() - cartesian_damping.array() * (franka_state->get_effector_velocity() - velocity_command).array()).matrix();
     }
     
     // joints-space control
+    Eigen::Matrix<double, 7, 1> joint_position_command = Eigen::Matrix<double, 7, 1>::Zero(); //--> to publisher
+    Eigen::Matrix<double, 7, 1> joint_velocity_command = Eigen::Matrix<double, 7, 1>::Zero(); //--> to publisher
     if (!parameters->joint_stiffness.isZero() || !parameters->joint_damping.isZero())
     {
         try
         {
-            Eigen::Matrix<double, 7, 1> joint_position_target = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, std::numeric_limits<double>::quiet_NaN());
-            Eigen::Matrix<double, 7, 1> joint_velocity_target = jacobian_inverse.block<7,3>(0,0) * _velocity_target;
+            joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, std::numeric_limits<double>::quiet_NaN());
+            joint_velocity_command = jacobian_inverse.block<7,3>(0,0) * _velocity_target;
             torque += (
-                parameters->joint_stiffness.array() * (franka_state->get_joint_positions() - joint_position_target).array() +
-                parameters->joint_damping.array() * (franka_state->get_joint_velocities() - joint_velocity_target).array()
+                parameters->joint_stiffness.array() * (franka_state->get_joint_positions() - joint_position_command).array() +
+                parameters->joint_damping.array() * (franka_state->get_joint_velocities() - joint_velocity_command).array()
             ).matrix();
         }
         catch (std::exception &e)
@@ -132,11 +134,16 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     }
     
     // publish
-    publisher->set_command_timestamp(time);
-    publisher->set_command_effector_position(_position_target);
-    publisher->set_command_effector_velocity(_velocity_target);
-    publisher->set_command_effector_acceleration(Eigen::Matrix<double, 3, 1>::Zero());
-    publisher->set_command_joint_torques(torque);
+    publisher->set_command(
+        time,
+        _position_target,
+        parameters->target_effector_orientation,
+        velocity_command,
+        Eigen::Matrix<double, 6, 1>::Zero(),
+        joint_position_command,
+        joint_velocity_command,
+        Eigen::Matrix<double, 7, 1>::Zero(),
+        torque);
 
     return torque;
 }

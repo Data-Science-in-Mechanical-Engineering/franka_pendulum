@@ -35,21 +35,30 @@ _parameters(parameters)
     for (size_t i = 0; i < 7; i++) _joint_state.name[i] = _parameters->arm_id + "_joint" + std::to_string(i+1);
     for (size_t i = 0; i < 2; i++) _joint_state.name[7+i] = _parameters->arm_id + "_finger_joint" + std::to_string(i+1);
 
-    set_franka_timestamp(ros::Time(0.0));
-    set_franka_joint_positions(Eigen::Matrix<double, 7, 1>::Zero());
-    set_franka_joint_velocities(Eigen::Matrix<double, 7, 1>::Zero());
-    set_franka_effector_position(Eigen::Matrix<double, 3, 1>::Zero());
-    set_franka_effector_velocity(Eigen::Matrix<double, 3, 1>::Zero());
-    set_franka_effector_orientation(Eigen::Quaterniond(0.0, 1.0, 0.0, 0.0));
-    set_pole_timestamp(ros::Time(0.0));
-    set_pole_angle(Eigen::Matrix<double, 2, 1>::Zero());
-    set_pole_dangle(Eigen::Matrix<double, 2, 1>::Zero());
-    set_pole_joint_angle(Eigen::Matrix<double, 2, 1>::Zero());
-    set_command_timestamp(ros::Time(0.0));
-    set_command_effector_position(Eigen::Matrix<double, 3, 1>::Zero());
-    set_command_effector_velocity(Eigen::Matrix<double, 3, 1>::Zero());
-    set_command_effector_acceleration(Eigen::Matrix<double, 3, 1>::Zero());
-    set_command_joint_torques(Eigen::Matrix<double, 7, 1>::Zero());
+    set_pole(
+        ros::Time(0,0),
+        Eigen::Matrix<double, 2, 1>::Zero(),
+        Eigen::Matrix<double, 2, 1>::Zero(),
+        Eigen::Matrix<double, 2, 1>::Zero(),
+        Eigen::Matrix<double, 2, 1>::Zero());
+
+    set_franka(ros::Time(0,0),
+        Eigen::Matrix<double, 3, 1>::Zero(),
+        Eigen::Quaterniond(1.0, 0.0, 0.0, 0.0),
+        Eigen::Matrix<double, 6, 1>::Zero(),
+        Eigen::Matrix<double, 7, 1>::Zero(),
+        Eigen::Matrix<double, 7, 1>::Zero());
+
+    set_command(ros::Time(0,0),
+        Eigen::Matrix<double, 3, 1>::Zero(),
+        Eigen::Quaterniond(1.0, 0.0, 0.0, 0.0),
+        Eigen::Matrix<double, 6, 1>::Zero(),
+        Eigen::Matrix<double, 6, 1>::Zero(),
+        Eigen::Matrix<double, 7, 1>::Zero(),
+        Eigen::Matrix<double, 7, 1>::Zero(),
+        Eigen::Matrix<double, 7, 1>::Zero(),
+        Eigen::Matrix<double, 7, 1>::Zero());
+
     set_reset(false);
 }
 
@@ -59,86 +68,64 @@ void franka_pole::Publisher::publish()
     _joint_state_publisher.publish(_joint_state);
 }
 
-void franka_pole::Publisher::set_franka_timestamp(const ros::Time &timestamp)
-{
-    _sample.franka_timestamp = timestamp.toSec();
-}
-
-void franka_pole::Publisher::set_franka_joint_positions(const Eigen::Matrix<double, 7, 1> &positions)
-{
-    Eigen::Matrix<double, 7, 1>::Map(&_joint_state.position[0]) = positions;
-}
-
-void franka_pole::Publisher::set_franka_joint_velocities(const Eigen::Matrix<double, 7, 1> &velocities)
-{
-    Eigen::Matrix<double, 7, 1>::Map(&_joint_state.velocity[0]) = velocities;
-}
-
-void franka_pole::Publisher::set_franka_effector_position(const Eigen::Matrix<double, 3, 1> &position)
-{
-    Eigen::Matrix<double, 3, 1>::Map(&_sample.franka_effector_position[0]) = position;
-}
-
-void franka_pole::Publisher::set_franka_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity)
-{
-    Eigen::Matrix<double, 3, 1>::Map(&_sample.franka_effector_velocity[0]) = velocity;
-}
-
-void franka_pole::Publisher::set_franka_effector_orientation(const Eigen::Quaterniond &orientation)
-{
-}
-
-void franka_pole::Publisher::set_pole_timestamp(const ros::Time &timestamp)
+void franka_pole::Publisher::set_pole(
+    const ros::Time &timestamp,
+    const Eigen::Matrix<double, 2, 1> &angle,
+    const Eigen::Matrix<double, 2, 1> &dangle,
+    const Eigen::Matrix<double, 2, 1> &joint_angle,
+    const Eigen::Matrix<double, 2, 1> &joint_dangle)
 {
     _sample.pole_timestamp = timestamp.toSec();
-}
-
-void franka_pole::Publisher::set_pole_angle(const Eigen::Matrix<double, 2, 1> &angle)
-{
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_angle[0]) = angle;
-}
-
-void franka_pole::Publisher::set_pole_dangle(const Eigen::Matrix<double, 2, 1> &dangle)
-{
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_dangle[0]) = dangle;
-}
 
-void franka_pole::Publisher::set_pole_joint_angle(const Eigen::Matrix<double, 2, 1> &angle)
-{
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_angle[0]) = angle;
     if (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.position[9] = -angle(0);
     if (_parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.position[10] = angle(1);
-}
 
-void franka_pole::Publisher::set_pole_joint_dangle(const Eigen::Matrix<double, 2, 1> &dangle)
-{
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_dangle[0]) = dangle;
     if (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.velocity[9] = -dangle(0);
     if (_parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.velocity[10] = dangle(1);
 }
 
-void franka_pole::Publisher::set_command_timestamp(const ros::Time &timestamp)
+void franka_pole::Publisher::set_franka(const ros::Time &timestamp,
+    const Eigen::Matrix<double, 3, 1> &position,
+    const Eigen::Quaterniond &orientation,
+    const Eigen::Matrix<double, 6, 1> &velocity,
+    const Eigen::Matrix<double, 7, 1> &positions,
+    const Eigen::Matrix<double, 7, 1> &velocities)
+{
+    _sample.franka_timestamp = timestamp.toSec();
+    Eigen::Matrix<double, 3, 1>::Map(&_sample.franka_effector_position[0]) = position;
+    //Eigen::Matrix<double, 4, 1>::Map(&_sample.franka_effector_orientation[0]) = Eigen::Matrix<double, 4, 1>(orientation.w(), orientation.x(), orientation.y(), orientation.z());
+    Eigen::Matrix<double, 3, 1>::Map(&_sample.franka_effector_velocity[0]) = velocity.segment<3>(0);
+
+    Eigen::Matrix<double, 7, 1>::Map(&_sample.franka_joint_positions[0]) = positions;
+    Eigen::Matrix<double, 7, 1>::Map(&_joint_state.position[0]) = positions;
+
+    Eigen::Matrix<double, 7, 1>::Map(&_sample.franka_joint_velocities[0]) = velocities;
+    Eigen::Matrix<double, 7, 1>::Map(&_joint_state.velocity[0]) = velocities;
+}
+
+void franka_pole::Publisher::set_command(const ros::Time &timestamp,
+    const Eigen::Matrix<double, 3, 1> &position,
+    const Eigen::Quaterniond &orientation,
+    const Eigen::Matrix<double, 6, 1> &velocity,
+    const Eigen::Matrix<double, 6, 1> &acceleration,
+    const Eigen::Matrix<double, 7, 1> &positions,
+    const Eigen::Matrix<double, 7, 1> &velocities,
+    const Eigen::Matrix<double, 7, 1> &accelerations,
+    const Eigen::Matrix<double, 7, 1> &torques)
 {
     _sample.command_timestamp = timestamp.toSec();
-}
-
-void franka_pole::Publisher::set_command_effector_position(const Eigen::Matrix<double, 3, 1> &position)
-{
     Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_position[0]) = position;
-}
-
-void franka_pole::Publisher::set_command_effector_velocity(const Eigen::Matrix<double, 3, 1> &velocity)
-{
-    Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_velocity[0]) = velocity;
-}
-
-void franka_pole::Publisher::set_command_effector_acceleration(const Eigen::Matrix<double, 3, 1> &acceleration)
-{
-    Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_acceleration[0]) = acceleration;
-}
-
-void franka_pole::Publisher::set_command_joint_torques(const Eigen::Matrix<double, 7, 1> &torques)
-{
+    //Eigen::Matrix<double, 4, 1>::Map(&_sample.franka_effector_orientation[0]) = Eigen::Matrix<double, 4, 1>(orientation.w(), orientation.x(), orientation.y(), orientation.z());
+    Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_velocity[0]) = velocity.segment<3>(0);
+    Eigen::Matrix<double, 3, 1>::Map(&_sample.command_effector_acceleration[0]) = acceleration.segment<3>(0);
+    Eigen::Matrix<double, 7, 1>::Map(&_sample.command_joint_positions[0]) = positions;
+    Eigen::Matrix<double, 7, 1>::Map(&_sample.command_joint_velocities[0]) = velocities;
+    Eigen::Matrix<double, 7, 1>::Map(&_sample.command_joint_accelerations[0]) = accelerations;
+    //Eigen::Matrix<double, 7, 1>::Map(&_sample.command_joint_torques[0]) = torques;
     Eigen::Matrix<double, 7, 1>::Map(&_joint_state.effort[0]) = torques;
 }
 

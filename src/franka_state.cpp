@@ -55,11 +55,13 @@ void franka_pole::FrankaState::update(const ros::Time &time)
     _effector_velocity = _franka_model->get_effector_jacobian(_joint_positions) * _joint_velocities;
     
     //Publish
-    _publisher->set_franka_timestamp(time);
-    _publisher->set_franka_joint_positions(_joint_positions);
-    _publisher->set_franka_joint_velocities(_joint_velocities);
-    _publisher->set_franka_effector_position(_effector_position);
-    _publisher->set_franka_effector_velocity(_effector_velocity.segment<3>(0));
+    _publisher->set_franka(
+        time,
+        _effector_position,
+        _effector_orientation,
+        _effector_velocity,
+        _joint_positions,
+        _joint_velocities);
 }
 
 double franka_pole::FrankaState::get_timestamp() const
