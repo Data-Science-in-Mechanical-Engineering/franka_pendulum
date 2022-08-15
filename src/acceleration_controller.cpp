@@ -92,14 +92,17 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     // joints-space control
     Eigen::Matrix<double, 7, 1> joint_position_command = Eigen::Matrix<double, 7, 1>::Zero(); //--> to publisher
     Eigen::Matrix<double, 7, 1> joint_velocity_command = Eigen::Matrix<double, 7, 1>::Zero(); //--> to publisher
+    Eigen::Matrix<double, 7, 1> joint_control = Eigen::Matrix<double, 7, 1>::Zero(); //Calculate, but don't apply in pure dynamics mode
     if (!parameters->joint_stiffness.isZero() || !parameters->joint_damping.isZero())
     {
         joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, std::numeric_limits<double>::quiet_NaN());
         joint_velocity_command = jacobian_inverse.block<7,3>(0,0) * _velocity_target;
-        torque += (
+        
+        joint_control = (
             parameters->joint_stiffness.array() * (franka_state->get_joint_positions() - joint_position_command).array() +
             parameters->joint_damping.array() * (franka_state->get_joint_velocities() - joint_velocity_command).array()
         ).matrix();
+        if (!parameters->pure_dynamics) torque += joint_control;
     }
 
     // nullspace control
@@ -125,6 +128,10 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
         if (parameters->pure_dynamics) acceleration_command_centroidal += parameters->dynamics * cartesian_control; //Apply cartesian control here instread
     }
     Eigen::Matrix<double, 7, 1> joint_acceleration_command = jacobian_inverse * acceleration_command_centroidal; //--> to publisher
+    if (parameters->dynamics > 0.0)
+    {
+        if (parameters->pure_dynamics) joint_acceleration_command += parameters->dynamics * joint_control; //Apply joint control here instread
+    }
    
     if (parameters->model == Model::D0)
     {
