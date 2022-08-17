@@ -98,5 +98,12 @@ namespace franka_pole
 
         // Control
         Eigen::Matrix<double, 8, 1> control() const;    ///< Gain to be multiplied with observation vector
+
+        //Test
+        double startup_time() const;                        ///< Duration till test and simple controllers gradually increase their output from zero to full
+        bool test_rectangle() const;                        ///< `true` if tested on rectangular input, `false` if on sinewave
+        Eigen::Matrix<double, 3, 1> test_amplitude() const; ///< Amplitude of input signal in three axis, meters
+        Eigen::Matrix<double, 3, 1> test_frequency() const; ///< Frequency of input signal in three axis, hertz
+        Eigen::Matrix<double, 3, 1> test_phase() const;     ///< Phase of input signal in three axis, radians
     };
 }

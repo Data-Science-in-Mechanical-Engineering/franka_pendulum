@@ -5,6 +5,7 @@
 
 bool franka_pole::SimpleAccelerationController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
+    _time = ros::Time(0,0);
     return true;
 }
 
@@ -28,7 +29,8 @@ Eigen::Matrix<double, 3, 1> franka_pole::SimpleAccelerationController::_get_acce
         acceleration_target(1) = parameters->control.segment<4>(4).transpose() * input;
     }
 
-    return acceleration_target;
+    _time += period;
+    return acceleration_target * std::min(_time.toSec() / parameters->startup_time, 1.0);
 }
 
 FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole::SimpleAccelerationController);

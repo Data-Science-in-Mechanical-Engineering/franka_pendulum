@@ -45,3 +45,9 @@ float64[7] hardware_reset_stiffness
 float64[7] hardware_reset_damping
 
 float64[8] control
+
+float64 startup_time
+bool test_rectangle
+float64[3] test_amplitude
+float64[3] test_frequency
+float64[3] test_phase

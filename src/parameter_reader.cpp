@@ -172,3 +172,9 @@ Eigen::Matrix<double, 7, 1> franka_pole::ParameterReader::hardware_reset_stiffne
 Eigen::Matrix<double, 7, 1> franka_pole::ParameterReader::hardware_reset_damping() const { auto v = _read_vector<7>("hardware_reset_damping"); if (_nan_vector(v)) v = _replace_vector<7>(v, 2*hardware_reset_stiffness().array().sqrt().matrix()); return _check_vector("hardware_reset_damping", v); }
 
 Eigen::Matrix<double, 8, 1> franka_pole::ParameterReader::control() const { return _check_vector("control", _read_vector<8>("control")); }
+
+double franka_pole::ParameterReader::startup_time() const { return _check_double("startup_time", _read_double("startup_time")); }
+bool franka_pole::ParameterReader::test_rectangle() const { return _read_bool("test_rectangle"); }
+Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::test_amplitude() const { return _check_vector("test_amplitude", _read_vector<3>("test_amplitude")); }
+Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::test_frequency() const { return _check_vector("test_frequency", _read_vector<3>("test_frequency")); }
+Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::test_phase() const { return _check_vector("test_phase", _read_vector<3>("test_phase")); }

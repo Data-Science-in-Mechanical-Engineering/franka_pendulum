@@ -11,6 +11,9 @@ namespace franka_pole_example
     class HybridController : public franka_pole::AccelerationController
     {
     private:
+        //Local time
+        ros::Time _time = ros::Time(0,0);
+
         //Subscriber
         Eigen::Matrix<double, 3, 1> _acceleration_target;
         ros::Subscriber _subscriber;
@@ -33,6 +36,7 @@ void franka_pole_example::HybridController::_callback(const franka_pole::Command
 
 bool franka_pole_example::HybridController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
+    _time = ros::Time(0,0);
     _acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
     if (!_subscribed)
     {
@@ -62,7 +66,8 @@ Eigen::Matrix<double, 3, 1> franka_pole_example::HybridController::_get_accelera
         acceleration_target(1) = parameters->control.segment<4>(4).transpose() * input;
     }
 
-    return acceleration_target + _acceleration_target;
+    _time += period;
+    return _acceleration_target + acceleration_target * std::min(_time.toSec() / parameters->startup_time, 1.0);
 }
 
 FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole_example::HybridController);

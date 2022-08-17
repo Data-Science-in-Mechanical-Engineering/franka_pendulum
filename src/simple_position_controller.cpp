@@ -5,6 +5,7 @@
 
 bool franka_pole::SimplePositionController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
+    _time = ros::Time(0,0);
     return true;
 }
 
@@ -28,7 +29,8 @@ Eigen::Matrix<double, 3, 1> franka_pole::SimplePositionController::_get_position
         position_target(1) = parameters->control.segment<4>(4).transpose() * input;
     }
 
-    return position_target;
+    _time += period;
+    return parameters->target_effector_position + position_target * std::min(_time.toSec() / parameters->startup_time, 1.0);
 }
 
 Eigen::Matrix<double, 3, 1> franka_pole::SimplePositionController::_get_velocity_level2(const ros::Time &time, const ros::Duration &period)

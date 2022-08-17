@@ -67,6 +67,13 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     // Control
     _receive_vector<8>(&control, msg->control);
 
+    //Test
+    _receive_double(&startup_time, msg->startup_time);
+    test_rectangle = msg->test_rectangle;
+    _receive_vector<3>(&test_amplitude, msg->test_amplitude);
+    _receive_vector<3>(&test_frequency, msg->test_frequency);
+    _receive_vector<3>(&test_phase, msg->test_phase);
+
     if (_publish && _changed) { _publisher.publish(msg); _changed = false; }
 }
 
@@ -132,6 +139,13 @@ void franka_pole::Parameters::_send()
 
     // Control
     _send_vector<8>(control, &command.control);
+
+    //Test
+    _send_double(startup_time, &command.startup_time);
+    command.test_rectangle = test_rectangle;
+    _send_vector<3>(test_amplitude, &command.test_amplitude);
+    _send_vector<3>(test_frequency, &command.test_frequency);
+    _send_vector<3>(test_phase, &command.test_phase);
 
     _publisher.publish(command);
 }
@@ -247,7 +261,13 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     hardware_reset_stiffness(reader.hardware_reset_stiffness()),
     hardware_reset_damping(reader.hardware_reset_damping()),
 
-    control(reader.control())
+    control(reader.control()),
+
+    startup_time(reader.startup_time()),
+    test_rectangle(reader.test_rectangle()),
+    test_amplitude(reader.test_amplitude()),
+    test_frequency(reader.test_frequency()),
+    test_phase(reader.test_phase())
 {
     // Publishing parameters once
     if (publish)

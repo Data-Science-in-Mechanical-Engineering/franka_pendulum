@@ -62,3 +62,8 @@ $(arg namespace):
 
   # Control
   control: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+
+  # Test
+  test_amplitude: [ 0.0, 0.0, 0.0 ]
+  test_frequency: [ 0.0, 0.0, 0.0 ]
+  test_phase: [ 0.0, 0.0, 0.0 ]
