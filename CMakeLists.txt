@@ -72,6 +72,7 @@ target_include_directories(franka_pole_common PUBLIC include)
 target_compile_options(franka_pole_common PUBLIC -O3)
 target_include_directories(franka_pole_common PUBLIC ${catkin_INCLUDE_DIRS} ${pinocchio_INCLUDE_DIRS})
 target_link_libraries(franka_pole_common PUBLIC ${catkin_LIBRARIES} ${pinocchio_LIBRARIES})
+#target_compile_definitions(franka_pole_common PUBLIC FRANKA_POLE_VELOCITY_INTERFACE)
 add_dependencies(franka_pole_common ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_library(franka_pole_controllers SHARED

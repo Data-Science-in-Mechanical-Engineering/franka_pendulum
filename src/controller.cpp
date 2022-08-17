@@ -32,9 +32,14 @@ void franka_pole::Controller::_reset()
     _software_reset = false;
     _hardware_reset = false;
     _initial_joint_positions = franka_model->effector_inverse_kinematics(parameters->initial_effector_position, parameters->initial_effector_orientation, parameters->initial_joint0_position);
-    if (parameters->model == Model::D0) _torque = franka_model->get_gravity9(_initial_joint_positions).segment<7>(0);
-    else if (parameters->model == Model::D1) _torque = franka_model->get_gravity10(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
-    else _torque = franka_model->get_gravity11(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
+    #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+        _velocity = Eigen::Matrix<double, 6, 1>::Zero();
+    #else
+        if (parameters->model == Model::D0) _torque = franka_model->get_gravity9(_initial_joint_positions).segment<7>(0);
+        else if (parameters->model == Model::D1) _torque = franka_model->get_gravity10(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
+        else _torque = franka_model->get_gravity11(_initial_joint_positions, parameters->initial_pole_positions).segment<7>(0);
+    #endif
+
     if (pole_state != nullptr) pole_state->reset(parameters->initial_pole_positions, parameters->initial_pole_velocities);
     _init_level1(_robot_hw, _node_handle);
 }
@@ -62,7 +67,11 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
         }
 
         //Opening reset subscribers
-        _reset_subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
+        if (!_reset_subscribed)
+        {
+            _reset_subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
+            _reset_subscribed = true;
+        }
         _software_reset_semaphore = sem_open(("/" + parameters->namespacee + "_" + parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
         if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_pole::Controller::_init_level0(): sem_open failed");
         _software_reset = true;
@@ -94,23 +103,37 @@ void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::D
     {
         if (_hardware_reset_time < parameters->hardware_reset_duration)
         {
-            double factor = _hardware_reset_time / parameters->hardware_reset_duration;
-            Eigen::Matrix<double, 7, 1> target_joint_positions = factor * _initial_joint_positions + (1.0 - factor) * _hardware_reset_old_positions;
-            
-            _torque = (
-                (target_joint_positions - franka_state->get_joint_positions()).array() * parameters->hardware_reset_stiffness.array() +
-                ( - franka_state->get_joint_velocities()).array() * parameters->hardware_reset_damping.array()
-            ).matrix();
+            #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+                Eigen::Quaterniond old_orientation;
+                Eigen::Matrix<double, 3, 1> old_position = franka_model->effector_forward_kinematics(_hardware_reset_old_positions, &old_orientation);
+                _velocity.segment<3>(0) = (parameters->initial_effector_position - old_position) / parameters->hardware_reset_duration;
+                _velocity.segment<3>(3) = Eigen::Matrix<double, 3, 1>::Zero();
+            #else
+                double factor = _hardware_reset_time / parameters->hardware_reset_duration;
+                Eigen::Matrix<double, 7, 1> target_joint_positions = factor * _initial_joint_positions + (1.0 - factor) * _hardware_reset_old_positions;
+                _torque = (
+                    (target_joint_positions - franka_state->get_joint_positions()).array() * parameters->hardware_reset_stiffness.array() +
+                    ( - franka_state->get_joint_velocities()).array() * parameters->hardware_reset_damping.array()
+                ).matrix();
+            #endif
             _hardware_reset_time += 0.001;
         }
         else _reset();
     }
     if (++_franka_period_counter >= parameters->franka_period) { franka_state->update(time); _franka_period_counter = 0; }
     if (pole_state != nullptr && ++_pole_period_counter >= parameters->pole_period) { pole_state->update(time); _pole_period_counter = 0; }
-    if (++_command_period_counter >= parameters->command_period) { if (!_software_reset && !_hardware_reset) _torque = _get_torque_level1(time, ros::Duration(0,1000000*parameters->command_period)); _command_period_counter = 0; }
+    #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+        if (++_command_period_counter >= parameters->command_period) { if (!_software_reset && !_hardware_reset) _velocity = _get_velocity_level1(time, ros::Duration(0,1000000*parameters->command_period)); _command_period_counter = 0; }
+    #else
+        if (++_command_period_counter >= parameters->command_period) { if (!_software_reset && !_hardware_reset) _torque = _get_torque_level1(time, ros::Duration(0,1000000*parameters->command_period)); _command_period_counter = 0; }
+    #endif
     if (++_publish_period_counter >= parameters->publish_period) { publisher->publish(); _publish_period_counter = 0; }
-    
-    franka_state->_set_torque(_torque);
+
+    #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+        franka_state->_set_velocity(_velocity);
+    #else
+        franka_state->_set_torque(_torque);
+    #endif
 }
 
 franka_pole::Controller::~Controller()

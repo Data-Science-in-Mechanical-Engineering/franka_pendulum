@@ -2,10 +2,14 @@
 
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
+#ifdef FRANKA_POLE_VELOCITY_INTERFACE
+    #include <franka_hw/franka_cartesian_command_interface.h>
+#endif
 #include <ros/node_handle.h>
 #include <ros/time.h>
 #include <Eigen/Dense>
 #include <random>
+#include <memory>
 
 namespace franka_pole
 {
@@ -28,6 +32,9 @@ namespace franka_pole
 
         //Technical
         hardware_interface::JointHandle _joint_handles[7];
+        #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+            std::unique_ptr<franka_hw::FrankaCartesianVelocityHandle> _velocity_handle;
+        #endif
         std::normal_distribution<double> _random_position_distributions[7];
         std::normal_distribution<double> _random_velocity_distributions[7];
         std::default_random_engine _random_engine;
@@ -45,7 +52,11 @@ namespace franka_pole
         Eigen::Quaterniond _effector_orientation;
         Eigen::Matrix<double, 6, 1> _effector_velocity;
 
-        void _set_torque(const Eigen::Matrix<double, 7, 1> &torque);
+        #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+            void _set_velocity(const Eigen::Matrix<double, 6, 1> &velocity);
+        #else
+            void _set_torque(const Eigen::Matrix<double, 7, 1> &torque);
+        #endif
 
     public:
         ///Creates franka's state object

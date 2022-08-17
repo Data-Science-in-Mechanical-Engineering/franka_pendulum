@@ -14,6 +14,7 @@ namespace franka_pole_example
         //Subscriber
         Eigen::Matrix<double, 3, 1> _acceleration_target;
         ros::Subscriber _subscriber;
+        bool _subscribed = false;
         void _callback(const franka_pole::CommandAcceleration::ConstPtr &msg);
 
         //Overrides from franka_pole::AccelerationController
@@ -33,7 +34,11 @@ void franka_pole_example::HybridController::_callback(const franka_pole::Command
 bool franka_pole_example::HybridController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     _acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
-    _subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_acceleration", 10, &HybridController::_callback, this);
+    if (!_subscribed)
+    {
+        _subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_acceleration", 10, &HybridController::_callback, this);
+        _subscribed = true;
+    }
     return true;
 }
 

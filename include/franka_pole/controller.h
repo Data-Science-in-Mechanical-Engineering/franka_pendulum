@@ -5,6 +5,9 @@
 #include <controller_interface/multi_interface_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
+#ifdef FRANKA_POLE_VELOCITY_INTERFACE
+    #include <franka_hw/franka_cartesian_command_interface.h>
+#endif
 #include <pluginlib/class_list_macros.h>
 
 #include <ros/time.h>
@@ -21,7 +24,11 @@ namespace franka_pole
     class Publisher;
 
     ///Low-level controller, responsible for initialization of components, timing, reset and other low-level entities
-    class Controller : public controller_interface::MultiInterfaceController<hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface>
+    class Controller : public controller_interface::MultiInterfaceController<hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface
+        #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+        , franka_hw::FrankaVelocityCartesianInterface
+        #endif
+        >
     {
     private:
         hardware_interface::RobotHW *_robot_hw;
@@ -29,6 +36,7 @@ namespace franka_pole
 
         //Software reset
         ros::Subscriber _reset_subscriber;
+        bool _reset_subscribed = false;
         bool _software_reset;
         bool _hardware_reset;
         sem_t *_software_reset_semaphore;
@@ -36,7 +44,11 @@ namespace franka_pole
         double _hardware_reset_time;
 
         //Period
-        Eigen::Matrix<double, 7, 1> _torque;
+        #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+            Eigen::Matrix<double, 6, 1> _velocity;
+        #else
+            Eigen::Matrix<double, 7, 1> _torque;
+        #endif
         unsigned int _franka_period_counter;
         unsigned int _pole_period_counter;
         unsigned int _command_period_counter;
@@ -67,16 +79,29 @@ namespace franka_pole
         void _update_level0(const ros::Time &time, const ros::Duration &period);
 
         //Interface for higher level controllers
-        ///Initializes higher level controllers
-        ///@param robot_hw `hardware_interface::RobotHW` object
-        ///@param node_handle ROS node handle
-        ///@return `true` if initialization was successfull
-        virtual bool _init_level1(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) = 0;
-        ///Gets torque command from higher level controllers
-        ///@param time Current time
-        ///@param period Time from previous update
-        ///@return torque
-        virtual Eigen::Matrix<double, 7, 1> _get_torque_level1(const ros::Time &time, const ros::Duration &period) = 0;
+        #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+            ///Initializes higher level controllers
+            ///@param robot_hw `hardware_interface::RobotHW` object
+            ///@param node_handle ROS node handle
+            ///@return `true` if initialization was successfull
+            virtual bool _init_level1(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) = 0;
+            ///Gets torque command from higher level controllers
+            ///@param time Current time
+            ///@param period Time from previous update
+            ///@return cartesian velocity
+            virtual Eigen::Matrix<double, 6, 1> _get_velocity_level1(const ros::Time &time, const ros::Duration &period) = 0;
+        #else
+            ///Initializes higher level controllers
+            ///@param robot_hw `hardware_interface::RobotHW` object
+            ///@param node_handle ROS node handle
+            ///@return `true` if initialization was successfull
+            virtual bool _init_level1(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) = 0;
+            ///Gets torque command from higher level controllers
+            ///@param time Current time
+            ///@param period Time from previous update
+            ///@return joint torques
+            virtual Eigen::Matrix<double, 7, 1> _get_torque_level1(const ros::Time &time, const ros::Duration &period) = 0;
+        #endif
 
     public:
         //Components

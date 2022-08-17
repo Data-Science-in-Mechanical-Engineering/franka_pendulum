@@ -25,16 +25,20 @@ namespace franka_pole
         ///Creates franka model
         ///@param parameters Reference to parameters object
         FrankaModel(const Parameters *parameters);
-        ///Computes gravity term of the robotic equation
+        ///Computes gravity that is compensated by the Franka Interface
+        ///@param joint_positions 7-dimensional vector of joint positions
+        ///@return 7-dimensional vector of torque
+        Eigen::Matrix<double, 7, 1> get_gravity_compensation(const Eigen::Matrix<double, 7, 1> &joint_positions);
+        ///Computes gravity term of the robotic equation (without compensated gravity)
         ///@param joint_positions 7-dimensional vector of joint positions
         ///@return 9-dimensional vector of torque
         Eigen::Matrix<double, 9, 1> get_gravity9(const Eigen::Matrix<double, 7, 1> &joint_positions);
-        ///Computes gravity term of the robotic equation
+        ///Computes gravity term of the robotic equation (without compensated gravity)
         ///@param joint_positions 7-dimensional vector of joint positions
         ///@param pole_joint_positions 2-dimensional vector of pole joint positions
         ///@return 10-dimensional vector of torque
         Eigen::Matrix<double, 10, 1> get_gravity10(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_positions);
-        ///Computes gravity term of the robotic equation
+        ///Computes gravity term of the robotic equation (without compensated gravity)
         ///@param joint_positions 7-dimensional vector of joint positions
         ///@param pole_joint_positions 2-dimensional vector of pole joint positions
         ///@return 11-dimensional vector of torque

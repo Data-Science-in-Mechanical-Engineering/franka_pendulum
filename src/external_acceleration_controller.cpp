@@ -10,7 +10,11 @@ void franka_pole::ExternalAccelerationController::_callback(const franka_pole::C
 bool franka_pole::ExternalAccelerationController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     _acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
-    _subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_acceleration", 10, &ExternalAccelerationController::_callback, this);
+    if (!_subscribed)
+    {
+        _subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_acceleration", 10, &ExternalAccelerationController::_callback, this);
+        _subscribed = true;
+    }
     return true;
 }
 

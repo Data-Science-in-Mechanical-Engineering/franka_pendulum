@@ -16,6 +16,7 @@ namespace franka_pole
         Eigen::Matrix<double, 3, 1> _position_target = Eigen::Matrix<double, 3, 1>::Zero();
         Eigen::Matrix<double, 3, 1> _velocity_target = Eigen::Matrix<double, 3, 1>::Zero();
         ros::Subscriber _subscriber;
+        bool _subscribed = false;
         void _callback(const franka_pole::CommandPosition::ConstPtr &msg);
 
         //Overrides from franka_pole::PositionController

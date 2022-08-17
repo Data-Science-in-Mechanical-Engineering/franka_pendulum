@@ -25,7 +25,11 @@ namespace franka_pole
 
         //Overrides from franka_pole::Controller
         bool _init_level1(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) override;
-        Eigen::Matrix<double, 7, 1> _get_torque_level1(const ros::Time &time, const ros::Duration &period) override;
+        #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+            Eigen::Matrix<double, 6, 1> _get_velocity_level1(const ros::Time &time, const ros::Duration &period) override;
+        #else
+            Eigen::Matrix<double, 7, 1> _get_torque_level1(const ros::Time &time, const ros::Duration &period) override;
+        #endif
 
     protected:
         //Interface for higher level controllers

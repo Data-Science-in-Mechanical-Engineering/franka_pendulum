@@ -18,6 +18,7 @@ bool franka_pole::AccelerationController::_init_level1(hardware_interface::Robot
     return _init_level2(robot_hw, node_handle);
 }
 
+#ifndef FRANKA_POLE_VELOCITY_INTERFACE
 Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_level1(const ros::Time &time, const ros::Duration &period)
 {
     // compute target
@@ -217,3 +218,45 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
 
     return torque;
 }
+#else
+Eigen::Matrix<double, 6, 1> franka_pole::AccelerationController::_get_velocity_level1(const ros::Time &time, const ros::Duration &period)
+{
+    // compute target
+    _controller_period_counter += parameters->command_period;
+    if (_controller_period_counter >= parameters->controller_period)
+    {
+        _acceleration_target = _get_acceleration_level2(time, ros::Duration(0,1000000*parameters->controller_period));
+        _controller_period_counter = 0;
+    }
+    Eigen::Matrix<double, 7, 1> torque = Eigen::Matrix<double, 7, 1>::Zero();
+
+    // integrate
+    _velocity_target += period.toSec() * _acceleration_target;
+    _position_target += period.toSec() * _velocity_target;
+
+    // apply constraints and safety
+    for (size_t i = 0; i < 3; i++)
+    {
+        if (_velocity_target(i) > parameters->max_effector_velocity(i)) _velocity_target(i) = parameters->min_effector_velocity(i);
+        else if (_velocity_target(i) < parameters->min_effector_velocity(i)) _velocity_target(i) = parameters->min_effector_velocity(i);
+    }
+
+    // publish
+    Eigen::Matrix<double, 6, 1> acceleration_command = Eigen::Matrix<double, 6, 1>::Zero();
+    acceleration_command.segment<3>(0) = _acceleration_target;
+    Eigen::Matrix<double, 6, 1> velocity_command = Eigen::Matrix<double, 6, 1>::Zero();
+    velocity_command.segment<3>(0) = _velocity_target;
+    publisher->set_command(
+        time,
+        _position_target,
+        parameters->target_effector_orientation,
+        velocity_command,
+        acceleration_command,
+        Eigen::Matrix<double, 7, 1>::Zero(),
+        Eigen::Matrix<double, 7, 1>::Zero(),
+        Eigen::Matrix<double, 7, 1>::Zero(),
+        Eigen::Matrix<double, 7, 1>::Zero());
+
+    return velocity_command;
+}
+#endif

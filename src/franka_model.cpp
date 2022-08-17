@@ -55,6 +55,44 @@ _parameters(parameters)
     }
 }
 
+Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_gravity_compensation(const Eigen::Matrix<double, 7, 1> &joint_positions)
+{
+    if (_parameters->model == Model::D0)
+    {
+        Eigen::Matrix<double, 9, 1> q9 = Eigen::Matrix<double, 9, 1>::Zero();
+        q9.segment<7>(0) = joint_positions;
+        return pinocchio::computeGeneralizedGravity(_model, _data, q9).segment<7>(0);
+    }
+    else if (_parameters->model == Model::D1)
+    {
+        pinocchio::Inertia old_inertias[11];
+        for (size_t i = 7; i < 11; i++) { old_inertias[i] = _model.inertias[i]; _model.inertias[i].mass() = 0.0; }
+        _model.inertias[7].mass() = 1.46552; /* values taken from panda_arm.urdf.xacro */
+        _model.inertias[7].lever() = Eigen::Matrix<double, 3, 1>({0.0017561, 0.0013882, 0.0991564});
+        
+        Eigen::Matrix<double, 10, 1> q10 = Eigen::Matrix<double, 10, 1>::Zero();
+        q10.segment<7>(0) = joint_positions;
+        Eigen::Matrix<double, 10, 1> torque = pinocchio::computeGeneralizedGravity(_model, _data, q10);
+
+        for (size_t i = 7; i < 11; i++) _model.inertias[i] = old_inertias[i];
+        return torque.segment<7>(0);
+    }
+    else
+    {
+        pinocchio::Inertia old_inertias[12];
+        for (size_t i = 7; i < 12; i++) { old_inertias[i] = _model.inertias[i]; _model.inertias[i].mass() = 0.0; }
+        _model.inertias[7].mass() = 1.46552; /* values taken from panda_arm.urdf.xacro */
+        _model.inertias[7].lever() = Eigen::Matrix<double, 3, 1>({0.0017561, 0.0013882, 0.0991564});
+        
+        Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
+        q11.segment<7>(0) = joint_positions;
+        Eigen::Matrix<double, 11, 1> torque = pinocchio::computeGeneralizedGravity(_model, _data, q11);
+
+        for (size_t i = 7; i < 12; i++) _model.inertias[i] = old_inertias[i];
+        return torque.segment<7>(0);
+    }
+}
+
 Eigen::Matrix<double, 9, 1> franka_pole::FrankaModel::get_gravity9(const Eigen::Matrix<double, 7, 1> &joint_positions)
 {
     return Eigen::Matrix<double, 9, 1>::Zero();
