@@ -137,7 +137,7 @@
   <node name="$(arg namespace)_plotter" pkg="franka_pole" type="plotter.py" args="-N $(arg namespace)" if="$(arg plotter)"/>
 
   <!-- Resetter -->
-  <node name="$(arg namespace)_resetter" pkg="franka_pole" type="resetter.py" args="-N $(arg namespace)" if="$(arg resetter)"/>
+  <node name="$(arg namespace)_resetter" pkg="franka_pole" type="resetter.py" args="-N $(arg namespace) -T 10" if="$(arg resetter)"/>
 
   <!-- Logger -->
   <node name="$(arg namespace)_logger" pkg="franka_pole" type="logger.py" args="-N $(arg namespace) -O $(find franka_pole)/temp/$(arg log_name)" if="$(arg logger)"/>
