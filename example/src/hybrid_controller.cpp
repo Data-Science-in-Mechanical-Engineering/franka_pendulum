@@ -12,7 +12,7 @@ namespace franka_pole_example
     {
     private:
         //Local time
-        ros::Time _time = ros::Time(0,0);
+        ros::Time _time;
 
         //Subscriber
         Eigen::Matrix<double, 3, 1> _acceleration_target;
