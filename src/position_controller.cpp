@@ -90,7 +90,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     {
         try
         {
-            joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, std::numeric_limits<double>::quiet_NaN(), _target_joint_positions);
+            joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, 0.0, _target_joint_positions);
             joint_velocity_command = jacobian_inverse.block<7,3>(0,0) * _velocity_target;
             torque += (
                 parameters->joint_stiffness.array() * (joint_position_command - franka_state->get_joint_positions()).array() +

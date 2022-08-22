@@ -8,25 +8,25 @@ def sample_callback(sample):
     command = CommandAcceleration()
     
     command.command_effector_acceleration[0] = (
-        control[0] * sample.pole_angle[1] +
-        control[1] * sample.pole_dangle[1] +
-        control[2] * (sample.franka_effector_position[0] - target[0]) +
-        control[3] * sample.franka_effector_velocity[0])
+        pole_control[0] * sample.pole_angle[1] +
+        pole_control[1] * sample.pole_dangle[1] +
+        pole_control[2] * (sample.franka_effector_position[0] - target[0]) +
+        pole_control[3] * sample.franka_effector_velocity[0])
 
     command.command_effector_acceleration[1] = (
-        control[4] * sample.pole_angle[0] +
-        control[5] * sample.pole_dangle[0] +
-        control[6] * (sample.franka_effector_position[1] - target[1]) +
-        control[7] * sample.franka_effector_velocity[1])
+        pole_control[4] * sample.pole_angle[0] +
+        pole_control[5] * sample.pole_dangle[0] +
+        pole_control[6] * (sample.franka_effector_position[1] - target[1]) +
+        pole_control[7] * sample.franka_effector_velocity[1])
 
     command.command_effector_acceleration[2] = 0.0
     command_publisher.publish(command)
 
 # Callback for receiving parameters
 def parameters_callback(parameters):
-    global target, control
+    global target, pole_control
     target = parameters.target_effector_position
-    control = parameters.control
+    pole_control = parameters.pole_control
 
 # Main
 if __name__ == '__main__':
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     # Initialize
     rospy.init_node(namespace + "_acceleration_controller")
     target = rospy.get_param("/" + namespace + "/target_effector_position")
-    control = rospy.get_param("/" + namespace + "/control")
+    pole_control = rospy.get_param("/" + namespace + "/pole_control")
     command_publisher = rospy.Publisher("/" + namespace + "/command_acceleration", CommandAcceleration, queue_size=10, tcp_nodelay=True)
     sample_subscriber = rospy.Subscriber("/" + namespace + "/sample", Sample, sample_callback, queue_size=10, tcp_nodelay=True)
     parameters_subscriber = rospy.Subscriber("/" + namespace + "/command_parameters", CommandParameters, parameters_callback, queue_size=10, tcp_nodelay=True)

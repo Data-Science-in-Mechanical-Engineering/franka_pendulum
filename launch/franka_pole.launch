@@ -33,10 +33,10 @@
   <rosparam file="$(find franka_pole)/config/override/acceleration+1D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '1D')"/>
   <rosparam file="$(find franka_pole)/config/override/acceleration+2D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '2D')"/>
   <rosparam file="$(find franka_pole)/config/override/acceleration+2Db.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '2Db')"/>
-  <rosparam file="$(find franka_pole)/config/override/test+acceleration+0D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '0D')"/>
-  <rosparam file="$(find franka_pole)/config/override/test+acceleration+1D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '1D')"/>
-  <rosparam file="$(find franka_pole)/config/override/test+acceleration+2D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '2D')"/>
-  <rosparam file="$(find franka_pole)/config/override/test+acceleration+2Db.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('acceleration') and arg('model') == '2Db')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+0D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('model') == '0D')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+1D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('model') == '1D')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+2D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('model') == '2D')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+2Db.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('model') == '2Db')"/>
 
   <!-- Load available controllers -->
   <rosparam file="$(find franka_pole)/config/franka_pole_controllers.yaml" subst_value="true" />
@@ -89,7 +89,7 @@
       <param name="robot_ip" value="$(arg arm_ip)" />
     </node>
 
-    <include file="$(find vicon_bridge)/launch/vicon.launch">
+    <include file="$(find vicon_bridge)/launch/vicon.launch" if="$(eval arg('model') == '1D' or arg('model') == '2D' or arg('model') == '2Db')">
       <arg name="datastream_hostport" value="$(arg vicon_ip)" />
     </include>
   </group>

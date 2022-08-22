@@ -28,9 +28,9 @@ $(arg namespace):
   initial_pole_velocities: [ 0.0, 0.0 ]
   
   # Stiffness
-  outbound_translation_stiffness: [ 100.0, 100.0, 100.0 ]
+  outbound_translation_stiffness: [ 200.0, 200.0, 200.0 ]
   outbound_translation_damping: [ .NaN, .NaN, .NaN ] # fallbacks to 2 * sqrt(outbound_translation_stiffness)
-  outbound_rotation_stiffness: [ 25.0, 25.0, 25.0 ]
+  outbound_rotation_stiffness: [ 50.0, 50.0, 50.0 ]
   outbound_rotation_damping: [ .NaN, .NaN, .NaN ] # fallbacks to 2 * sqrt(outbound_rotation_stiffness)
   translation_stiffness: [ 0.0, 0.0, 0.0 ] # fallbacks to 2 * sqrt(outbound_translation_stiffness)
   translation_damping: [ .NaN, .NaN, .NaN ] # fallbacks to 2 * sqrt(translation_stiffness)
