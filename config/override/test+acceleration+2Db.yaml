@@ -1,2 +1,2 @@
 $(arg namespace):
-  translation_stiffness: [ 0.0, .NaN, .NaN ]
+  test_amplitude: [ 0.1, 0.0, 0.0 ]

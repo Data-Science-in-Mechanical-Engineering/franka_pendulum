@@ -57,17 +57,17 @@ Eigen::Matrix<double, 3, 1> franka_pole_example::HybridController::_get_accelera
         input(1) = pole_state->get_dangle()(1);
         input(2) = franka_state->get_effector_position()(0) - parameters->target_effector_position(0);
         input(3) = franka_state->get_effector_velocity()(0);
-        acceleration_target(0) = parameters->control.segment<4>(0).transpose() * input;
+        acceleration_target(0) = parameters->pole_control.segment<4>(0).transpose() * input;
             
         input(0) = pole_state->get_angle()(0);
         input(1) = pole_state->get_dangle()(0);
         input(2) = franka_state->get_effector_position()(1) - parameters->target_effector_position(1);
         input(3) = franka_state->get_effector_velocity()(1);
-        acceleration_target(1) = parameters->control.segment<4>(4).transpose() * input;
+        acceleration_target(1) = parameters->pole_control.segment<4>(4).transpose() * input;
     }
 
     _time += period;
-    return _acceleration_target + acceleration_target * std::min(_time.toSec() / parameters->startup_time, 1.0);
+    return _acceleration_target + ((_time.toSec() > parameters->startup_time) ? (acceleration_target) : (acceleration_target * _time.toSec() / parameters->startup_time));
 }
 
 FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole_example::HybridController);

@@ -96,8 +96,8 @@ namespace franka_pole
         Eigen::Matrix<double, 7, 1> hardware_reset_stiffness() const;   ///< Joint-space stiffness gain during hardware reset
         Eigen::Matrix<double, 7, 1> hardware_reset_damping() const;     ///< Joint-space damping gain during hardware reset
 
-        // Control
-        Eigen::Matrix<double, 8, 1> control() const;    ///< Gain to be multiplied with observation vector
+        // Pole control
+        Eigen::Matrix<double, 8, 1> pole_control() const;    ///< Gain to be multiplied with observation vector
 
         //Test
         double startup_time() const;                        ///< Duration till test and simple controllers gradually increase their output from zero to full

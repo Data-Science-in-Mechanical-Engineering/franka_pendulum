@@ -3,10 +3,12 @@
 #include <franka_pole/CommandReset.h>
 
 #include <controller_interface/multi_interface_controller.h>
-#include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #ifdef FRANKA_POLE_VELOCITY_INTERFACE
     #include <franka_hw/franka_cartesian_command_interface.h>
+    #include <franka_hw/franka_state_interface.h>
+#else
+    #include <hardware_interface/joint_command_interface.h>
 #endif
 #include <pluginlib/class_list_macros.h>
 
@@ -24,41 +26,57 @@ namespace franka_pole
     class Publisher;
 
     ///Low-level controller, responsible for initialization of components, timing, reset and other low-level entities
-    class Controller : public controller_interface::MultiInterfaceController<hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface
+    class Controller : public controller_interface::MultiInterfaceController<
         #ifdef FRANKA_POLE_VELOCITY_INTERFACE
-        , franka_hw::FrankaVelocityCartesianInterface
+            franka_hw::FrankaVelocityCartesianInterface, franka_hw::FrankaStateInterface
+        #else
+            hardware_interface::EffortJointInterface, hardware_interface::PositionJointInterface
         #endif
         >
     {
     private:
+        //Technical
         hardware_interface::RobotHW *_robot_hw;
         ros::NodeHandle _node_handle;
 
-        //Software reset
-        ros::Subscriber _reset_subscriber;
-        bool _reset_subscribed = false;
-        bool _software_reset;
-        bool _hardware_reset;
-        sem_t *_software_reset_semaphore;
-        Eigen::Matrix<double, 7, 1> _hardware_reset_old_positions;
-        double _hardware_reset_time;
-
-        //Period
-        #ifdef FRANKA_POLE_VELOCITY_INTERFACE
-            Eigen::Matrix<double, 6, 1> _velocity;
-        #else
-            Eigen::Matrix<double, 7, 1> _torque;
-        #endif
+        //Time
         unsigned int _franka_period_counter;
         unsigned int _pole_period_counter;
         unsigned int _command_period_counter;
         unsigned int _publish_period_counter;
+        
+        //Reset
+        enum class ResetMode
+        {
+            normal,
+            hardware_reset,
+            software_reset
+        };
+        ResetMode _reset_mode;
+        ros::Subscriber _reset_subscriber;
 
-        //Additional parameters
-        Eigen::Matrix<double, 7, 1> _initial_joint_positions;
+        //Software reset
+        sem_t *_software_reset_semaphore;
 
+        //Hardware reset
+        ros::Publisher _hardware_reset_publisher;
+        Eigen::Matrix<double, 3, 1> _hardware_reset_start_position;
+        Eigen::Quaterniond _hardware_reset_start_orientation;
+        Eigen::Matrix<double, 7, 1> _hardware_reset_start_positions;
+        Eigen::Matrix<double, 7, 1> _hardware_reset_end_positions; //Inverse kinematics cache
+        double _hardware_reset_time;
+
+        //Output
+        #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+            Eigen::Matrix<double, 6, 1> _velocity;
+        #else
+            Eigen::Matrix<double, 7, 1> _torque;
+        #endif        
+
+        void _initiate_hardware_reset();
+        void _initiate_software_reset();
+        void _initiate_normal_mode();
         void _callback(const franka_pole::CommandReset::ConstPtr &msg);
-        void _reset();
 
     protected:
         //System handling

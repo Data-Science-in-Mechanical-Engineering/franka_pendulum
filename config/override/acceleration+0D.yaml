@@ -1,2 +1,0 @@
-$(arg namespace):
-  translation_stiffness: [ .NaN, 0.0, .NaN ]

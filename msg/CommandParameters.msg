@@ -44,7 +44,7 @@ float64 hardware_reset_duration
 float64[7] hardware_reset_stiffness
 float64[7] hardware_reset_damping
 
-float64[8] control
+float64[8] pole_control
 
 float64 startup_time
 bool test_rectangle

@@ -100,8 +100,9 @@ namespace franka_pole
         ///@param effector_position End effector position
         ///@param effector_orientation End effector orientation
         ///@param joint0 Angle of the first joint (may be `NaN`)
+        ///@param hint Initial guess
         ///@return 7-dimensional vector of joint positions
         ///@throw `std::runtime_error` if numer of iteration exeeded (in particular because the desired pose is not reachable)
-        Eigen::Matrix<double, 7, 1> effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, double joint0);
+        Eigen::Matrix<double, 7, 1> effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, double joint0, const Eigen::Matrix<double, 7, 1> &hint);
     };
 }

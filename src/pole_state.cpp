@@ -70,7 +70,7 @@ _parameters(parameters), _franka_model(franka_model), _franka_state(franka_state
     }
     _random_engine.seed(time(nullptr));
 
-    //Set zeros
+    //Initial readings
     reset(Eigen::Matrix<double, 2, 1>::Zero(), Eigen::Matrix<double, 2, 1>::Zero());
 }
 

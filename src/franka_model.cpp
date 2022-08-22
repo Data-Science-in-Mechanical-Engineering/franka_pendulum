@@ -312,21 +312,20 @@ Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::pole_forward_kinematics(co
     return placement.translation_impl();
 }
 
-Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, double joint0)
+Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, double joint0, const Eigen::Matrix<double, 7, 1> &hint)
 {
     //Constants
     const pinocchio::SE3 goal(effector_orientation, effector_position);
-    const double tolerance   = 1e-4;
+    const double tolerance   = 1e-3;
     const int max_iteration  = 1000;
-    const double step        = 1e-1;
+    const double step        = 5e-1;
     const double damp        = 1e-6;
-    const double hint[] = { 0.0, -M_PI/4, 0.0, -3*M_PI/4, 0.0, M_PI/2, M_PI/4 };
 
     if (_parameters->model == Model::D0)
     {
         //Copying hints
         Eigen::Matrix<double, 9, 1> result = Eigen::Matrix<double, 9, 1>::Zero();
-        result.segment<7>(0) = Eigen::Matrix<double, 7, 1>::Map(hint);
+        result.segment<7>(0) = hint;
         if (!isnan(joint0)) result(0) = joint0;
 
         //Loop
@@ -343,7 +342,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
             Eigen::Matrix<double, 6, 6> jacobian2 = jacobian.block<6,7>(0,0) * jacobian.block<6,7>(0,0).transpose();
             jacobian2.diagonal().array() += damp;
             Eigen::Matrix<double, 9, 1> gradient;
-            gradient.segment<7>(0) = -jacobian.block<6,7>(0,0).transpose() * jacobian2.ldlt().solve(error);
+            gradient.segment<7>(0) = -jacobian.block<6,7>(0,0).transpose() * jacobian2.llt().solve(error);
             gradient.segment<2>(7) = Eigen::Matrix<double, 2, 1>::Zero();
             result = pinocchio::integrate(_model, result, gradient * step);
             if (!isnan(joint0)) result(0) = joint0;
@@ -353,7 +352,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
     {
         //Copying hints
         Eigen::Matrix<double, 10, 1> result = Eigen::Matrix<double, 10, 1>::Zero();
-        result.segment<7>(0) = Eigen::Matrix<double, 7, 1>::Map(hint);
+        result.segment<7>(0) = hint;
         if (!isnan(joint0)) result(0) = joint0;
 
         //Loop
@@ -369,7 +368,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
             Eigen::Matrix<double, 6, 6> jacobian2 = jacobian.block<6,7>(0,0) * jacobian.block<6,7>(0,0).transpose();
             jacobian2.diagonal().array() += damp;
             Eigen::Matrix<double, 10, 1> gradient;
-            gradient.segment<7>(0) = -jacobian.block<6,7>(0,0).transpose() * jacobian2.ldlt().solve(error);
+            gradient.segment<7>(0) = -jacobian.block<6,7>(0,0).transpose() * jacobian2.llt().solve(error);
             gradient.segment<3>(7) = Eigen::Matrix<double, 3, 1>::Zero();
             result = pinocchio::integrate(_model, result, gradient * step);
             if (!isnan(joint0)) result(0) = joint0;
@@ -379,7 +378,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
     {
         //Copying hints
         Eigen::Matrix<double, 11, 1> result = Eigen::Matrix<double, 11, 1>::Zero();
-        result.segment<7>(0) = Eigen::Matrix<double, 7, 1>::Map(hint);
+        result.segment<7>(0) = hint;
         if (!isnan(joint0)) result(0) = joint0;
 
         //Loop
@@ -395,7 +394,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
             Eigen::Matrix<double, 6, 6> jacobian2 = jacobian.block<6,7>(0,0) * jacobian.block<6,7>(0,0).transpose();
             jacobian2.diagonal().array() += damp;
             Eigen::Matrix<double, 11, 1> gradient;
-            gradient.segment<7>(0) = -jacobian.block<6,7>(0,0).transpose() * jacobian2.ldlt().solve(error);
+            gradient.segment<7>(0) = -jacobian.block<6,7>(0,0).transpose() * jacobian2.llt().solve(error);
             gradient.segment<4>(7) = Eigen::Matrix<double, 4, 1>::Zero();
             result = pinocchio::integrate(_model, result, gradient * step);
             if (!isnan(joint0)) result(0) = joint0;

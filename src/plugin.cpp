@@ -114,7 +114,8 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
 
 void franka_pole::Plugin::Reset()
 {
-    Eigen::Matrix<double, 7, 1> initial_joint_positions = _franka_model->effector_inverse_kinematics(_parameters->initial_effector_position, _parameters->initial_effector_orientation, _parameters->initial_joint0_position);
+    const double hint[] = { 0.0, -M_PI/4, 0.0, -3*M_PI/4, 0.0, M_PI/2, M_PI/4 };
+    Eigen::Matrix<double, 7, 1> initial_joint_positions = _franka_model->effector_inverse_kinematics(_parameters->initial_effector_position, _parameters->initial_effector_orientation, _parameters->initial_joint0_position, Eigen::Matrix<double, 7, 1>::Map(hint));
 
     for (size_t i = 0; i < 7; i++)
     {

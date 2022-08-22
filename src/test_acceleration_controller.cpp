@@ -9,7 +9,6 @@ bool franka_pole::TestAccelerationController::_init_level2(hardware_interface::R
 
 Eigen::Matrix<double, 3, 1> franka_pole::TestAccelerationController::_get_acceleration_level2(const ros::Time &time, const ros::Duration &period)
 {
-    _time += period;
     Eigen::Matrix<double, 3, 1> acceleration_target;
     for (size_t i = 0; i < 3; i++)
     {
@@ -18,7 +17,9 @@ Eigen::Matrix<double, 3, 1> franka_pole::TestAccelerationController::_get_accele
         if (parameters->test_rectangle) acceleration_target(i) = a * (sin(phi) > 0.0 ? 1.0 : -1.0);
         else acceleration_target(i) = a * sin(phi);
     }
-    return acceleration_target * std::min(_time.toSec() / parameters->startup_time, 1.0);
+
+    _time += period;
+    return (_time.toSec() > parameters->startup_time) ? (acceleration_target) : (acceleration_target * _time.toSec() / parameters->startup_time);
 }
 
 FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole::TestAccelerationController);

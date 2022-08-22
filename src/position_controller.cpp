@@ -13,7 +13,8 @@ bool franka_pole::PositionController::_init_level1(hardware_interface::RobotHW *
     _position_target = parameters->target_effector_position;
     _velocity_target = Eigen::Matrix<double, 3, 1>::Zero();
     _controller_period_counter = 0;
-    _target_joint_positions = franka_model->effector_inverse_kinematics(parameters->initial_effector_position, parameters->initial_effector_orientation, parameters->initial_joint0_position);
+    const double hint[] = { 0.0, -M_PI/4, 0.0, -3*M_PI/4, 0.0, M_PI/2, M_PI/4 };
+    _target_joint_positions = franka_model->effector_inverse_kinematics(parameters->initial_effector_position, parameters->initial_effector_orientation, parameters->initial_joint0_position, Eigen::Matrix<double, 7, 1>::Map(hint));
     return _init_level2(robot_hw, node_handle);
 }
 
@@ -89,14 +90,14 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     {
         try
         {
-            joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, std::numeric_limits<double>::quiet_NaN());
+            joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, std::numeric_limits<double>::quiet_NaN(), _target_joint_positions);
             joint_velocity_command = jacobian_inverse.block<7,3>(0,0) * _velocity_target;
             torque += (
-                parameters->joint_stiffness.array() * (franka_state->get_joint_positions() - joint_position_command).array() +
-                parameters->joint_damping.array() * (franka_state->get_joint_velocities() - joint_velocity_command).array()
+                parameters->joint_stiffness.array() * (joint_position_command - franka_state->get_joint_positions()).array() +
+                parameters->joint_damping.array() * (joint_velocity_command - franka_state->get_joint_velocities()).array()
             ).matrix();
         }
-        catch (std::exception &e)
+        catch (const std::exception &e)
         {
             ROS_WARN_STREAM(e.what());
         }
@@ -107,7 +108,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     {
         torque += (Eigen::Matrix<double, 7, 7>::Identity() - jacobian_transpose * jacobian_transpose_inverse) * (
             parameters->nullspace_stiffness.array() * (_target_joint_positions - franka_state->get_joint_positions()).array() +
-            parameters->nullspace_damping.array() * (-franka_state->get_joint_velocities()).array()
+            parameters->nullspace_damping.array() * (/*zero velocity*/ - franka_state->get_joint_velocities()).array()
         ).matrix();
     }
 

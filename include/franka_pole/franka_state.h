@@ -31,9 +31,11 @@ namespace franka_pole
         Publisher *_publisher;
 
         //Technical
-        hardware_interface::JointHandle _joint_handles[7];
         #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+            std::unique_ptr<franka_hw::FrankaStateHandle> _state_handle;
             std::unique_ptr<franka_hw::FrankaCartesianVelocityHandle> _velocity_handle;
+        #else
+            hardware_interface::JointHandle _joint_handles[7];
         #endif
         std::normal_distribution<double> _random_position_distributions[7];
         std::normal_distribution<double> _random_velocity_distributions[7];

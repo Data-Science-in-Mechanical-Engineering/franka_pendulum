@@ -9,7 +9,6 @@ bool franka_pole::TestPositionController::_init_level2(hardware_interface::Robot
 
 Eigen::Matrix<double, 3, 1> franka_pole::TestPositionController::_get_position_level2(const ros::Time &time, const ros::Duration &period)
 {
-    _time += period;
     Eigen::Matrix<double, 3, 1> position_target;
     for (size_t i = 0; i < 3; i++)
     {
@@ -18,7 +17,9 @@ Eigen::Matrix<double, 3, 1> franka_pole::TestPositionController::_get_position_l
         if (parameters->test_rectangle) position_target(i) = 0.0; //???
         else position_target(i) = a * -sin(phi);
     }
-    return parameters->target_effector_position + position_target * std::min(_time.toSec() / parameters->startup_time, 1.0);
+
+    _time += period;
+    return parameters->target_effector_position + ((_time.toSec() > parameters->startup_time) ? (position_target) : (position_target * _time.toSec() / parameters->startup_time));
 }
 
 Eigen::Matrix<double, 3, 1> franka_pole::TestPositionController::_get_velocity_level2(const ros::Time &time, const ros::Duration &period)
@@ -31,7 +32,8 @@ Eigen::Matrix<double, 3, 1> franka_pole::TestPositionController::_get_velocity_l
         if (parameters->test_rectangle) velocity_target(i) = 0.0; //???
         else velocity_target(i) = a * -cos(phi);
     }
-    return velocity_target * std::min(_time.toSec() / parameters->startup_time, 1.0);
+
+    return (_time.toSec() > parameters->startup_time) ? (velocity_target) : (velocity_target * _time.toSec() / parameters->startup_time);
 }
 
 FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole::TestPositionController);

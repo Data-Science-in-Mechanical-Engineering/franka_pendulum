@@ -65,7 +65,7 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     _receive_vector<7>(&hardware_reset_damping, msg->hardware_reset_damping);
 
     // Control
-    _receive_vector<8>(&control, msg->control);
+    _receive_vector<8>(&pole_control, msg->pole_control);
 
     //Test
     _receive_double(&startup_time, msg->startup_time);
@@ -138,7 +138,7 @@ void franka_pole::Parameters::_send()
     _send_vector<7>(hardware_reset_damping, &command.hardware_reset_damping);
 
     // Control
-    _send_vector<8>(control, &command.control);
+    _send_vector<8>(pole_control, &command.pole_control);
 
     //Test
     _send_double(startup_time, &command.startup_time);
@@ -261,7 +261,7 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     hardware_reset_stiffness(reader.hardware_reset_stiffness()),
     hardware_reset_damping(reader.hardware_reset_damping()),
 
-    control(reader.control()),
+    pole_control(reader.pole_control()),
 
     startup_time(reader.startup_time()),
     test_rectangle(reader.test_rectangle()),

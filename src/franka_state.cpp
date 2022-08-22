@@ -7,13 +7,25 @@
 franka_pole::FrankaState::FrankaState(const Parameters *parameters, FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw) :
 _parameters(parameters), _franka_model(franka_model), _publisher(publisher)
 {
-    //Joint handles
-    auto *effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
-    if (effort_joint_interface == nullptr) throw std::runtime_error("franka_pole::FrankaState::FrankaState(): Error getting effort joint interface from hardware");
-    for (size_t i = 0; i < 7; i++)
-    {
-        _joint_handles[i] = effort_joint_interface->getHandle(_parameters->arm_id + "_joint" + std::to_string(i + 1));
-    }
+    #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+        //State interface
+        auto *state_interface = robot_hw->get<franka_hw::FrankaStateInterface>();
+        if (state_interface == nullptr) throw std::runtime_error("franka_pole::FrankaState::FrankaState(): Error getting state interface from hardware");
+        _state_handle = std::make_unique<franka_hw::FrankaStateHandle>(state_interface->getHandle(_parameters->arm_id + "_robot"));
+
+        //Velocity interface
+        auto *velocity_interface = robot_hw->get<franka_hw::FrankaVelocityCartesianInterface>();
+        if (velocity_interface == nullptr) throw std::runtime_error("franka_pole::FrankaState::FrankaState(): Error getting cartesian velocity interface from hardware");
+        _velocity_handle = std::make_unique<franka_hw::FrankaCartesianVelocityHandle>(velocity_interface->getHandle(_parameters->arm_id + "_robot"));
+    #else
+        //Joint handles
+        auto *effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
+        if (effort_joint_interface == nullptr) throw std::runtime_error("franka_pole::FrankaState::FrankaState(): Error getting effort joint interface from hardware");
+        for (size_t i = 0; i < 7; i++)
+        {
+            _joint_handles[i] = effort_joint_interface->getHandle(_parameters->arm_id + "_joint" + std::to_string(i + 1));
+        }
+    #endif
 
     //Random
     Eigen::Matrix<double, 7, 1> joint_position_standard_deviation = parameters->joint_position_standard_deviation;
@@ -25,22 +37,28 @@ _parameters(parameters), _franka_model(franka_model), _publisher(publisher)
     }
     _random_engine.seed(time(nullptr));
 
-    #ifdef FRANKA_POLE_VELOCITY_INTERFACE
-        auto *velocity_interface = robot_hw->get<franka_hw::FrankaVelocityCartesianInterface>();
-        if (velocity_interface == nullptr) throw std::runtime_error("franka_pole::FrankaState::FrankaState(): Error getting effort joint interface from hardware");
-        _velocity_handle = std::make_unique<franka_hw::FrankaCartesianVelocityHandle>(velocity_interface->getHandle(_parameters->arm_id + "_robot"));
-    #endif
+    //Initial readings
+    update(ros::Time(0,0));
 }
 
 void franka_pole::FrankaState::update(const ros::Time &time)
 {
     //Measurement
     _timestamp = time.toSec();
-    for (size_t i = 0; i < 7; i++)
-    {
-        _exact_joint_positions(i) = _joint_handles[i].getPosition();
-        _joint_velocities(i) = _joint_handles[i].getVelocity();
-    }
+    #ifdef FRANKA_POLE_VELOCITY_INTERFACE
+        franka::RobotState state = _state_handle->getRobotState();
+        for (size_t i = 0; i < 7; i++)
+        {
+            _exact_joint_positions(i) = state.q[i];
+            _joint_velocities(i) = state.dq[i];
+        }
+    #else
+        for (size_t i = 0; i < 7; i++)
+        {
+            _exact_joint_positions(i) = _joint_handles[i].getPosition();
+            _joint_velocities(i) = _joint_handles[i].getVelocity();
+        }
+    #endif
     
     //Adding noise
     if (_parameters->simulated)
