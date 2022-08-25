@@ -128,7 +128,9 @@ void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::D
     //Hardware reset
     else if (_reset_mode == ResetMode::hardware_reset)
     {
-        if (_hardware_reset_time < 4.0)
+        const double hardware_recovery_duration = 5.0;
+        const double hardware_reset_duration = std::max(hardware_recovery_duration, _hardware_reset_time);
+        if (_hardware_reset_time < hardware_reset_duration)
         {
             //Do nothing
             #ifdef FRANKA_POLE_VELOCITY_INTERFACE
@@ -148,7 +150,7 @@ void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::D
                 _velocity.segment<3>(0) = (parameters->initial_effector_position - _hardware_reset_old_position) / (parameters->hardware_reset_duration - 4.0);
                 _velocity.segment<3>(3) = Eigen::Matrix<double, 3, 1>::Zero();
             #else
-                double factor = (_hardware_reset_time - 4.0) / (parameters->hardware_reset_duration - 4.0);
+                double factor = (_hardware_reset_time - hardware_reset_duration) / (parameters->hardware_reset_duration - hardware_reset_duration);
                 Eigen::Matrix<double, 7, 1> target_joint_positions = factor * _hardware_reset_end_positions + (1.0 - factor) * _hardware_reset_start_positions;
                 _torque = (
                     (target_joint_positions - franka_state->get_joint_positions()).array() * parameters->hardware_reset_stiffness.array() +
