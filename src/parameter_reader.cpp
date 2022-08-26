@@ -119,6 +119,7 @@ franka_pole::Model franka_pole::ParameterReader::model() const
     else if (s == "1D") return Model::D1;
     else if (s == "2D") return Model::D2;
     else if (s == "2Db") return Model::D2b;
+    else if (s == "2Dc") return Model::D2c;
     else throw std::runtime_error("franka_pole::ParameterReader: Invalid parameter model");
 }
 
@@ -131,6 +132,7 @@ unsigned int franka_pole::ParameterReader::controller_period() const { return _r
 Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::target_effector_position() const { return _check_vector("target_effector_position", _read_vector<3>("target_effector_position")); }
 Eigen::Quaterniond franka_pole::ParameterReader::target_effector_orientation() const { return _check_quaternion("target_effector_orientation", _read_quaternion("target_effector_orientation")); }
 double franka_pole::ParameterReader::target_joint0_position() const { double p = _read_double("target_joint0_position"); if (isnan(p)) { auto v = target_effector_position(); p = atan2(v(1), v(0)); } return _check_double("target_joint0_position", p); }
+bool franka_pole::ParameterReader::target_joint0_stuck() const { return _read_bool("target_joint0_stuck"); }
 Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::min_effector_position() const { return _check_vector("min_effector_position", _read_vector<3>("min_effector_position")); }
 Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::max_effector_position() const { return _check_vector("max_effector_position", _read_vector<3>("max_effector_position")); }
 Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::min_effector_velocity() const { return _check_vector("min_effector_velocity", _read_vector<3>("min_effector_velocity")); }
@@ -163,8 +165,10 @@ bool franka_pole::ParameterReader::pure_dynamics() const { return _read_bool("pu
 double franka_pole::ParameterReader::pole_angle_filter() const { return _check_double("pole_angle_filter", _read_double("pole_angle_filter")); }
 double franka_pole::ParameterReader::pole_dangle_filter() const { double d = _read_double("pole_angle_filter"); if (isnan(d)) d = pole_angle_filter(); return _check_double("pole_angle_filter", d); }
 
+Eigen::Matrix<double, 7, 1> franka_pole::ParameterReader::joint_position_mean() const { return _check_vector("joint_position_mean", _read_vector<7>("joint_position_mean")); }
 Eigen::Matrix<double, 7, 1> franka_pole::ParameterReader::joint_position_standard_deviation() const { return _check_vector("joint_position_standard_deviation", _read_vector<7>("joint_position_standard_deviation")); }
 Eigen::Matrix<double, 7, 1> franka_pole::ParameterReader::joint_velocity_standard_deviation() const { auto v = _read_vector<7>("joint_velocity_standard_deviation"); if (_nan_vector(v)) v = _replace_vector<7>(v, joint_position_standard_deviation()); return _check_vector("joint_velocity_standard_deviation", v); }
+Eigen::Matrix<double, 2, 1> franka_pole::ParameterReader::pole_angle_mean() const { return _check_vector("pole_angle_mean", _read_vector<2>("pole_angle_mean")); }
 Eigen::Matrix<double, 2, 1> franka_pole::ParameterReader::pole_angle_standard_deviation() const { return _check_vector("pole_angle_standard_deviation", _read_vector<2>("pole_angle_standard_deviation")); }
 
 double franka_pole::ParameterReader::hardware_reset_duration() const { return _check_double("hardware_reset_durtion", _read_double("hardware_reset_durtion")); }

@@ -51,6 +51,7 @@ namespace franka_pole
         Eigen::Matrix<double, 3, 1> target_effector_position() const;   ///< Effector's target position
         Eigen::Quaterniond target_effector_orientation() const;         ///< Effector's target orientation
         double target_joint0_position() const;                          ///< Effector's target angle of first joint
+        bool target_joint0_stuck() const;                               ///< `true` if first joint is stuck, `false` if first joint is active
         Eigen::Matrix<double, 3, 1> min_effector_position() const;      ///< Higher boundary for effector position
         Eigen::Matrix<double, 3, 1> max_effector_position() const;      ///< Lower boundary for effector position
         Eigen::Matrix<double, 3, 1> min_effector_velocity() const;      ///< Higher boundary for effector velocity
@@ -87,8 +88,10 @@ namespace franka_pole
         double pole_dangle_filter() const;  ///< Filter factor of pole anglular velocity. 0.0 for no filter
 
         // Noise
+        Eigen::Matrix<double, 7, 1> joint_position_mean() const;                ///< Mean value of noise added to joint position measurements
         Eigen::Matrix<double, 7, 1> joint_position_standard_deviation() const;  ///< Standard deviation of noise added to joint position measurements
         Eigen::Matrix<double, 7, 1> joint_velocity_standard_deviation() const;  ///< Standard deviation of noise added to joint velocity measurements
+        Eigen::Matrix<double, 2, 1> pole_angle_mean() const;                    ///< Mean value of noise added to pole angle measurements
         Eigen::Matrix<double, 2, 1> pole_angle_standard_deviation() const;      ///< Standard deviation of noise added to pole angle measurements
         
         // Reset

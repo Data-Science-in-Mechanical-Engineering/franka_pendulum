@@ -65,8 +65,13 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     
     // calculate jacobians
     Eigen::Matrix<double, 6, 7> jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
-    Eigen::Matrix<double, 7, 6> jacobian_transpose = jacobian.transpose();
-    Eigen::Matrix<double, 7, 6> jacobian_inverse = pseudo_inverse(jacobian, true);
+    Eigen::Matrix<double, 7, 6> jacobian_transpose;
+    if (parameters->target_joint0_stuck) { jacobian_transpose.block<1,6>(0,0) = Eigen::Matrix<double, 1, 6>::Zero(); jacobian_transpose.block<6,6>(1,0) = jacobian.transpose().block<6,6>(1,0); }
+    else jacobian_transpose = jacobian.transpose();
+    
+    Eigen::Matrix<double, 7, 6> jacobian_inverse;
+    if (parameters->target_joint0_stuck) { jacobian_inverse.block<1,6>(0,0) = Eigen::Matrix<double, 1, 6>::Zero(); jacobian_inverse.block<6,6>(1,0) = pseudo_inverse(Eigen::Matrix<double, 6, 6>(jacobian.block<6,6>(0,1)), true); }
+    else jacobian_inverse = pseudo_inverse(jacobian, true);
     Eigen::Matrix<double, 6, 7> jacobian_transpose_inverse = pseudo_inverse(jacobian_transpose, true);
     
     // cartesian control
@@ -90,7 +95,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
     {
         try
         {
-            joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, 0.0, _target_joint_positions);
+            joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, parameters->target_joint0_stuck ? parameters->target_joint0_position : std::numeric_limits<double>::quiet_NaN(), _target_joint_positions);
             joint_velocity_command = jacobian_inverse.block<7,3>(0,0) * _velocity_target;
             torque += (
                 parameters->joint_stiffness.array() * (joint_position_command - franka_state->get_joint_positions()).array() +
@@ -111,18 +116,15 @@ Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(
             parameters->nullspace_damping.array() * (/*zero velocity*/ - franka_state->get_joint_velocities()).array()
         ).matrix();
     }
-
-    // anti-damping
-    if (parameters->simulated) torque += franka_state->get_joint_velocities() * 0.003;
-
+    
     // gravit and coriolis
-    if (parameters->model == Model::D0)
+    if (get_model_freedom(parameters->model) == 0)
     {
         Eigen::Matrix<double, 9, 1> gravity = franka_model->get_gravity9(franka_state->get_joint_positions());
         Eigen::Matrix<double, 9, 1> coriolis = franka_model->get_coriolis9(franka_state->get_joint_positions(), franka_state->get_joint_velocities());
         torque += coriolis.segment<7>(0) + gravity.segment<7>(0);
     }
-    else if (parameters->model == Model::D1)
+    else if (get_model_freedom(parameters->model) == 1)
     {
         Eigen::Matrix<double, 10, 1> gravity = franka_model->get_gravity10(franka_state->get_joint_positions(), pole_state->get_joint_angle());
         Eigen::Matrix<double, 10, 1> coriolis = franka_model->get_coriolis10(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());

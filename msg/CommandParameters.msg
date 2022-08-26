@@ -7,6 +7,7 @@ uint32 controller_period
 float64[3] target_effector_position
 float64[4] target_effector_orientation
 float64 target_joint0_position
+bool target_joint0_stuck
 float64[3] min_effector_position
 float64[3] max_effector_position
 float64[3] min_effector_velocity
@@ -36,8 +37,10 @@ bool pure_dynamics
 float64 pole_angle_filter
 float64 pole_dangle_filter
 
+float64[7] joint_position_mean
 float64[7] joint_position_standard_deviation
 float64[7] joint_velocity_standard_deviation
+float64[2] pole_angle_mean
 float64[2] pole_angle_standard_deviation
 
 float64 hardware_reset_duration

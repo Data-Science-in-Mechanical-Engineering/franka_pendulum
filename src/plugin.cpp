@@ -80,12 +80,12 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
             _fingers[i] = model->GetJoint(name_base + "_finger_joint" + std::to_string(i + 1));
             if (_fingers[i] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
         }
-        if (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2b)
+        if (get_model_freedom(_parameters->model) >= 1)
         {
             _pole[0] = model->GetJoint(name_base + "_pole_joint_x");
             if (_pole[0] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
         }
-        if (_parameters->model == Model::D2 || _parameters->model == Model::D2b)
+        if (get_model_freedom(_parameters->model) == 2)
         {
             _pole[1] = model->GetJoint(name_base + "_pole_joint_y");
             if (_pole[1] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");

@@ -69,8 +69,12 @@ def lqr_2db():
     K,S,E = control.lqr(A, B, Q, R)
     return -K
 
+def lqr_2dc():
+    return lqr_2db()
+
 if __name__ == "__main__":
     if sys.argv[-1] == '1D': print(lqr())
     elif sys.argv[-1] == '2D': print(lqr_2d())
     elif sys.argv[-1] == '2Db': print(lqr_2db())
+    elif sys.argv[-1] == '2Dc': print(lqr_2dc())
     else: raise Exception("Invalid usage")

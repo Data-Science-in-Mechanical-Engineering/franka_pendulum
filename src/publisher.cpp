@@ -8,14 +8,14 @@ _parameters(parameters)
     _joint_state_publisher = node_handle.advertise<sensor_msgs::JointState>("/" + _parameters->namespacee + "/joint_state", 10);
     
     
-    if (_parameters->model == Model::D0)
+    if (get_model_freedom(_parameters->model) == 0)
     {
         _joint_state.name.resize(9);
         _joint_state.position.resize(9, 0.0);
         _joint_state.velocity.resize(9, 0.0);
         _joint_state.effort.resize(9, 0.0);
     }
-    else if (_parameters->model == Model::D1)
+    else if (get_model_freedom(_parameters->model) == 1)
     {
         _joint_state.name.resize(10);
         _joint_state.position.resize(10, 0.0);
@@ -23,7 +23,7 @@ _parameters(parameters)
         _joint_state.effort.resize(10, 0.0);
         _joint_state.name[9] = _parameters->arm_id + "_pole_joint_x";
     }
-    else if (_parameters->model == Model::D2 || _parameters->model == Model::D2b)
+    else
     {
         _joint_state.name.resize(11);
         _joint_state.position.resize(11, 0.0);
@@ -80,12 +80,12 @@ void franka_pole::Publisher::set_pole(
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_dangle[0]) = dangle;
 
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_angle[0]) = angle;
-    if (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.position[9] = -angle(0);
-    if (_parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.position[10] = angle(1);
+    if (get_model_freedom(_parameters->model) >= 1) _joint_state.position[9] = -angle(0);
+    if (get_model_freedom(_parameters->model) == 2) _joint_state.position[10] = angle(1);
 
     Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_dangle[0]) = dangle;
-    if (_parameters->model == Model::D1 || _parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.velocity[9] = -dangle(0);
-    if (_parameters->model == Model::D2 || _parameters->model == Model::D2b) _joint_state.velocity[10] = dangle(1);
+    if (get_model_freedom(_parameters->model) >= 1) _joint_state.velocity[9] = -dangle(0);
+    if (get_model_freedom(_parameters->model) == 2) _joint_state.velocity[10] = dangle(1);
 }
 
 void franka_pole::Publisher::set_franka(const ros::Time &timestamp,

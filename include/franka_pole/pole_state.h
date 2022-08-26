@@ -39,7 +39,7 @@ namespace franka_pole
         void _callback(const geometry_msgs::TransformStamped::ConstPtr &msg);
         
         //Timestamp
-        double _timestamp = 0.0;
+        double _timestamp;
 
         //Angles
         bool _first;
@@ -47,6 +47,9 @@ namespace franka_pole
         Eigen::Matrix<double, 2, 1> _dangle;
         Eigen::Matrix<double, 2, 1> _joint_angle;
         Eigen::Matrix<double, 2, 1> _joint_dangle;
+
+        //Generalized processing from update & _callback
+        void _update(const Eigen::Quaterniond &pole_orientation, ros::Time timestamp);
 
     public:
         ///Creates pole state object

@@ -22,8 +22,6 @@ bool franka_pole::AccelerationController::_init_level1(hardware_interface::Robot
 #ifndef FRANKA_POLE_VELOCITY_INTERFACE
 Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_level1(const ros::Time &time, const ros::Duration &period)
 {
-    bool joint0_stuck = true;
-
     // compute target
     _controller_period_counter += parameters->command_period;
     if (_controller_period_counter >= parameters->controller_period)
@@ -73,11 +71,11 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     // calculate jacobians
     Eigen::Matrix<double, 6, 7> jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
     Eigen::Matrix<double, 7, 6> jacobian_transpose;
-    if (joint0_stuck) { jacobian_transpose.block<1,6>(0,0) = Eigen::Matrix<double, 1, 6>::Zero(); jacobian_transpose.block<6,6>(1,0) = jacobian.transpose().block<6,6>(1,0); }
+    if (parameters->target_joint0_stuck) { jacobian_transpose.block<1,6>(0,0) = Eigen::Matrix<double, 1, 6>::Zero(); jacobian_transpose.block<6,6>(1,0) = jacobian.transpose().block<6,6>(1,0); }
     else jacobian_transpose = jacobian.transpose();
     
     Eigen::Matrix<double, 7, 6> jacobian_inverse;
-    if (joint0_stuck) { jacobian_inverse.block<1,6>(0,0) = Eigen::Matrix<double, 1, 6>::Zero(); jacobian_inverse.block<6,6>(1,0) = pseudo_inverse(Eigen::Matrix<double, 6, 6>(jacobian.block<6,6>(0,1)), true); }
+    if (parameters->target_joint0_stuck) { jacobian_inverse.block<1,6>(0,0) = Eigen::Matrix<double, 1, 6>::Zero(); jacobian_inverse.block<6,6>(1,0) = pseudo_inverse(Eigen::Matrix<double, 6, 6>(jacobian.block<6,6>(0,1)), true); }
     else jacobian_inverse = pseudo_inverse(jacobian, true);
     Eigen::Matrix<double, 6, 7> jacobian_transpose_inverse = pseudo_inverse(jacobian_transpose, true);
 
@@ -106,7 +104,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     {
         try
         {
-            joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, joint0_stuck ? parameters->target_joint0_position : std::numeric_limits<double>::quiet_NaN(), _target_joint_positions);
+            joint_position_command = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, parameters->target_joint0_stuck ? parameters->target_joint0_position : std::numeric_limits<double>::quiet_NaN(), _target_joint_positions);
             joint_velocity_command = jacobian_inverse.block<7,3>(0,0) * _velocity_target;
             
             joint_control = (
@@ -130,9 +128,6 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
         ).matrix();
     }
 
-    // anti-damping
-    if (parameters->simulated) torque += franka_state->get_joint_velocities() * 0.003;
-
     // inverse dynamics
     Eigen::Matrix<double, 6, 1> acceleration_command = Eigen::Matrix<double, 6, 1>::Zero(); //--> to publisher
     Eigen::Matrix<double, 3, 1> centroidal_acceleration = franka_model->get_effector_centroidal_acceleration(franka_state->get_joint_positions(), franka_state->get_joint_velocities());
@@ -143,7 +138,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
     Eigen::Matrix<double, 7, 1> joint_acceleration_command = jacobian_inverse * acceleration_command; //--> to publisher
     if (parameters->pure_dynamics) joint_acceleration_command += joint_control; //Apply joint control here instread
    
-    if (parameters->model == Model::D0)
+    if (get_model_freedom(parameters->model) == 0)
     {
         // calculate gravity and coriolis
         Eigen::Matrix<double, 9, 1> gravity = franka_model->get_gravity9(franka_state->get_joint_positions());
@@ -164,7 +159,7 @@ Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_lev
             torque += parameters->dynamics * (mass.block<7,9>(0,0) * a9);
         }
     }
-    else if (parameters->model == Model::D1)
+    else if (get_model_freedom(parameters->model) == 1)
     {
         // calculate gravity and coriolis
         Eigen::Matrix<double, 10, 1> gravity = franka_model->get_gravity10(franka_state->get_joint_positions(), pole_state->get_joint_angle());

@@ -19,6 +19,7 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     _receive_vector<3>(&target_effector_position, msg->target_effector_position);
     _receive_quaternion(&target_effector_orientation, msg->target_effector_orientation);
     _receive_double(&target_joint0_position, msg->target_joint0_position);
+    target_joint0_stuck = msg->target_joint0_stuck;
     _receive_vector<3>(&min_effector_position, msg->min_effector_position);
     _receive_vector<3>(&max_effector_position, msg->max_effector_position);
     _receive_vector<3>(&min_effector_velocity, msg->min_effector_velocity);
@@ -55,8 +56,10 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     _receive_double(&pole_dangle_filter, msg->pole_dangle_filter);
 
     // Noise
+    _receive_vector<7>(&joint_position_mean, msg->joint_position_mean);
     _receive_vector<7>(&joint_position_standard_deviation, msg->joint_position_standard_deviation);
     _receive_vector<7>(&joint_velocity_standard_deviation, msg->joint_velocity_standard_deviation);
+    _receive_vector<2>(&pole_angle_mean, msg->pole_angle_mean);
     _receive_vector<2>(&pole_angle_standard_deviation, msg->pole_angle_standard_deviation);
 
     // Reset
@@ -92,6 +95,7 @@ void franka_pole::Parameters::_send()
     _send_vector<3>(target_effector_position, &command.target_effector_position);
     _send_quaternion(target_effector_orientation, &command.target_effector_orientation);
     _send_double(target_joint0_position, &command.target_joint0_position);
+    command.target_joint0_stuck = target_joint0_stuck;
     _send_vector<3>(min_effector_position, &command.min_effector_position);
     _send_vector<3>(max_effector_position, &command.max_effector_position);
     _send_vector<3>(min_effector_velocity, &command.min_effector_velocity);
@@ -128,8 +132,10 @@ void franka_pole::Parameters::_send()
     _send_double(pole_dangle_filter, &command.pole_dangle_filter);
 
     // Noise
+    _send_vector<7>(joint_position_mean, &command.joint_position_mean);
     _send_vector<7>(joint_position_standard_deviation, &command.joint_position_standard_deviation);
     _send_vector<7>(joint_velocity_standard_deviation, &command.joint_velocity_standard_deviation);
+    _send_vector<2>(pole_angle_mean, &command.pole_angle_mean);
     _send_vector<2>(pole_angle_standard_deviation, &command.pole_angle_standard_deviation);
 
     // Reset
@@ -221,6 +227,7 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     target_effector_position(reader.target_effector_position()),
     target_effector_orientation(reader.target_effector_orientation()),
     target_joint0_position(reader.target_joint0_position()),
+    target_joint0_stuck(reader.target_joint0_stuck()),
     min_effector_position(reader.min_effector_position()),
     max_effector_position(reader.max_effector_position()),
     min_effector_velocity(reader.min_effector_velocity()),
@@ -253,8 +260,10 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     pole_angle_filter(reader.pole_angle_filter()),
     pole_dangle_filter(reader.pole_dangle_filter()),
 
+    joint_position_mean(reader.joint_position_mean()),
     joint_position_standard_deviation(reader.joint_position_standard_deviation()),
     joint_velocity_standard_deviation(reader.joint_velocity_standard_deviation()),
+    pole_angle_mean(reader.pole_angle_mean()),
     pole_angle_standard_deviation(reader.pole_angle_standard_deviation()),
 
     hardware_reset_duration(reader.hardware_reset_duration()),

@@ -5,7 +5,7 @@
 #include <time.h>
 
 franka_pole::FrankaState::FrankaState(const Parameters *parameters, FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw) :
-_parameters(parameters), _franka_model(franka_model), _publisher(publisher)
+_parameters(parameters), _franka_model(franka_model), _publisher(publisher), _timestamp(0.0)
 {
     #ifdef FRANKA_POLE_VELOCITY_INTERFACE
         //State interface
@@ -26,14 +26,15 @@ _parameters(parameters), _franka_model(franka_model), _publisher(publisher)
             _joint_handles[i] = effort_joint_interface->getHandle(_parameters->arm_id + "_joint" + std::to_string(i + 1));
         }
     #endif
+}
 
+void franka_pole::FrankaState::reset()
+{
     //Random
-    Eigen::Matrix<double, 7, 1> joint_position_standard_deviation = parameters->joint_position_standard_deviation;
-    Eigen::Matrix<double, 7, 1> joint_velocity_standard_deviation = parameters->joint_velocity_standard_deviation;
     for (size_t i = 0; i < 7; i++)
     {
-        _random_position_distributions[i] = std::normal_distribution<double>(0.0, joint_position_standard_deviation(i));
-        _random_velocity_distributions[i] = std::normal_distribution<double>(0.0, joint_velocity_standard_deviation(i));
+        _random_position_distributions[i] = std::normal_distribution<double>(0.0, _parameters->joint_position_standard_deviation(i));
+        _random_velocity_distributions[i] = std::normal_distribution<double>(0.0, _parameters->joint_velocity_standard_deviation(i));
     }
     _random_engine.seed(time(nullptr));
 
@@ -49,13 +50,13 @@ void franka_pole::FrankaState::update(const ros::Time &time)
         franka::RobotState state = _state_handle->getRobotState();
         for (size_t i = 0; i < 7; i++)
         {
-            _exact_joint_positions(i) = state.q[i];
+            _exact_joint_positions(i) = state.q[i] + _parameters->joint_position_mean(i);
             _joint_velocities(i) = state.dq[i];
         }
     #else
         for (size_t i = 0; i < 7; i++)
         {
-            _exact_joint_positions(i) = _joint_handles[i].getPosition();
+            _exact_joint_positions(i) = _joint_handles[i].getPosition() + _parameters->joint_position_mean(i);
             _joint_velocities(i) = _joint_handles[i].getVelocity();
         }
     #endif

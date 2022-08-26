@@ -194,6 +194,34 @@ def get_parts_2db():
 
     return lower, upper
 
+def get_parts_2dc():
+    base_mass=0.322 #kg
+    holder_mass=0.040 #kg
+    needle_mass=0.009 #kg
+    pine_mass=0.085 #kg
+    beam_length = 0.65 #m
+    beam_radius = 0.005 #m
+    beam_density = 0.042 #kg/m
+    beam_position = 0.039 #m
+    ball_radius = 0.0275 #m
+    ball_position = 0.215 #m
+    ball_mass = 0.038 #kg
+    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pole") + "/meshes/2Dc.FCStd")
+
+    lower = PartGroup([
+        CADPart(document, "b_part8_001_", mass=base_mass),
+        CADPart(document, "b_part18_001_", mass=holder_mass)
+        ])
+    
+    upper = PartGroup([
+        CADPart(document, "b_part16_001_", mass=needle_mass),
+        CADPart(document, "b_part17_001_", mass=pine_mass),
+        BallPart(ball_radius, False, np.array([0,0,ball_position]), mass=ball_mass),
+        BeamPart(beam_length, beam_radius, True, 2, np.array([0,0,beam_position]), beam_density)
+        ])
+
+    return lower, upper
+
 if __name__ == "__main__":
     if sys.argv[-1] == '1D':
         lower, upper = get_parts()
@@ -212,6 +240,12 @@ if __name__ == "__main__":
         #Warning: all coordinates are in CAD space / effector space. In reality upper link is 1.2cm higher
     elif sys.argv[-1] == '2Db':
         lower, upper = get_parts_2db()
+        print("Lower:")
+        print(lower)
+        print("Upper:")
+        print(upper)
+    elif sys.argv[-1] == '2Dc':
+        lower, upper = get_parts_2dc()
         print("Lower:")
         print(lower)
         print("Upper:")

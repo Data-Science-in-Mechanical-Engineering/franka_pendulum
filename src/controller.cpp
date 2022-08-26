@@ -30,6 +30,7 @@ void franka_pole::Controller::_initiate_software_reset()
 void franka_pole::Controller::_initiate_normal_mode()
 {
     if (pole_state != nullptr) pole_state->reset(parameters->initial_pole_positions, parameters->initial_pole_velocities);
+    franka_state->reset();
     _init_level1(_robot_hw, _node_handle);
     _reset_mode = ResetMode::normal;
 }
@@ -64,6 +65,7 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
         franka_model = new FrankaModel(parameters);
         publisher = new Publisher(parameters, node_handle);
         franka_state = new FrankaState(parameters, franka_model, publisher, robot_hw);
+        franka_state->reset();
         if (parameters->model != Model::D0)
         {
             pole_state = new PoleState(parameters, franka_model, franka_state, publisher, &mutex, robot_hw, node_handle);

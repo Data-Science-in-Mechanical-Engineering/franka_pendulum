@@ -1,10 +1,16 @@
 <?xml version='1.0' encoding='utf-8'?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="franka_pole">
   <xacro:arg name="arm_id" default="panda" />
+  <xacro:arg name="friction" default="false" />
   
   <!-- Create a simulatable URDF -->
   <xacro:include filename="$(find franka_description)/robots/utils.xacro" />
-  <xacro:include filename="$(find franka_pole)/robots/panda_gazebo.xacro" />
+  <xacro:unless value="$(arg friction)">
+    <xacro:include filename="$(find franka_pole)/robots/panda_gazebo.xacro" />
+  </xacro:unless>
+  <xacro:if value="$(arg friction)">
+    <xacro:include filename="$(find franka_description)/robots/panda_gazebo.xacro" />
+  </xacro:if>
   <xacro:panda_arm arm_id="$(arg arm_id)" />
   <xacro:hand arm_id="$(arg arm_id)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id)_link8" />
   <xacro:gazebo-joint joint="$(arg arm_id)_finger_joint1" transmission="hardware_interface/EffortJointInterface" />

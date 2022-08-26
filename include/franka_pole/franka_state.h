@@ -42,7 +42,7 @@ namespace franka_pole
         std::default_random_engine _random_engine;
 
         //Timestamp
-        double _timestamp = 0.0;
+        double _timestamp;
 
         //Joints
         Eigen::Matrix<double, 7, 1> _exact_joint_positions;
@@ -67,6 +67,8 @@ namespace franka_pole
         ///@param publisher Reference to publisher object
         ///@param robot_hw `hardware_interface::RobotHW` object
         FrankaState(const Parameters *parameters, FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw);
+        ///Resets franka state
+        void reset();
         ///Updates robot's state
         ///@param time Current time
         void update(const ros::Time &time);

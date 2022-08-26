@@ -59,7 +59,8 @@ namespace franka_pole
         // Target state and constraints
         Eigen::Matrix<double, 3, 1> target_effector_position;   ///< Effector's target position
         Eigen::Quaterniond target_effector_orientation;         ///< Effector's target orientation
-        double target_joint0_position;                          ///< Effector's target angle of first joint
+        double target_joint0_position;                          ///< Robots's target angle of first joint
+        bool target_joint0_stuck;                               ///< `true` if first joint is stuck, `false` if first joint is active
         Eigen::Matrix<double, 3, 1> min_effector_position;      ///< Higher boundary for effector position
         Eigen::Matrix<double, 3, 1> max_effector_position;      ///< Lower boundary for effector position
         Eigen::Matrix<double, 3, 1> min_effector_velocity;      ///< Higher boundary for effector velocity
@@ -68,7 +69,7 @@ namespace franka_pole
         // Initial state
         Eigen::Matrix<double, 3, 1> initial_effector_position;  ///< Effector's initial position
         Eigen::Quaterniond initial_effector_orientation;        ///< Effector's initial orientation
-        double initial_joint0_position;                         ///< Effector's initial angle of first joint
+        double initial_joint0_position;                         ///< Robot's initial angle of first joint
         Eigen::Matrix<double, 2, 1> initial_pole_positions;     ///< Pole's initial joint angles
         Eigen::Matrix<double, 2, 1> initial_pole_velocities;    ///< Pole's initial joint angular velocities
 
@@ -96,8 +97,10 @@ namespace franka_pole
         double pole_dangle_filter;  ///< Filter factor of pole anglular velocity. 0.0 for no filter
 
         // Noise
+        Eigen::Matrix<double, 7, 1> joint_position_mean;                ///< Mean value of noise added to joint position measurements
         Eigen::Matrix<double, 7, 1> joint_position_standard_deviation;  ///< Standard deviation of noise added to joint position measurements
         Eigen::Matrix<double, 7, 1> joint_velocity_standard_deviation;  ///< Standard deviation of noise added to joint velocity measurements
+        Eigen::Matrix<double, 2, 1> pole_angle_mean;                    ///< Mean value of noise added to pole angle measurements
         Eigen::Matrix<double, 2, 1> pole_angle_standard_deviation;      ///< Standard deviation of noise added to pole angle measurements
 
         // Reset

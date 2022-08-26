@@ -55,7 +55,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://franka_pole/meshes/visual/2Db_lower.dae"/>
+        <mesh filename="package://franka_pole/meshes/visual/2Dc_lower.dae"/>
       </geometry>
     </visual>
 
@@ -74,7 +74,7 @@
     <child link="$(arg arm_id)_pole_link_middle"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
-    <limit velocity="1000000" lower="${-30*pi/180}" effort="0" upper="${30*pi/180}" />
+    <limit velocity="1000000" lower="${-60*pi/180}" effort="0" upper="${60*pi/180}" />
     <dynamics damping="0.0"/>
   </joint>
 
@@ -95,7 +95,7 @@
     <child link="$(arg arm_id)_pole_link_upper"/>
     <origin xyz="0 0 0.01" rpy="0 0 0"/>
     <axis xyz="1 0 0"/>
-    <limit velocity="1000000" lower="${-30*pi/180}" effort="0" upper="${30*pi/180}" />
+    <limit velocity="1000000" lower="${-60*pi/180}" effort="0" upper="${60*pi/180}" />
     <dynamics damping="0.0"/>
   </joint>
   
@@ -121,12 +121,12 @@
     </visual>
     
     <inertial>
-      <origin xyz="0.0 0.0 ${0.42771135304787394 - 0.01}" rpy="0 0 0"/>
+      <origin xyz="0.0 0.0 ${0.4632543529459209 - 0.01}" rpy="0 0 0"/>
       <mass value="0.1593"/>
       <inertia
-      ixx="0.013902072326225548" ixy="0.0" ixz="0.0"
-      iyy="0.013902072326225548" iyz="0.0"
-      izz="4.266992059635794e-05"/>
+      ixx="0.012139364109265307" ixy="0.0" ixz="0.0"
+      iyy="0.012139364109265307" iyz="0.0"
+      izz="4.63115872630246e-05"/>
     </inertial>
   </link>
   

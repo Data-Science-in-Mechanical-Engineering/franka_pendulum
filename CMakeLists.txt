@@ -62,12 +62,15 @@ add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf" DEP
 add_custom_target(franka_pole_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf")
 add_custom_target(franka_pole_xacro_2Db ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf")
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.urdf")
+add_custom_target(franka_pole_xacro_2Dc ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.urdf")
 
 ## Declare C++ libraries
 add_library(franka_pole_common SHARED
 src/parameters.cpp
 src/parameter_reader.cpp
-src/franka_model.cpp)
+src/franka_model.cpp
+src/model.cpp)
 target_include_directories(franka_pole_common PUBLIC include)
 target_compile_options(franka_pole_common PUBLIC -O3)
 target_include_directories(franka_pole_common PUBLIC ${catkin_INCLUDE_DIRS} ${pinocchio_INCLUDE_DIRS})

@@ -12,9 +12,9 @@ if __name__ == '__main__':
     for i in sys.argv:
         if next_namespace: namespace = i
         next_namespace = (i == "-N")
-    rospy.init_node('reconfigure')
     
     # Initialize
+    rospy.init_node(namespace + "_reconfigure")
     parameters_publisher = rospy.Publisher("/" + namespace + "/command_parameters", CommandParameters, queue_size=10)
     parameters = rospy.wait_for_message("/" + namespace + "/command_parameters", CommandParameters)
 

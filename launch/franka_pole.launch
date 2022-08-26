@@ -3,7 +3,8 @@
 
   <!-- Customization -->
   <arg name="source"        default="gazebo"              doc="Source of data [gazebo/robot/record]" />
-  <arg name="model"         default="0D"                  doc="Model to use [0D/1D/2D/2Db]" />
+  <arg name="model"         default="0D"                  doc="Model to use [0D/1D/2D/2Db/2Dc]" />
+  <arg name="friction"      default="false"               doc="Use model with friction" />
   <arg name="type"          default="test"                doc="Type of controller [test/simple/external/python]" />
   <arg name="acceleration"  default="true"                doc="Use acceleration controller" />
   <arg name="paused"        default="false"               doc="Should the simulation directly be stopped at 0s?" />
@@ -25,18 +26,22 @@
   <!-- Load parameters -->
   <arg name="simulated" value="$(eval arg('source') == 'gazebo')" />
   <rosparam file="$(find franka_pole)/config/parameters.yaml" subst_value="true" />
+  <rosparam file="$(find franka_pole)/config/override/robot.yaml" subst_value="true" if="$(eval arg('source') == 'robot')"/>
   <rosparam file="$(find franka_pole)/config/override/0D.yaml" subst_value="true" if="$(eval arg('model') == '0D')"/>
   <rosparam file="$(find franka_pole)/config/override/1D.yaml" subst_value="true" if="$(eval arg('model') == '1D')"/>
   <rosparam file="$(find franka_pole)/config/override/2D.yaml" subst_value="true" if="$(eval arg('model') == '2D')"/>
   <rosparam file="$(find franka_pole)/config/override/2Db.yaml" subst_value="true" if="$(eval arg('model') == '2Db')"/>
+  <rosparam file="$(find franka_pole)/config/override/2Dc.yaml" subst_value="true" if="$(eval arg('model') == '2Dc')"/>
   <rosparam file="$(find franka_pole)/config/override/acceleration+0D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '0D')"/>
   <rosparam file="$(find franka_pole)/config/override/acceleration+1D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '1D')"/>
   <rosparam file="$(find franka_pole)/config/override/acceleration+2D.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '2D')"/>
   <rosparam file="$(find franka_pole)/config/override/acceleration+2Db.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '2Db')"/>
+  <rosparam file="$(find franka_pole)/config/override/acceleration+2Dc.yaml" subst_value="true" if="$(eval arg('acceleration') and arg('model') == '2Dc')"/>
   <rosparam file="$(find franka_pole)/config/override/test+0D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('model') == '0D')"/>
   <rosparam file="$(find franka_pole)/config/override/test+1D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('model') == '1D')"/>
   <rosparam file="$(find franka_pole)/config/override/test+2D.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('model') == '2D')"/>
   <rosparam file="$(find franka_pole)/config/override/test+2Db.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('model') == '2Db')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+2Dc.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('model') == '2Dc')"/>
 
   <!-- Load available controllers -->
   <rosparam file="$(find franka_pole)/config/franka_pole_controllers.yaml" subst_value="true" />
@@ -53,6 +58,9 @@
   </group>
   <group if="$(eval arg('model') == '2Db')">
     <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2Db.xacro arm_id:=$(arg arm_id)" />
+  </group>
+  <group if="$(eval arg('model') == '2Dc')">
+    <param name="robot_description" command="xacro $(find franka_pole)/robots/franka_pole_2Dc.xacro arm_id:=$(arg arm_id)" />
   </group>
 
   <!-- Option 1: Simulation -->
@@ -89,7 +97,7 @@
       <param name="robot_ip" value="$(arg arm_ip)" />
     </node>
 
-    <include file="$(find vicon_bridge)/launch/vicon.launch" if="$(eval arg('model') == '1D' or arg('model') == '2D' or arg('model') == '2Db')">
+    <include file="$(find vicon_bridge)/launch/vicon.launch" if="$(eval arg('model') == '1D' or arg('model') == '2D' or arg('model') == '2Db' or arg('model') == '2Dc')">
       <arg name="datastream_hostport" value="$(arg vicon_ip)" />
     </include>
   </group>
