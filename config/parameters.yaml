@@ -15,7 +15,7 @@ $(arg namespace):
   target_effector_position: [ 0.5, 0.0, 0.6 ]
   target_effector_orientation: { w: 1.0, x: 0.0, y: 0.0, z: 0.0 }
   target_joint0_position: .NaN # fallbacks to atan2(target_effector_position[1] / target_effector_position[0])
-  target_joint0_stuck: false
+  target_joint0_stuck: true
   min_effector_position: [ 0.3, -0.35, 0.5 ]
   max_effector_position: [ 0.7, 0.35, 0.7 ]
   min_effector_velocity: [ -1000.0, -1000.0, -1000.0 ]
@@ -67,7 +67,7 @@ $(arg namespace):
   pole_control: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
 
   # Test
-  startup_time: 5.0
+  startup_time: 0.0
   test_rectangle: false
   test_amplitude: [ 0.0, 0.0, 0.0 ]
   test_frequency: [ 1.0, 1.0, 1.0 ]

@@ -1,3 +1,4 @@
 $(arg namespace):
+  startup_time: 5.0
   joint_position_mean: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
   pole_angle_mean: [ 0.0, 0.0 ]
