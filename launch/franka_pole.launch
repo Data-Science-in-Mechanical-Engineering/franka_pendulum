@@ -27,6 +27,7 @@
   <arg name="simulated" value="$(eval arg('source') == 'gazebo')" />
   <rosparam file="$(find franka_pole)/config/parameters.yaml" subst_value="true" />
   <rosparam file="$(find franka_pole)/config/override/robot.yaml" subst_value="true" if="$(eval arg('source') == 'robot')"/>
+  <rosparam file="$(find franka_pole)/config/override/test+gazebo.yaml" subst_value="true" if="$(eval arg('type') == 'test' and arg('source') == 'gazebo')"/>
   <rosparam file="$(find franka_pole)/config/override/0D.yaml" subst_value="true" if="$(eval arg('model') == '0D')"/>
   <rosparam file="$(find franka_pole)/config/override/1D.yaml" subst_value="true" if="$(eval arg('model') == '1D')"/>
   <rosparam file="$(find franka_pole)/config/override/2D.yaml" subst_value="true" if="$(eval arg('model') == '2D')"/>

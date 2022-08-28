@@ -1,0 +1,2 @@
+$(arg namespace):
+  startup_time: 5.0
