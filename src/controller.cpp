@@ -54,6 +54,7 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
         ros::TransportHints().tcpNoDelay();
 
         //Time
+        _time = ros::Time(0,0);
         _franka_period_counter = 0;
         _pole_period_counter = 0;
         _command_period_counter = 0;
@@ -109,8 +110,9 @@ void franka_pole::Controller::_starting_level0(const ros::Time &time)
 void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::Duration &period)
 {
     //Reading data
-    if (_franka_period_counter == 0) franka_state->update(time);
-    if (_pole_period_counter == 0 && pole_state != nullptr) pole_state->update(time);
+    _time += period;
+    if (_franka_period_counter == 0) franka_state->update(_time);
+    if (_pole_period_counter == 0 && pole_state != nullptr) pole_state->update(_time);
 
     //Software reset
     if (_reset_mode == ResetMode::software_reset)
@@ -167,9 +169,9 @@ void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::D
     else
     {
         #ifdef FRANKA_POLE_VELOCITY_INTERFACE
-            if (_command_period_counter == 0) _velocity = _get_velocity_level1(time, ros::Duration(0,1000000*parameters->command_period));
+            if (_command_period_counter == 0) _velocity = _get_velocity_level1(_time, ros::Duration(0,1000000*parameters->command_period));
         #else
-            if (_command_period_counter == 0) _torque = _get_torque_level1(time, ros::Duration(0,1000000*parameters->command_period));
+            if (_command_period_counter == 0) _torque = _get_torque_level1(_time, ros::Duration(0,1000000*parameters->command_period));
         #endif
     }
     

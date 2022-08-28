@@ -40,6 +40,7 @@ namespace franka_pole
         ros::NodeHandle _node_handle;
 
         //Time
+        ros::Time _time;
         unsigned int _franka_period_counter;
         unsigned int _pole_period_counter;
         unsigned int _command_period_counter;
