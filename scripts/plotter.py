@@ -283,7 +283,7 @@ if __name__ == '__main__':
     else:
         # Recorded
         duration = 3.0
-        bag = rosbag.Bag(rospkg.RosPack().get_path("franka_pole") + "/temp/log.bag")
+        bag = rosbag.Bag(rospkg.RosPack().get_path("franka_pole") + "/temp/" + log_name + ".bag")
         for topic, sample, time in bag.read_messages(topics=["/" + namespace + "/sample"]):
             if sample.franka_timestamp < start_time: continue
             if sample.franka_timestamp > start_time + duration: break
