@@ -51,7 +51,7 @@ void franka_pole::PositionController::_compute_jacobians()
     _jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
     
     // Jacobian transpose
-    _jacobian.transpose();
+    _jacobian_transpose = _jacobian.transpose();
     
     // Jacobian inverse
     _jacobian_inverse = pseudo_inverse(_jacobian, parameters->target_joint_weights, 0.2);
