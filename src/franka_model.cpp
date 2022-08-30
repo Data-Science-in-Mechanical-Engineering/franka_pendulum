@@ -1,5 +1,4 @@
 #include <franka_pole/franka_model.h>
-#include <franka_pole/pseudo_inverse.h>
 #include <franka_pole/parameters.h>
 
 #include <pinocchio/parsers/urdf.hpp>
@@ -313,9 +312,10 @@ Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::pole_forward_kinematics(co
     return placement.translation_impl();
 }
 
-Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, double joint0, const Eigen::Matrix<double, 7, 1> &hint)
+Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, const Eigen::Matrix<double, 7, 1> &weights, const Eigen::Matrix<double, 7, 1> &hint)
 {
     //Constants
+    Eigen::DiagonalMatrix<double, 7> weights_inverse(weights.array().inverse().matrix());
     const pinocchio::SE3 goal(effector_orientation, effector_position);
     const double tolerance   = 1e-3;
     const int max_iteration  = 1000;
@@ -327,7 +327,6 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
         //Copying hints
         Eigen::Matrix<double, 9, 1> result = Eigen::Matrix<double, 9, 1>::Zero();
         result.segment<7>(0) = hint;
-        if (!isnan(joint0)) result(0) = joint0;
 
         //Loop
         for (size_t i = 0; i < max_iteration; i++)
@@ -340,13 +339,12 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
             //Originally it were computeJointJacobian, but computeJointJacobian is inconsistent with absolutely everything else (including computeFrameJacobian)
             Eigen::Matrix<double, 6, 9> jacobian;
             pinocchio::computeFrameJacobian(_model, _data, result, _effector_frame_id, pinocchio::ReferenceFrame::LOCAL, jacobian);
-            Eigen::Matrix<double, 6, 6> jacobian2 = jacobian.block<6,7>(0,0) * jacobian.block<6,7>(0,0).transpose();
+            Eigen::Matrix<double, 6, 6> jacobian2 = jacobian.block<6,7>(0,0) * weights_inverse * jacobian.block<6,7>(0,0).transpose();
             jacobian2.diagonal().array() += damp;
             Eigen::Matrix<double, 9, 1> gradient;
-            gradient.segment<7>(0) = -jacobian.block<6,7>(0,0).transpose() * jacobian2.llt().solve(error);
+            gradient.segment<7>(0) = -(weights_inverse * jacobian.block<6,7>(0,0).transpose() * jacobian2.llt().solve(error));
             gradient.segment<2>(7) = Eigen::Matrix<double, 2, 1>::Zero();
             result = pinocchio::integrate(_model, result, gradient * step);
-            if (!isnan(joint0)) result(0) = joint0;
         }
     }
     else if (get_model_freedom(_parameters->model) == 1)
@@ -354,7 +352,6 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
         //Copying hints
         Eigen::Matrix<double, 10, 1> result = Eigen::Matrix<double, 10, 1>::Zero();
         result.segment<7>(0) = hint;
-        if (!isnan(joint0)) result(0) = joint0;
 
         //Loop
         for (size_t i = 0; i < max_iteration; i++)
@@ -366,13 +363,12 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
             if (error.norm() < tolerance) return result.segment<7>(0);
             Eigen::Matrix<double, 6, 10> jacobian;
             pinocchio::computeFrameJacobian(_model, _data, result, _effector_frame_id, pinocchio::ReferenceFrame::LOCAL, jacobian);
-            Eigen::Matrix<double, 6, 6> jacobian2 = jacobian.block<6,7>(0,0) * jacobian.block<6,7>(0,0).transpose();
+            Eigen::Matrix<double, 6, 6> jacobian2 = jacobian.block<6,7>(0,0) * weights_inverse * jacobian.block<6,7>(0,0).transpose();
             jacobian2.diagonal().array() += damp;
             Eigen::Matrix<double, 10, 1> gradient;
-            gradient.segment<7>(0) = -jacobian.block<6,7>(0,0).transpose() * jacobian2.llt().solve(error);
+            gradient.segment<7>(0) = -(weights_inverse * jacobian.block<6,7>(0,0).transpose() * jacobian2.llt().solve(error));
             gradient.segment<3>(7) = Eigen::Matrix<double, 3, 1>::Zero();
             result = pinocchio::integrate(_model, result, gradient * step);
-            if (!isnan(joint0)) result(0) = joint0;
         }
     }
     else
@@ -380,7 +376,6 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
         //Copying hints
         Eigen::Matrix<double, 11, 1> result = Eigen::Matrix<double, 11, 1>::Zero();
         result.segment<7>(0) = hint;
-        if (!isnan(joint0)) result(0) = joint0;
 
         //Loop
         for (size_t i = 0; i < max_iteration; i++)
@@ -392,13 +387,12 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
             if (error.norm() < tolerance) return result.segment<7>(0);
             Eigen::Matrix<double, 6, 11> jacobian;
             pinocchio::computeFrameJacobian(_model, _data, result, _effector_frame_id, pinocchio::ReferenceFrame::LOCAL, jacobian);
-            Eigen::Matrix<double, 6, 6> jacobian2 = jacobian.block<6,7>(0,0) * jacobian.block<6,7>(0,0).transpose();
+            Eigen::Matrix<double, 6, 6> jacobian2 = jacobian.block<6,7>(0,0) * weights_inverse * jacobian.block<6,7>(0,0).transpose();
             jacobian2.diagonal().array() += damp;
             Eigen::Matrix<double, 11, 1> gradient;
-            gradient.segment<7>(0) = -jacobian.block<6,7>(0,0).transpose() * jacobian2.llt().solve(error);
+            gradient.segment<7>(0) = -(weights_inverse * jacobian.block<6,7>(0,0).transpose() * jacobian2.llt().solve(error));
             gradient.segment<4>(7) = Eigen::Matrix<double, 4, 1>::Zero();
             result = pinocchio::integrate(_model, result, gradient * step);
-            if (!isnan(joint0)) result(0) = joint0;
         }
     }
     throw std::runtime_error("franka_pole::FrankaModel::inverse_kinematics(): Number of iterations exeeded");

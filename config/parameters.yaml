@@ -14,8 +14,7 @@ $(arg namespace):
   # Target state and constraints
   target_effector_position: [ 0.5, 0.0, 0.6 ]
   target_effector_orientation: { w: 1.0, x: 0.0, y: 0.0, z: 0.0 }
-  target_joint0_position: .NaN # fallbacks to atan2(target_effector_position[1] / target_effector_position[0])
-  target_joint0_stuck: true
+  target_joint_weights: [ .Inf, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ]
   min_effector_position: [ 0.3, -0.35, 0.5 ]
   max_effector_position: [ 0.7, 0.35, 0.7 ]
   min_effector_velocity: [ -1000.0, -1000.0, -1000.0 ]
@@ -24,7 +23,7 @@ $(arg namespace):
   # Initial state
   initial_effector_position: [ .NaN, .NaN, .NaN ] # fallbacks to target_effector_position
   initial_effector_orientation: { w: .NaN, x: .NaN, y: .NaN, z: .NaN } # fallbacks to target_effector_orientation
-  initial_joint0_position: .NaN # fallbacks to atan2(initial_effector_position[1] / initial_effector_position[0])
+  initial_joint_weights: [ .NaN, .NaN, .NaN, .NaN, .NaN, .NaN, .NaN ] # fallbacks to target_joint_weights
   initial_pole_positions: [ 0.0, 0.0 ]
   initial_pole_velocities: [ 0.0, 0.0 ]
   

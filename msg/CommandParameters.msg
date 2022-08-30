@@ -6,8 +6,7 @@ uint32 controller_period
   
 float64[3] target_effector_position
 float64[4] target_effector_orientation
-float64 target_joint0_position
-bool target_joint0_stuck
+float64[7] target_joint_weights
 float64[3] min_effector_position
 float64[3] max_effector_position
 float64[3] min_effector_velocity
@@ -15,7 +14,7 @@ float64[3] max_effector_velocity
 
 float64[3] initial_effector_position
 float64[4] initial_effector_orientation
-float64 initial_joint0_position
+float64[7] initial_joint_weights
 float64[2] initial_pole_positions
 float64[2] initial_pole_velocities
 

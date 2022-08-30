@@ -131,8 +131,7 @@ unsigned int franka_pole::ParameterReader::controller_period() const { return _r
 
 Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::target_effector_position() const { return _check_vector("target_effector_position", _read_vector<3>("target_effector_position")); }
 Eigen::Quaterniond franka_pole::ParameterReader::target_effector_orientation() const { return _check_quaternion("target_effector_orientation", _read_quaternion("target_effector_orientation")); }
-double franka_pole::ParameterReader::target_joint0_position() const { double p = _read_double("target_joint0_position"); if (isnan(p)) { auto v = target_effector_position(); p = atan2(v(1), v(0)); } return _check_double("target_joint0_position", p); }
-bool franka_pole::ParameterReader::target_joint0_stuck() const { return _read_bool("target_joint0_stuck"); }
+Eigen::Matrix<double, 7, 1> franka_pole::ParameterReader::target_joint_weights() const { return _check_vector("target_joint_weights", _read_vector<7>("target_joint_weights")); }
 Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::min_effector_position() const { return _check_vector("min_effector_position", _read_vector<3>("min_effector_position")); }
 Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::max_effector_position() const { return _check_vector("max_effector_position", _read_vector<3>("max_effector_position")); }
 Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::min_effector_velocity() const { return _check_vector("min_effector_velocity", _read_vector<3>("min_effector_velocity")); }
@@ -140,7 +139,7 @@ Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::max_effector_velocity(
 
 Eigen::Matrix<double, 3, 1> franka_pole::ParameterReader::initial_effector_position() const { auto v = _read_vector<3>("initial_effector_position"); if (_nan_vector(v)) v = _replace_vector(v, target_effector_position()); return _check_vector("initial_effector_position", v); }
 Eigen::Quaterniond franka_pole::ParameterReader::initial_effector_orientation() const { auto q = _read_quaternion("initial_effector_orientation"); if (_nan_quaternion(q)) q = _replace_quaternion(q, target_effector_orientation()); return _check_quaternion("initial_effector_orientation", q); }
-double franka_pole::ParameterReader::initial_joint0_position() const { double p = _read_double("initial_joint0_position"); if (isnan(p)) { auto v = initial_effector_position(); p = atan2(v(1), v(0)); } return _check_double("initial_joint0_position", p); }
+Eigen::Matrix<double, 7, 1> franka_pole::ParameterReader::initial_joint_weights() const { auto v = _read_vector<7>("initial_joint_weights"); if (_nan_vector(v)) v = _replace_vector<7>(v, target_joint_weights().array().sqrt().matrix()); return _check_vector("initial_joint_weights", v); }
 Eigen::Matrix<double, 2, 1> franka_pole::ParameterReader::initial_pole_positions() const { return _check_vector("initial_pole_positions", _read_vector<2>("initial_pole_positions")); }
 Eigen::Matrix<double, 2, 1> franka_pole::ParameterReader::initial_pole_velocities() const { return _check_vector("initial_pole_velocities", _read_vector<2>("initial_pole_velocities")); }
 

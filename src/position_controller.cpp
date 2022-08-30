@@ -51,15 +51,13 @@ void franka_pole::PositionController::_compute_jacobians()
     _jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
     
     // Jacobian transpose
-    if (parameters->target_joint0_stuck) { _jacobian_transpose.block<1,6>(0,0) = Eigen::Matrix<double, 1, 6>::Zero(); _jacobian_transpose.block<6,6>(1,0) = _jacobian.transpose().block<6,6>(1,0); }
-    else _jacobian_transpose = _jacobian.transpose();
+    _jacobian.transpose();
     
     // Jacobian inverse
-    if (parameters->target_joint0_stuck) { _jacobian_inverse.block<1,6>(0,0) = Eigen::Matrix<double, 1, 6>::Zero(); _jacobian_inverse.block<6,6>(1,0) = pseudo_inverse(Eigen::Matrix<double, 6, 6>(_jacobian.block<6,6>(0,1)), true); }
-    else _jacobian_inverse = pseudo_inverse(_jacobian, true);
+    _jacobian_inverse = pseudo_inverse(_jacobian, parameters->target_joint_weights, 0.2);
     
     // Jacobian transpose inverse
-    _jacobian_transpose_inverse = pseudo_inverse(_jacobian_transpose, true);
+    _jacobian_transpose_inverse = pseudo_inverse(_jacobian_transpose, Eigen::Matrix<double, 6, 1>(Eigen::Matrix<double, 6, 1>::Ones()), 0.2);
 }
 
 void franka_pole::PositionController::_cartesian_control()
@@ -96,7 +94,7 @@ void franka_pole::PositionController::_cartesian_control()
         error.segment<3>(3) = -(franka_state->get_effector_orientation() * Eigen::Matrix<double, 3, 1>(error_quaternion.x(), error_quaternion.y(), error_quaternion.z()));
         
         Eigen::Matrix<double, 6, 1> control = (-cartesian_stiffness.array() * error.array() - cartesian_damping.array() * (franka_state->get_effector_velocity() - _velocity_target).array()).matrix();
-        _torque += _jacobian_transpose * control;
+        _torque += Eigen::DiagonalMatrix<double, 7>(parameters->target_joint_weights).inverse() * _jacobian_transpose * control;
     }
 }
 
@@ -106,7 +104,7 @@ void franka_pole::PositionController::_joint_space_control()
     {
         try
         {
-            _joint_positions_target = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, parameters->target_joint0_stuck ? parameters->target_joint0_position : std::numeric_limits<double>::quiet_NaN(), _initial_joint_positions_target);
+            _joint_positions_target = franka_model->effector_inverse_kinematics(_position_target, parameters->target_effector_orientation, parameters->target_joint_weights, _initial_joint_positions_target);
             _joint_velocities_target = _jacobian_inverse * _velocity_target;
             
             Eigen::Matrix<double, 7, 1> control = (
@@ -164,7 +162,7 @@ bool franka_pole::PositionController::_init_level1(hardware_interface::RobotHW *
     _velocity_target = Eigen::Matrix<double, 6, 1>::Zero();
     _position_target = parameters->initial_effector_position;
     const double hint[] = { 0.0, -M_PI/4, 0.0, -3*M_PI/4, 0.0, M_PI/2, M_PI/4 };
-    _initial_joint_positions_target = franka_model->effector_inverse_kinematics(parameters->initial_effector_position, parameters->initial_effector_orientation, parameters->initial_joint0_position, Eigen::Matrix<double, 7, 1>::Map(hint));
+    _initial_joint_positions_target = franka_model->effector_inverse_kinematics(parameters->initial_effector_position, parameters->initial_effector_orientation, parameters->initial_joint_weights, Eigen::Matrix<double, 7, 1>::Map(hint));
     return _init_level2(robot_hw, node_handle);
 }
 

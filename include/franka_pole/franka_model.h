@@ -103,6 +103,6 @@ namespace franka_pole
         ///@param hint Initial guess
         ///@return 7-dimensional vector of joint positions
         ///@throw `std::runtime_error` if numer of iteration exeeded (in particular because the desired pose is not reachable)
-        Eigen::Matrix<double, 7, 1> effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, double joint0, const Eigen::Matrix<double, 7, 1> &hint);
+        Eigen::Matrix<double, 7, 1> effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, const Eigen::Matrix<double, 7, 1> &weights, const Eigen::Matrix<double, 7, 1> &hint);
     };
 }

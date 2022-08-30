@@ -16,7 +16,7 @@ void franka_pole::Controller::_initiate_hardware_reset()
     _hardware_reset_start_orientation = franka_state->get_effector_orientation();
     _hardware_reset_start_positions = franka_state->get_joint_positions();
     const double hint[] = { 0.0, -M_PI/4, 0.0, -3*M_PI/4, 0.0, M_PI/2, M_PI/4 };
-    _hardware_reset_end_positions = franka_model->effector_inverse_kinematics(parameters->initial_effector_position, parameters->initial_effector_orientation, parameters->initial_joint0_position, Eigen::Matrix<double, 7, 1>::Map(hint));
+    _hardware_reset_end_positions = franka_model->effector_inverse_kinematics(parameters->initial_effector_position, parameters->initial_effector_orientation, parameters->initial_joint_weights, Eigen::Matrix<double, 7, 1>::Map(hint));
     _hardware_reset_time = 0.0;
     _reset_mode = ResetMode::hardware_reset;
 }

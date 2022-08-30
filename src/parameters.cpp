@@ -18,8 +18,7 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     // Target state and constraints
     _receive_vector<3>(&target_effector_position, msg->target_effector_position);
     _receive_quaternion(&target_effector_orientation, msg->target_effector_orientation);
-    _receive_double(&target_joint0_position, msg->target_joint0_position);
-    target_joint0_stuck = msg->target_joint0_stuck;
+    _receive_vector<7>(&target_joint_weights, msg->target_joint_weights);
     _receive_vector<3>(&min_effector_position, msg->min_effector_position);
     _receive_vector<3>(&max_effector_position, msg->max_effector_position);
     _receive_vector<3>(&min_effector_velocity, msg->min_effector_velocity);
@@ -28,7 +27,7 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     // Initial state
     _receive_vector<3>(&initial_effector_position, msg->initial_effector_position);
     _receive_quaternion(&initial_effector_orientation, msg->initial_effector_orientation);
-    _receive_double(&initial_joint0_position, msg->initial_joint0_position);
+    _receive_vector<7>(&initial_joint_weights, msg->initial_joint_weights);
     _receive_vector<2>(&initial_pole_positions, msg->initial_pole_positions);
     _receive_vector<2>(&initial_pole_velocities, msg->initial_pole_velocities);
 
@@ -94,8 +93,7 @@ void franka_pole::Parameters::_send()
     // Target state and constraints
     _send_vector<3>(target_effector_position, &command.target_effector_position);
     _send_quaternion(target_effector_orientation, &command.target_effector_orientation);
-    _send_double(target_joint0_position, &command.target_joint0_position);
-    command.target_joint0_stuck = target_joint0_stuck;
+    _send_vector<7>(target_joint_weights, &command.target_joint_weights);
     _send_vector<3>(min_effector_position, &command.min_effector_position);
     _send_vector<3>(max_effector_position, &command.max_effector_position);
     _send_vector<3>(min_effector_velocity, &command.min_effector_velocity);
@@ -104,7 +102,7 @@ void franka_pole::Parameters::_send()
     // Initial state
     _send_vector<3>(initial_effector_position, &command.initial_effector_position);
     _send_quaternion(initial_effector_orientation, &command.initial_effector_orientation);
-    _send_double(initial_joint0_position, &command.initial_joint0_position);
+    _send_vector<7>(initial_joint_weights, &command.initial_joint_weights);
     _send_vector<2>(initial_pole_positions, &command.initial_pole_positions);
     _send_vector<2>(initial_pole_velocities, &command.initial_pole_velocities);
 
@@ -226,8 +224,7 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
 
     target_effector_position(reader.target_effector_position()),
     target_effector_orientation(reader.target_effector_orientation()),
-    target_joint0_position(reader.target_joint0_position()),
-    target_joint0_stuck(reader.target_joint0_stuck()),
+    target_joint_weights(reader.target_joint_weights()),
     min_effector_position(reader.min_effector_position()),
     max_effector_position(reader.max_effector_position()),
     min_effector_velocity(reader.min_effector_velocity()),
@@ -235,7 +232,7 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
 
     initial_effector_position(reader.initial_effector_position()),
     initial_effector_orientation(reader.initial_effector_orientation()),
-    initial_joint0_position(reader.initial_joint0_position()),
+    initial_joint_weights(reader.initial_joint_weights()),
     initial_pole_positions(reader.initial_pole_positions()),
     initial_pole_velocities(reader.initial_pole_velocities()),
 

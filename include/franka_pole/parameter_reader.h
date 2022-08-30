@@ -50,8 +50,7 @@ namespace franka_pole
         // Target state and constraints
         Eigen::Matrix<double, 3, 1> target_effector_position() const;   ///< Effector's target position
         Eigen::Quaterniond target_effector_orientation() const;         ///< Effector's target orientation
-        double target_joint0_position() const;                          ///< Effector's target angle of first joint
-        bool target_joint0_stuck() const;                               ///< `true` if first joint is stuck, `false` if first joint is active
+        Eigen::Matrix<double, 7, 1> target_joint_weights() const;       ///< Weights of joints for inverse kinematic and dynamic
         Eigen::Matrix<double, 3, 1> min_effector_position() const;      ///< Higher boundary for effector position
         Eigen::Matrix<double, 3, 1> max_effector_position() const;      ///< Lower boundary for effector position
         Eigen::Matrix<double, 3, 1> min_effector_velocity() const;      ///< Higher boundary for effector velocity
@@ -60,7 +59,7 @@ namespace franka_pole
         // Initial state
         Eigen::Matrix<double, 3, 1> initial_effector_position() const;  ///< Effector's initial position
         Eigen::Quaterniond initial_effector_orientation() const;        ///< Effector's initial orientation
-        double initial_joint0_position() const;                         ///< Effector's initial angle of first joint
+        Eigen::Matrix<double, 7, 1> initial_joint_weights() const;       ///< Initial weights of joints for inverse kinematic
         Eigen::Matrix<double, 2, 1> initial_pole_positions() const;     ///< Pole's initial joint angles
         Eigen::Matrix<double, 2, 1> initial_pole_velocities() const;    ///< Pole's initial joint angular velocities
 
