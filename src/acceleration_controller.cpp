@@ -240,14 +240,16 @@ Eigen::Matrix<double, 6, 1> franka_pole::AccelerationController::_get_velocity_l
     _controller_period_counter += parameters->command_period;
     if (_controller_period_counter >= parameters->controller_period)
     {
-        _acceleration_target = _get_acceleration_level2(time, ros::Duration(0,1000000*parameters->controller_period));
+        _input_acceleration = _get_acceleration_level2(time, ros::Duration(0,1000000*parameters->controller_period));
+        _acceleration_target.segment<3>(0) = _input_acceleration;
+        _acceleration_target.segment<3>(3) = Eigen::Matrix<double, 3, 1>::Zero();
         _controller_period_counter = 0;
     }
     Eigen::Matrix<double, 7, 1> torque = Eigen::Matrix<double, 7, 1>::Zero();
 
     // integrate
-    _velocity_target += period.toSec() * _acceleration_target;
-    _position_target += period.toSec() * _velocity_target;
+    _velocity_target.segment<3>(0) += period.toSec() * _input_acceleration;
+    _position_target += period.toSec() * _velocity_target.segment<3>(0);
 
     // apply constraints and safety
     for (size_t i = 0; i < 3; i++)
@@ -257,22 +259,18 @@ Eigen::Matrix<double, 6, 1> franka_pole::AccelerationController::_get_velocity_l
     }
 
     // publish
-    Eigen::Matrix<double, 6, 1> acceleration_command = Eigen::Matrix<double, 6, 1>::Zero();
-    acceleration_command.segment<3>(0) = _acceleration_target;
-    Eigen::Matrix<double, 6, 1> velocity_command = Eigen::Matrix<double, 6, 1>::Zero();
-    velocity_command.segment<3>(0) = _velocity_target;
     publisher->set_command(
         time,
         _position_target,
         parameters->target_effector_orientation,
-        velocity_command,
-        acceleration_command,
+        _velocity_target,
+        _acceleration_target,
         Eigen::Matrix<double, 7, 1>::Zero(),
         Eigen::Matrix<double, 7, 1>::Zero(),
         Eigen::Matrix<double, 7, 1>::Zero(),
         Eigen::Matrix<double, 7, 1>::Zero());
 
-    return velocity_command;
+    return _velocity_target;
 }
 #else
 Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_level1(const ros::Time &time, const ros::Duration &period)

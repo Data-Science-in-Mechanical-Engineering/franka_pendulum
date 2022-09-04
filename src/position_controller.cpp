@@ -14,8 +14,8 @@ void franka_pole::PositionController::_update_cartesian_targets(const ros::Time 
     _controller_period_counter += parameters->command_period;
     if (_controller_period_counter >= parameters->controller_period)
     {
-        _position_target = _get_position_level2(time, ros::Duration(0,1000000*parameters->controller_period));
         _velocity_target.segment<3>(0) = _get_velocity_level2(time, ros::Duration(0,1000000*parameters->controller_period));
+        _velocity_target.segment<3>(3) = Eigen::Matrix<double, 3, 1>::Zero();
         _controller_period_counter = 0;
     }
 
@@ -174,7 +174,8 @@ Eigen::Matrix<double, 6, 1> franka_pole::PositionController::_get_velocity_level
     if (_controller_period_counter >= parameters->controller_period)
     {
         _position_target = _get_position_level2(time, ros::Duration(0,1000000*parameters->controller_period));
-        _velocity_target = _get_velocity_level2(time, ros::Duration(0,1000000*parameters->controller_period));
+        _velocity_target.segment<3>(0) = _get_velocity_level2(time, ros::Duration(0,1000000*parameters->controller_period));
+        _velocity_target.segment<3>(3) = Eigen::Matrix<double, 3, 1>::Zero();
         _controller_period_counter = 0;
     }
     
@@ -186,20 +187,18 @@ Eigen::Matrix<double, 6, 1> franka_pole::PositionController::_get_velocity_level
     }
     
     // publish
-    Eigen::Matrix<double, 6, 1> velocity_command = Eigen::Matrix<double, 6, 1>::Zero();
-    velocity_command.segment<3>(0) = _velocity_target;
     publisher->set_command(
         time,
         _position_target,
         parameters->target_effector_orientation,
-        velocity_command,
+        _velocity_target,
         Eigen::Matrix<double, 6, 1>::Zero(),
         Eigen::Matrix<double, 7, 1>::Zero(),
         Eigen::Matrix<double, 7, 1>::Zero(),
         Eigen::Matrix<double, 7, 1>::Zero(),
         Eigen::Matrix<double, 7, 1>::Zero());
 
-    return velocity_command;
+    return _velocity_target;
 }
 #else
 Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(const ros::Time &time, const ros::Duration &period)

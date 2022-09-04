@@ -151,7 +151,7 @@ void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::D
         {
             //Move to start
             #ifdef FRANKA_POLE_VELOCITY_INTERFACE
-                _velocity.segment<3>(0) = (parameters->initial_effector_position - _hardware_reset_old_position) / (parameters->hardware_reset_duration - hardware_recovery_duration);
+                _velocity.segment<3>(0) = (parameters->initial_effector_position - _hardware_reset_start_position) / (parameters->hardware_reset_duration - hardware_recovery_duration);
                 _velocity.segment<3>(3) = Eigen::Matrix<double, 3, 1>::Zero();
             #else
                 double factor = (_hardware_reset_time - hardware_recovery_duration) / (parameters->hardware_reset_duration - hardware_recovery_duration);
