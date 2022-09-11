@@ -1,5 +1,5 @@
-#include <franka_pole/franka_model.h>
-#include <franka_pole/parameters.h>
+#include <franka_pendulum/franka_model.h>
+#include <franka_pendulum/parameters.h>
 
 #include <pinocchio/parsers/urdf.hpp>
 #include <pinocchio/algorithm/joint-configuration.hpp>
@@ -9,16 +9,16 @@
 #include <pinocchio/algorithm/crba.hpp>
 #include <ros/package.h>
 
-franka_pole::FrankaModel::FrankaModel(const Parameters *parameters) :
+franka_pendulum::FrankaModel::FrankaModel(const Parameters *parameters) :
 _parameters(parameters)
 {
     //Pinocchio model
-    std::string package_path = ros::package::getPath("franka_pole");
-    if (_parameters->model == Model::D0) pinocchio::urdf::buildModel(package_path + "/robots/franka_pole.urdf", _model);
-    else if (_parameters->model == Model::D1) pinocchio::urdf::buildModel(package_path + "/robots/franka_pole_1D.urdf", _model);
-    else if (_parameters->model == Model::D2) pinocchio::urdf::buildModel(package_path + "/robots/franka_pole_2D.urdf", _model);
-    else if (_parameters->model == Model::D2b) pinocchio::urdf::buildModel(package_path + "/robots/franka_pole_2Db.urdf", _model);
-    else pinocchio::urdf::buildModel(package_path + "/robots/franka_pole_2Dc.urdf", _model);
+    std::string package_path = ros::package::getPath("franka_pendulum");
+    if (_parameters->model == Model::D0) pinocchio::urdf::buildModel(package_path + "/robots/franka_pendulum.urdf", _model);
+    else if (_parameters->model == Model::D1) pinocchio::urdf::buildModel(package_path + "/robots/franka_pendulum_1D.urdf", _model);
+    else if (_parameters->model == Model::D2) pinocchio::urdf::buildModel(package_path + "/robots/franka_pendulum_2D.urdf", _model);
+    else if (_parameters->model == Model::D2b) pinocchio::urdf::buildModel(package_path + "/robots/franka_pendulum_2Db.urdf", _model);
+    else pinocchio::urdf::buildModel(package_path + "/robots/franka_pendulum_2Dc.urdf", _model);
     _data = pinocchio::Data(_model);
 
     //Checking joints
@@ -35,18 +35,18 @@ _parameters(parameters)
     }
     if (get_model_freedom(_parameters->model) >= 1)
     {
-        if (!_model.existJointName("panda_pole_joint_x")) throw std::runtime_error("FrankaModel: Joint panda_pole_joint_x not found");
+        if (!_model.existJointName("panda_pendulum_joint_x")) throw std::runtime_error("FrankaModel: Joint panda_pendulum_joint_x not found");
     }
     if (get_model_freedom(_parameters->model) == 2)
     {
-        if (!_model.existJointName("panda_pole_joint_y")) throw std::runtime_error("FrankaModel: Joint panda_pole_joint_y not found");
+        if (!_model.existJointName("panda_pendulum_joint_y")) throw std::runtime_error("FrankaModel: Joint panda_pendulum_joint_y not found");
     }
     if (get_model_freedom(_parameters->model) >= 1)
     {
-        if (!_model.existFrame("panda_pole_link_lower")) throw std::runtime_error("FrankaModel: Frame panda_pole_link_lower not found");
-        _effector_frame_id = _model.getFrameId("panda_pole_link_lower");
-        if (!_model.existFrame("panda_pole_link_upper")) throw std::runtime_error("FrankaModel: Frame panda_pole_link_upper not found");
-        _pole_frame_id = _model.getFrameId("panda_pole_link_upper");
+        if (!_model.existFrame("panda_pendulum_link_lower")) throw std::runtime_error("FrankaModel: Frame panda_pendulum_link_lower not found");
+        _effector_frame_id = _model.getFrameId("panda_pendulum_link_lower");
+        if (!_model.existFrame("panda_pendulum_link_upper")) throw std::runtime_error("FrankaModel: Frame panda_pendulum_link_upper not found");
+        _pendulum_frame_id = _model.getFrameId("panda_pendulum_link_upper");
     }
     else
     {
@@ -55,7 +55,7 @@ _parameters(parameters)
     }
 }
 
-Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_gravity_compensation(const Eigen::Matrix<double, 7, 1> &joint_positions)
+Eigen::Matrix<double, 7, 1> franka_pendulum::FrankaModel::get_gravity_compensation(const Eigen::Matrix<double, 7, 1> &joint_positions)
 {
     if (get_model_freedom(_parameters->model) == 0)
     {
@@ -93,12 +93,12 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::get_gravity_compensation(c
     }
 }
 
-Eigen::Matrix<double, 9, 1> franka_pole::FrankaModel::get_gravity9(const Eigen::Matrix<double, 7, 1> &joint_positions)
+Eigen::Matrix<double, 9, 1> franka_pendulum::FrankaModel::get_gravity9(const Eigen::Matrix<double, 7, 1> &joint_positions)
 {
     return Eigen::Matrix<double, 9, 1>::Zero();
 }
 
-Eigen::Matrix<double, 10, 1> franka_pole::FrankaModel::get_gravity10(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_positions)
+Eigen::Matrix<double, 10, 1> franka_pendulum::FrankaModel::get_gravity10(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pendulum_joint_positions)
 {
     pinocchio::Inertia old_inertias[11];
     for (size_t i = 0; i < 11; i++) { old_inertias[i] = _model.inertias[i]; _model.inertias[i].mass() = 0.0; }
@@ -107,14 +107,14 @@ Eigen::Matrix<double, 10, 1> franka_pole::FrankaModel::get_gravity10(const Eigen
 
     Eigen::Matrix<double, 10, 1> q10 = Eigen::Matrix<double, 10, 1>::Zero();
     q10.segment<7>(0) = joint_positions;
-    q10(9) = pole_joint_positions(0);
+    q10(9) = pendulum_joint_positions(0);
     Eigen::Matrix<double, 10, 1> torque = pinocchio::computeGeneralizedGravity(_model, _data, q10);
 
     for (size_t i = 0; i < 11; i++) _model.inertias[i] = old_inertias[i];
     return torque;
 }
 
-Eigen::Matrix<double, 11, 1> franka_pole::FrankaModel::get_gravity11(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_positions)
+Eigen::Matrix<double, 11, 1> franka_pendulum::FrankaModel::get_gravity11(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pendulum_joint_positions)
 {
     pinocchio::Inertia old_inertias[12];
     for (size_t i = 0; i < 12; i++) { old_inertias[i] = _model.inertias[i]; _model.inertias[i].mass() = 0.0; }
@@ -123,15 +123,15 @@ Eigen::Matrix<double, 11, 1> franka_pole::FrankaModel::get_gravity11(const Eigen
 
     Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
     q11.segment<7>(0) = joint_positions;
-    q11(9) = pole_joint_positions(1);
-    q11(10) = pole_joint_positions(0);
+    q11(9) = pendulum_joint_positions(1);
+    q11(10) = pendulum_joint_positions(0);
     Eigen::Matrix<double, 11, 1> torque = pinocchio::computeGeneralizedGravity(_model, _data, q11);
 
     for (size_t i = 0; i < 12; i++) _model.inertias[i] = old_inertias[i];
     return torque;
 }
 
-Eigen::Matrix<double, 9, 1> franka_pole::FrankaModel::get_coriolis9(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities)
+Eigen::Matrix<double, 9, 1> franka_pendulum::FrankaModel::get_coriolis9(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities)
 {
     Eigen::Matrix<double, 9, 1> q9 = Eigen::Matrix<double, 9, 1>::Zero();
     q9.segment<7>(0) = joint_positions;
@@ -140,31 +140,31 @@ Eigen::Matrix<double, 9, 1> franka_pole::FrankaModel::get_coriolis9(const Eigen:
     return pinocchio::computeCoriolisMatrix(_model, _data, q9, v9) * v9;
 }
 
-Eigen::Matrix<double, 10, 1> franka_pole::FrankaModel::get_coriolis10(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities, const Eigen::Matrix<double, 2, 1> &pole_joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_velocities)
+Eigen::Matrix<double, 10, 1> franka_pendulum::FrankaModel::get_coriolis10(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities, const Eigen::Matrix<double, 2, 1> &pendulum_joint_positions, const Eigen::Matrix<double, 2, 1> &pendulum_joint_velocities)
 {
     Eigen::Matrix<double, 10, 1> q10 = Eigen::Matrix<double, 10, 1>::Zero();
     q10.segment<7>(0) = joint_positions;
-    q10(9) = pole_joint_positions(0);
+    q10(9) = pendulum_joint_positions(0);
     Eigen::Matrix<double, 10, 1> v10 = Eigen::Matrix<double, 10, 1>::Zero();
     v10.segment<7>(0) = joint_velocities;
-    v10(9) = pole_joint_velocities(0);
+    v10(9) = pendulum_joint_velocities(0);
     return pinocchio::computeCoriolisMatrix(_model, _data, q10, v10) * v10;
 }
 
-Eigen::Matrix<double, 11, 1> franka_pole::FrankaModel::get_coriolis11(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities, const Eigen::Matrix<double, 2, 1> &pole_joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_velocities)
+Eigen::Matrix<double, 11, 1> franka_pendulum::FrankaModel::get_coriolis11(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities, const Eigen::Matrix<double, 2, 1> &pendulum_joint_positions, const Eigen::Matrix<double, 2, 1> &pendulum_joint_velocities)
 {
     Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
     q11.segment<7>(0) = joint_positions;
-    q11(9) = pole_joint_positions(1);
-    q11(10) = pole_joint_positions(0);
+    q11(9) = pendulum_joint_positions(1);
+    q11(10) = pendulum_joint_positions(0);
     Eigen::Matrix<double, 11, 1> v11 = Eigen::Matrix<double, 11, 1>::Zero();
     v11.segment<7>(0) = joint_velocities;
-    v11(9) = pole_joint_positions(1);
-    v11(10) = pole_joint_positions(0);
+    v11(9) = pendulum_joint_positions(1);
+    v11(10) = pendulum_joint_positions(0);
     return pinocchio::computeCoriolisMatrix(_model, _data, q11, v11) * v11;
 }
 
-Eigen::Matrix<double, 9, 9> franka_pole::FrankaModel::get_mass_matrix9(const Eigen::Matrix<double, 7, 1> &joint_positions)
+Eigen::Matrix<double, 9, 9> franka_pendulum::FrankaModel::get_mass_matrix9(const Eigen::Matrix<double, 7, 1> &joint_positions)
 {
     Eigen::Matrix<double, 9, 1> q9 = Eigen::Matrix<double, 9, 1>::Zero();
     q9.segment<7>(0) = joint_positions;
@@ -173,28 +173,28 @@ Eigen::Matrix<double, 9, 9> franka_pole::FrankaModel::get_mass_matrix9(const Eig
     return result;
 }
 
-Eigen::Matrix<double, 10, 10> franka_pole::FrankaModel::get_mass_matrix10(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_positions)
+Eigen::Matrix<double, 10, 10> franka_pendulum::FrankaModel::get_mass_matrix10(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pendulum_joint_positions)
 {
     Eigen::Matrix<double, 10, 1> q10 = Eigen::Matrix<double, 10, 1>::Zero();
     q10.segment<7>(0) = joint_positions;
-    q10(9) = pole_joint_positions(0);
+    q10(9) = pendulum_joint_positions(0);
     Eigen::Matrix<double, 10, 10> result = pinocchio::crba(_model, _data, q10);
     result.triangularView<Eigen::StrictlyLower>() = result.transpose().triangularView<Eigen::StrictlyLower>();
     return result;
 }
 
-Eigen::Matrix<double, 11, 11> franka_pole::FrankaModel::get_mass_matrix11(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_positions)
+Eigen::Matrix<double, 11, 11> franka_pendulum::FrankaModel::get_mass_matrix11(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pendulum_joint_positions)
 {
     Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
     q11.segment<7>(0) = joint_positions;
-    q11(9) = pole_joint_positions(1);
-    q11(10) = pole_joint_positions(0);
+    q11(9) = pendulum_joint_positions(1);
+    q11(10) = pendulum_joint_positions(0);
     Eigen::Matrix<double, 11, 11> result = pinocchio::crba(_model, _data, q11);
     result.triangularView<Eigen::StrictlyLower>() = result.transpose().triangularView<Eigen::StrictlyLower>();
     return result;
 }
 
-Eigen::Matrix<double, 6, 7> franka_pole::FrankaModel::get_effector_jacobian(const Eigen::Matrix<double, 7, 1> &joint_positions)
+Eigen::Matrix<double, 6, 7> franka_pendulum::FrankaModel::get_effector_jacobian(const Eigen::Matrix<double, 7, 1> &joint_positions)
 {
     if (get_model_freedom(_parameters->model) == 0)
     {
@@ -227,7 +227,7 @@ Eigen::Matrix<double, 6, 7> franka_pole::FrankaModel::get_effector_jacobian(cons
     return jacobian;
 }
 
-Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::get_effector_centroidal_acceleration(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities)
+Eigen::Matrix<double, 3, 1> franka_pendulum::FrankaModel::get_effector_centripetal_acceleration(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 7, 1> &joint_velocities)
 {
     if (get_model_freedom(_parameters->model) == 0)
     {
@@ -259,7 +259,7 @@ Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::get_effector_centroidal_ac
     return pinocchio::updateFramePlacement(_model, _data, _effector_frame_id).rotation_impl() * pinocchio::getFrameClassicalAcceleration(_model, _data, _effector_frame_id).linear_impl();
 }
 
-Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::effector_forward_kinematics(const Eigen::Matrix<double, 7, 1> &joint_positions, Eigen::Quaterniond *effector_orientation)
+Eigen::Matrix<double, 3, 1> franka_pendulum::FrankaModel::effector_forward_kinematics(const Eigen::Matrix<double, 7, 1> &joint_positions, Eigen::Quaterniond *effector_orientation)
 {
     if (get_model_freedom(_parameters->model) == 0)
     {
@@ -284,7 +284,7 @@ Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::effector_forward_kinematic
     return placement.translation_impl();
 }
 
-Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::pole_forward_kinematics(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pole_joint_positions, Eigen::Quaterniond *pole_orientation)
+Eigen::Matrix<double, 3, 1> franka_pendulum::FrankaModel::pendulum_forward_kinematics(const Eigen::Matrix<double, 7, 1> &joint_positions, const Eigen::Matrix<double, 2, 1> &pendulum_joint_positions, Eigen::Quaterniond *pendulum_orientation)
 {
     if (get_model_freedom(_parameters->model) == 0)
     {
@@ -296,23 +296,23 @@ Eigen::Matrix<double, 3, 1> franka_pole::FrankaModel::pole_forward_kinematics(co
     {
         Eigen::Matrix<double, 10, 1> q10 = Eigen::Matrix<double, 10, 1>::Zero();
         q10.segment<7>(0) = joint_positions;
-        q10(9) = pole_joint_positions(0);
+        q10(9) = pendulum_joint_positions(0);
         pinocchio::forwardKinematics(_model, _data, q10);
     }
     else
     {
         Eigen::Matrix<double, 11, 1> q11 = Eigen::Matrix<double, 11, 1>::Zero();
         q11.segment<7>(0) = joint_positions;
-        q11(9) = pole_joint_positions(1);
-        q11(10) = pole_joint_positions(0);
+        q11(9) = pendulum_joint_positions(1);
+        q11(10) = pendulum_joint_positions(0);
         pinocchio::forwardKinematics(_model, _data, q11);
     }
-    pinocchio::SE3 placement = pinocchio::updateFramePlacement(_model, _data, _pole_frame_id);
-    if (pole_orientation != nullptr) *pole_orientation = placement.rotation_impl();
+    pinocchio::SE3 placement = pinocchio::updateFramePlacement(_model, _data, _pendulum_frame_id);
+    if (pendulum_orientation != nullptr) *pendulum_orientation = placement.rotation_impl();
     return placement.translation_impl();
 }
 
-Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, const Eigen::Matrix<double, 7, 1> &weights, const Eigen::Matrix<double, 7, 1> &hint)
+Eigen::Matrix<double, 7, 1> franka_pendulum::FrankaModel::effector_inverse_kinematics(const Eigen::Matrix<double, 3, 1> &effector_position, const Eigen::Quaterniond &effector_orientation, const Eigen::Matrix<double, 7, 1> &weights, const Eigen::Matrix<double, 7, 1> &hint)
 {
     //Constants
     Eigen::DiagonalMatrix<double, 7> weights_inverse(weights.array().inverse().matrix());
@@ -395,5 +395,5 @@ Eigen::Matrix<double, 7, 1> franka_pole::FrankaModel::effector_inverse_kinematic
             result = pinocchio::integrate(_model, result, gradient * step);
         }
     }
-    throw std::runtime_error("franka_pole::FrankaModel::inverse_kinematics(): Number of iterations exeeded");
+    throw std::runtime_error("franka_pendulum::FrankaModel::inverse_kinematics(): Number of iterations exeeded");
 }

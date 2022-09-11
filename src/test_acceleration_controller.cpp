@@ -1,13 +1,13 @@
-#include <franka_pole/test_acceleration_controller.h>
-#include <franka_pole/parameters.h>
+#include <franka_pendulum/test_acceleration_controller.h>
+#include <franka_pendulum/parameters.h>
 
-bool franka_pole::TestAccelerationController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+bool franka_pendulum::TestAccelerationController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     _time = ros::Time(0,0);
     return true;
 }
 
-Eigen::Matrix<double, 3, 1> franka_pole::TestAccelerationController::_get_acceleration_level2(const ros::Time &time, const ros::Duration &period)
+Eigen::Matrix<double, 3, 1> franka_pendulum::TestAccelerationController::_get_acceleration_level2(const ros::Time &time, const ros::Duration &period)
 {
     Eigen::Matrix<double, 3, 1> acceleration_target;
     for (size_t i = 0; i < 3; i++)
@@ -22,4 +22,4 @@ Eigen::Matrix<double, 3, 1> franka_pole::TestAccelerationController::_get_accele
     return (_time.toSec() > parameters->startup_time) ? (acceleration_target) : (acceleration_target * _time.toSec() / parameters->startup_time);
 }
 
-FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole::TestAccelerationController);
+FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pendulum::TestAccelerationController);

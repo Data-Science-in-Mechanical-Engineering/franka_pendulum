@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from franka_pole.msg import CommandReset
+from franka_pendulum.msg import CommandReset
 import rospy
 import sys
 
@@ -12,7 +12,7 @@ def callback(event):
 # Main
 if __name__ == "__main__":
     # Read arguments
-    namespace = "franka_pole"
+    namespace = "franka_pendulum"
     period = None
     hardware = False
     next_namespace = False

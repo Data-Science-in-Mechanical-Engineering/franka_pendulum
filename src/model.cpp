@@ -1,6 +1,6 @@
-#include <franka_pole/model.h>
+#include <franka_pendulum/model.h>
 
-size_t franka_pole::get_model_freedom(Model model)
+size_t franka_pendulum::get_model_freedom(Model model)
 {
     switch (model)
     {

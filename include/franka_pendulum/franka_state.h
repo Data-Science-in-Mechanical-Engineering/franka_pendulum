@@ -11,19 +11,19 @@
 #include <random>
 #include <memory>
 
-namespace franka_pole
+namespace franka_pendulum
 {
     class Controller;
     class Parameters;
     class FrankaModel;
     class Publisher;
-    class PoleState;
+    class PendulumState;
 
     ///Class responsible for obtaining, adding noise and doing basic calculations to franka state
     class FrankaState
     {
     friend Controller;
-    friend PoleState;
+    friend PendulumState;
     private:
         //References
         const Parameters *_parameters;

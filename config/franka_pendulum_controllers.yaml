@@ -1,23 +1,23 @@
 $(arg namespace)_external_position_controller:
   namespace: $(arg namespace)
-  type: franka_pole/ExternalPositionController
+  type: franka_pendulum/ExternalPositionController
 
 $(arg namespace)_simple_position_controller:
   namespace: $(arg namespace)
-  type: franka_pole/SimplePositionController
+  type: franka_pendulum/SimplePositionController
 
 $(arg namespace)_test_position_controller:
   namespace: $(arg namespace)
-  type: franka_pole/TestPositionController
+  type: franka_pendulum/TestPositionController
 
 $(arg namespace)_external_acceleration_controller:
   namespace: $(arg namespace)
-  type: franka_pole/ExternalAccelerationController
+  type: franka_pendulum/ExternalAccelerationController
 
 $(arg namespace)_simple_acceleration_controller:
   namespace: $(arg namespace)
-  type: franka_pole/SimpleAccelerationController
+  type: franka_pendulum/SimpleAccelerationController
 
 $(arg namespace)_test_acceleration_controller:
   namespace: $(arg namespace)
-  type: franka_pole/TestAccelerationController
+  type: franka_pendulum/TestAccelerationController

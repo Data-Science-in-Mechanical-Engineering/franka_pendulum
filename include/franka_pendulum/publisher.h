@@ -1,12 +1,12 @@
 #pragma once
 
-#include <franka_pole/Sample.h>
+#include <franka_pendulum/Sample.h>
 
 #include <sensor_msgs/JointState.h>
 #include <ros/node_handle.h>
 #include <Eigen/Dense>
 
-namespace franka_pole
+namespace franka_pendulum
 {
     class Parameters;
 
@@ -29,14 +29,14 @@ namespace franka_pole
         ///Publisher data
         void publish();
 
-        //Pole
-        ///Notifies publisher about pole update
-        ///@param timestamp Latest pole update time
-        ///@param angle Angles betweeeen the pole and the planes
-        ///@param dangle Derivative of the angle betweeeen the pole and the planes
-        ///@param joint_angle Angles of revolute joints in the pole
-        ///@param joint_dangle Angular velocities of revolute joints in the pole
-        void set_pole(
+        //Pendulum
+        ///Notifies publisher about pendulum update
+        ///@param timestamp Latest pendulum update time
+        ///@param angle Angles betweeeen the pendulum and the planes
+        ///@param dangle Derivative of the angle betweeeen the pendulum and the planes
+        ///@param joint_angle Angles of revolute joints in the pendulum
+        ///@param joint_dangle Angular velocities of revolute joints in the pendulum
+        void set_pendulum(
             const ros::Time &timestamp,
             const Eigen::Matrix<double, 2, 1> &angle,
             const Eigen::Matrix<double, 2, 1> &dangle,

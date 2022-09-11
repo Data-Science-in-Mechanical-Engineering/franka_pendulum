@@ -6,7 +6,7 @@ $(arg namespace):
 
   # Periods
   franka_period: 1 # frequency of franka state update
-  pole_period: 10 # frequency of pole state update
+  pendulum_period: 10 # frequency of pendulum state update
   command_period: 1  # frequency of franka command update
   publish_period: 10 # frequency of publisher invocation
   controller_period: 1 # frequency of high-level controller invocation
@@ -24,8 +24,8 @@ $(arg namespace):
   initial_effector_position: [ .NaN, .NaN, .NaN ] # fallbacks to target_effector_position
   initial_effector_orientation: { w: .NaN, x: .NaN, y: .NaN, z: .NaN } # fallbacks to target_effector_orientation
   initial_joint_weights: [ .NaN, .NaN, .NaN, .NaN, .NaN, .NaN, .NaN ] # fallbacks to target_joint_weights
-  initial_pole_positions: [ 0.0, 0.0 ]
-  initial_pole_velocities: [ 0.0, 0.0 ]
+  initial_pendulum_positions: [ 0.0, 0.0 ]
+  initial_pendulum_velocities: [ 0.0, 0.0 ]
   
   # Stiffness
   outbound_translation_stiffness: [ 200.0, 200.0, 200.0 ]
@@ -47,23 +47,23 @@ $(arg namespace):
   pure_dynamics: false
   
   # Filters
-  pole_angle_filter: 0.5
-  pole_dangle_filter: .NaN # fallbacks to pole_angle_filter
+  pendulum_angle_filter: 0.5
+  pendulum_dangle_filter: .NaN # fallbacks to pendulum_angle_filter
 
   # Noise
   joint_position_mean: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
   joint_velocity_standard_deviation: [ .NaN, .NaN, .NaN, .NaN, .NaN, .NaN, .NaN ] # fallbacks to joint_position_standard_deviation
   joint_position_standard_deviation: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
-  pole_angle_mean: [ 0.0, 0.0 ]
-  pole_angle_standard_deviation: [ 0.0, 0.0 ]
+  pendulum_angle_mean: [ 0.0, 0.0 ]
+  pendulum_angle_standard_deviation: [ 0.0, 0.0 ]
 
   # Reset
   hardware_reset_durtion: 10.0
   hardware_reset_stiffness: [ 600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0 ]
   hardware_reset_damping: [ 50.0, 50.0, 50.0, 20.0, 20.0, 20.0, 10.0 ] # fallbacks to 2 * sqrt(hardware_reset_stiffness)
 
-  # Pole control
-  pole_control: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+  # Pendulum control
+  pendulum_control: [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
 
   # Test
   startup_time: 0.0

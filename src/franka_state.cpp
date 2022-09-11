@@ -1,26 +1,26 @@
-#include <franka_pole/franka_model.h>
-#include <franka_pole/franka_state.h>
-#include <franka_pole/parameters.h>
-#include <franka_pole/publisher.h>
+#include <franka_pendulum/franka_model.h>
+#include <franka_pendulum/franka_state.h>
+#include <franka_pendulum/parameters.h>
+#include <franka_pendulum/publisher.h>
 #include <time.h>
 
-franka_pole::FrankaState::FrankaState(const Parameters *parameters, FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw) :
+franka_pendulum::FrankaState::FrankaState(const Parameters *parameters, FrankaModel *franka_model, Publisher *publisher, hardware_interface::RobotHW *robot_hw) :
 _parameters(parameters), _franka_model(franka_model), _publisher(publisher), _timestamp(0.0)
 {
     #ifdef FRANKA_POLE_VELOCITY_INTERFACE
         //State interface
         auto *state_interface = robot_hw->get<franka_hw::FrankaStateInterface>();
-        if (state_interface == nullptr) throw std::runtime_error("franka_pole::FrankaState::FrankaState(): Error getting state interface from hardware");
+        if (state_interface == nullptr) throw std::runtime_error("franka_pendulum::FrankaState::FrankaState(): Error getting state interface from hardware");
         _state_handle = std::make_unique<franka_hw::FrankaStateHandle>(state_interface->getHandle(_parameters->arm_id + "_robot"));
 
         //Velocity interface
         auto *velocity_interface = robot_hw->get<franka_hw::FrankaVelocityCartesianInterface>();
-        if (velocity_interface == nullptr) throw std::runtime_error("franka_pole::FrankaState::FrankaState(): Error getting cartesian velocity interface from hardware");
+        if (velocity_interface == nullptr) throw std::runtime_error("franka_pendulum::FrankaState::FrankaState(): Error getting cartesian velocity interface from hardware");
         _velocity_handle = std::make_unique<franka_hw::FrankaCartesianVelocityHandle>(velocity_interface->getHandle(_parameters->arm_id + "_robot"));
     #else
         //Joint handles
         auto *effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
-        if (effort_joint_interface == nullptr) throw std::runtime_error("franka_pole::FrankaState::FrankaState(): Error getting effort joint interface from hardware");
+        if (effort_joint_interface == nullptr) throw std::runtime_error("franka_pendulum::FrankaState::FrankaState(): Error getting effort joint interface from hardware");
         for (size_t i = 0; i < 7; i++)
         {
             _joint_handles[i] = effort_joint_interface->getHandle(_parameters->arm_id + "_joint" + std::to_string(i + 1));
@@ -28,7 +28,7 @@ _parameters(parameters), _franka_model(franka_model), _publisher(publisher), _ti
     #endif
 }
 
-void franka_pole::FrankaState::reset()
+void franka_pendulum::FrankaState::reset()
 {
     //Random
     for (size_t i = 0; i < 7; i++)
@@ -42,7 +42,7 @@ void franka_pole::FrankaState::reset()
     update(ros::Time(0,0));
 }
 
-void franka_pole::FrankaState::update(const ros::Time &time)
+void franka_pendulum::FrankaState::update(const ros::Time &time)
 {
     //Measurement
     _timestamp = time.toSec();
@@ -89,43 +89,43 @@ void franka_pole::FrankaState::update(const ros::Time &time)
         _joint_velocities);
 }
 
-double franka_pole::FrankaState::get_timestamp() const
+double franka_pendulum::FrankaState::get_timestamp() const
 {
     return _timestamp;
 }
 
-Eigen::Matrix<double, 7, 1> franka_pole::FrankaState::get_joint_positions() const
+Eigen::Matrix<double, 7, 1> franka_pendulum::FrankaState::get_joint_positions() const
 {
     return _joint_positions;
 }
 
-Eigen::Matrix<double, 7, 1> franka_pole::FrankaState::get_joint_velocities() const
+Eigen::Matrix<double, 7, 1> franka_pendulum::FrankaState::get_joint_velocities() const
 {
     return _joint_velocities;
 }
 
-Eigen::Matrix<double, 3, 1> franka_pole::FrankaState::get_effector_position() const
+Eigen::Matrix<double, 3, 1> franka_pendulum::FrankaState::get_effector_position() const
 {
     return _effector_position;
 }
 
-Eigen::Quaterniond franka_pole::FrankaState::get_effector_orientation() const
+Eigen::Quaterniond franka_pendulum::FrankaState::get_effector_orientation() const
 {
     return _effector_orientation;
 }
 
-Eigen::Matrix<double, 6, 1> franka_pole::FrankaState::get_effector_velocity() const
+Eigen::Matrix<double, 6, 1> franka_pendulum::FrankaState::get_effector_velocity() const
 {
     return _effector_velocity;
 }
 
 #ifndef FRANKA_POLE_VELOCITY_INTERFACE
-void franka_pole::FrankaState::_set_torque(const Eigen::Matrix<double, 7, 1> &torque)
+void franka_pendulum::FrankaState::_set_torque(const Eigen::Matrix<double, 7, 1> &torque)
 {
     for (size_t i = 0; i < 7; i++) _joint_handles[i].setCommand(torque(i));
 }
 #else
-void franka_pole::FrankaState::_set_velocity(const Eigen::Matrix<double, 6, 1> &velocity)
+void franka_pendulum::FrankaState::_set_velocity(const Eigen::Matrix<double, 6, 1> &velocity)
 {
     std::array<double, 6> v;
     Eigen::Matrix<double, 6, 1>::Map(&v[0]) = velocity;

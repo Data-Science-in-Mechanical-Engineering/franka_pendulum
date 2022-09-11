@@ -1,14 +1,14 @@
-#include <franka_pole/acceleration_controller.h>
-#include <franka_pole/parameters.h>
-#include <franka_pole/franka_state.h>
-#include <franka_pole/pole_state.h>
-#include <franka_pole/CommandAcceleration.h>
+#include <franka_pendulum/acceleration_controller.h>
+#include <franka_pendulum/parameters.h>
+#include <franka_pendulum/franka_state.h>
+#include <franka_pendulum/pendulum_state.h>
+#include <franka_pendulum/CommandAcceleration.h>
 
 #include <Eigen/Dense>
 
-namespace franka_pole_example
+namespace franka_pendulum_example
 {
-    class HybridController : public franka_pole::AccelerationController
+    class HybridController : public franka_pendulum::AccelerationController
     {
     private:
         //Local time
@@ -18,9 +18,9 @@ namespace franka_pole_example
         Eigen::Matrix<double, 3, 1> _acceleration_target;
         ros::Subscriber _subscriber;
         bool _subscribed = false;
-        void _callback(const franka_pole::CommandAcceleration::ConstPtr &msg);
+        void _callback(const franka_pendulum::CommandAcceleration::ConstPtr &msg);
 
-        //Overrides from franka_pole::AccelerationController
+        //Overrides from franka_pendulum::AccelerationController
         bool _init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) override;
         Eigen::Matrix<double, 3, 1> _get_acceleration_level2(const ros::Time &time, const ros::Duration &period) override;
 
@@ -28,13 +28,13 @@ namespace franka_pole_example
     };
 }
 
-void franka_pole_example::HybridController::_callback(const franka_pole::CommandAcceleration::ConstPtr &msg)
+void franka_pendulum_example::HybridController::_callback(const franka_pendulum::CommandAcceleration::ConstPtr &msg)
 {
     std::lock_guard<std::mutex> guard(mutex);
     _acceleration_target = Eigen::Matrix<double, 3, 1>::Map(&msg->command_effector_acceleration[0]);
 }
 
-bool franka_pole_example::HybridController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+bool franka_pendulum_example::HybridController::_init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     _time = ros::Time(0,0);
     _acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
@@ -46,28 +46,28 @@ bool franka_pole_example::HybridController::_init_level2(hardware_interface::Rob
     return true;
 }
 
-Eigen::Matrix<double, 3, 1> franka_pole_example::HybridController::_get_acceleration_level2(const ros::Time &time, const ros::Duration &period)
+Eigen::Matrix<double, 3, 1> franka_pendulum_example::HybridController::_get_acceleration_level2(const ros::Time &time, const ros::Duration &period)
 {
     Eigen::Matrix<double, 3, 1> acceleration_target = Eigen::Matrix<double, 3, 1>::Zero();
-    if (pole_state != nullptr)
+    if (pendulum_state != nullptr)
     {
         Eigen::Matrix<double, 4, 1> input = Eigen::Matrix<double, 4, 1>::Zero();
 
-        input(0) = pole_state->get_angle()(1);
-        input(1) = pole_state->get_dangle()(1);
+        input(0) = pendulum_state->get_angle()(1);
+        input(1) = pendulum_state->get_dangle()(1);
         input(2) = franka_state->get_effector_position()(0) - parameters->target_effector_position(0);
         input(3) = franka_state->get_effector_velocity()(0);
-        acceleration_target(0) = parameters->pole_control.segment<4>(0).transpose() * input;
+        acceleration_target(0) = parameters->pendulum_control.segment<4>(0).transpose() * input;
             
-        input(0) = pole_state->get_angle()(0);
-        input(1) = pole_state->get_dangle()(0);
+        input(0) = pendulum_state->get_angle()(0);
+        input(1) = pendulum_state->get_dangle()(0);
         input(2) = franka_state->get_effector_position()(1) - parameters->target_effector_position(1);
         input(3) = franka_state->get_effector_velocity()(1);
-        acceleration_target(1) = parameters->pole_control.segment<4>(4).transpose() * input;
+        acceleration_target(1) = parameters->pendulum_control.segment<4>(4).transpose() * input;
     }
 
     _time += period;
     return _acceleration_target + ((_time.toSec() > parameters->startup_time) ? (acceleration_target) : (acceleration_target * _time.toSec() / parameters->startup_time));
 }
 
-FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pole_example::HybridController);
+FRANKA_POLE_CONTROLLER_IMPLEMENTATION(franka_pendulum_example::HybridController);

@@ -1,14 +1,14 @@
-#include <franka_pole/franka_model.h>
-#include <franka_pole/acceleration_controller.h>
-#include <franka_pole/franka_state.h>
-#include <franka_pole/parameters.h>
-#include <franka_pole/pole_state.h>
-#include <franka_pole/publisher.h>
-#include <franka_pole/pseudo_inverse.h>
+#include <franka_pendulum/franka_model.h>
+#include <franka_pendulum/acceleration_controller.h>
+#include <franka_pendulum/franka_state.h>
+#include <franka_pendulum/parameters.h>
+#include <franka_pendulum/pendulum_state.h>
+#include <franka_pendulum/publisher.h>
+#include <franka_pendulum/pseudo_inverse.h>
 
 #include <type_traits>
 
-void franka_pole::AccelerationController::_update_cartesian_targets(const ros::Time &time, const ros::Duration &period)
+void franka_pendulum::AccelerationController::_update_cartesian_targets(const ros::Time &time, const ros::Duration &period)
 {
     // get acceleration
     _controller_period_counter += parameters->command_period;
@@ -45,7 +45,7 @@ void franka_pole::AccelerationController::_update_cartesian_targets(const ros::T
     }
 }
 
-void franka_pole::AccelerationController::_init_step()
+void franka_pendulum::AccelerationController::_init_step()
 {
     _acceleration_target.segment<3>(0) = _input_acceleration;
     _acceleration_target.segment<3>(3) = Eigen::Matrix<double, 3, 1>::Zero();
@@ -53,7 +53,7 @@ void franka_pole::AccelerationController::_init_step()
     _torque = Eigen::Matrix<double, 7, 1>::Zero();
 }
 
-void franka_pole::AccelerationController::_compute_jacobians()
+void franka_pendulum::AccelerationController::_compute_jacobians()
 {
     // Jacobian
     _jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
@@ -68,7 +68,7 @@ void franka_pole::AccelerationController::_compute_jacobians()
     _jacobian_transpose_inverse = pseudo_inverse(_jacobian_transpose, Eigen::Matrix<double, 6, 1>(Eigen::Matrix<double, 6, 1>::Ones()), 0.2);
 }
 
-void franka_pole::AccelerationController::_cartesian_control()
+void franka_pendulum::AccelerationController::_cartesian_control()
 {
     // compute cartesian stiffness/damping
     Eigen::Matrix<double, 6, 1> cartesian_stiffness;
@@ -107,7 +107,7 @@ void franka_pole::AccelerationController::_cartesian_control()
     }
 }
 
-void franka_pole::AccelerationController::_joint_space_control()
+void franka_pendulum::AccelerationController::_joint_space_control()
 {
     if (!parameters->joint_stiffness.isZero() || !parameters->joint_damping.isZero())
     {
@@ -130,7 +130,7 @@ void franka_pole::AccelerationController::_joint_space_control()
     }
 }
 
-void franka_pole::AccelerationController::_nullspace_control()
+void franka_pendulum::AccelerationController::_nullspace_control()
 {
     if (!parameters->nullspace_stiffness.isZero() || !parameters->nullspace_damping.isZero())
     {
@@ -141,11 +141,11 @@ void franka_pole::AccelerationController::_nullspace_control()
     }
 }
 
-void franka_pole::AccelerationController::_inverse_dynamics_control()
+void franka_pendulum::AccelerationController::_inverse_dynamics_control()
 {
-    //Add centroidal acceleration to cartesian acceleration, add cartesian acceleration to joint acceleration
-    Eigen::Matrix<double, 3, 1> centroidal = franka_model->get_effector_centroidal_acceleration(franka_state->get_joint_positions(), franka_state->get_joint_velocities());
-    _acceleration_target.segment<3>(0) += centroidal;
+    //Add centripetal acceleration to cartesian acceleration, add cartesian acceleration to joint acceleration
+    Eigen::Matrix<double, 3, 1> centripetal = franka_model->get_effector_centripetal_acceleration(franka_state->get_joint_positions(), franka_state->get_joint_velocities());
+    _acceleration_target.segment<3>(0) += centripetal;
     _joint_accelerations_target += _jacobian_inverse * _acceleration_target;
    
     if (get_model_freedom(parameters->model) == 0)
@@ -172,8 +172,8 @@ void franka_pole::AccelerationController::_inverse_dynamics_control()
     else if (get_model_freedom(parameters->model) == 1)
     {
         // calculate gravity and coriolis
-        Eigen::Matrix<double, 10, 1> gravity = franka_model->get_gravity10(franka_state->get_joint_positions(), pole_state->get_joint_angle());
-        Eigen::Matrix<double, 10, 1> coriolis = franka_model->get_coriolis10(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());
+        Eigen::Matrix<double, 10, 1> gravity = franka_model->get_gravity10(franka_state->get_joint_positions(), pendulum_state->get_joint_angle());
+        Eigen::Matrix<double, 10, 1> coriolis = franka_model->get_coriolis10(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pendulum_state->get_joint_angle(), pendulum_state->get_joint_dangle());
         _torque += (gravity.segment<7>(0) + coriolis.segment<7>(0));
 
         if (parameters->dynamics > 0.0)
@@ -184,10 +184,10 @@ void franka_pole::AccelerationController::_inverse_dynamics_control()
             a10.segment<2>(7) = Eigen::Matrix<double, 2, 1>::Zero();
 
             // calculate mass matrix
-            Eigen::Matrix<double, 10, 10> mass = franka_model->get_mass_matrix10(franka_state->get_joint_positions(), pole_state->get_joint_angle());
+            Eigen::Matrix<double, 10, 10> mass = franka_model->get_mass_matrix10(franka_state->get_joint_positions(), pendulum_state->get_joint_angle());
 
             // calculate last (1) of acceleration
-            a10.segment<1>(9) = /*zero torque on pole*/ - gravity.segment<1>(9) - coriolis.segment<1>(9) - mass.block<1, 9>(9,0) * a10.segment<9>(0);
+            a10.segment<1>(9) = /*zero torque on pendulum*/ - gravity.segment<1>(9) - coriolis.segment<1>(9) - mass.block<1, 9>(9,0) * a10.segment<9>(0);
 
             // calculate first (7) torque
             _torque += parameters->dynamics * (mass.block<7,10>(0,0) * a10);
@@ -196,8 +196,8 @@ void franka_pole::AccelerationController::_inverse_dynamics_control()
     else
     {
         // calculate gravity and coriolis
-        Eigen::Matrix<double, 11, 1> gravity = franka_model->get_gravity11(franka_state->get_joint_positions(), pole_state->get_joint_angle());
-        Eigen::Matrix<double, 11, 1> coriolis = franka_model->get_coriolis11(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());
+        Eigen::Matrix<double, 11, 1> gravity = franka_model->get_gravity11(franka_state->get_joint_positions(), pendulum_state->get_joint_angle());
+        Eigen::Matrix<double, 11, 1> coriolis = franka_model->get_coriolis11(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pendulum_state->get_joint_angle(), pendulum_state->get_joint_dangle());
         _torque += (gravity.segment<7>(0) + coriolis.segment<7>(0));
 
         if (parameters->dynamics > 0.0)
@@ -208,21 +208,21 @@ void franka_pole::AccelerationController::_inverse_dynamics_control()
             a11.segment<2>(7) = Eigen::Matrix<double, 2, 1>::Zero();
 
             // calculate mass matrix
-            Eigen::Matrix<double, 11, 11> mass = franka_model->get_mass_matrix11(franka_state->get_joint_positions(), pole_state->get_joint_angle());
+            Eigen::Matrix<double, 11, 11> mass = franka_model->get_mass_matrix11(franka_state->get_joint_positions(), pendulum_state->get_joint_angle());
 
             // calculate last (2) of acceleration
-            a11.segment<2>(9) = /*zero torque on pole*/ - gravity.segment<2>(9) - coriolis.segment<2>(9) - mass.block<2, 9>(9,0) * a11.segment<9>(0);
+            a11.segment<2>(9) = /*zero torque on pendulum*/ - gravity.segment<2>(9) - coriolis.segment<2>(9) - mass.block<2, 9>(9,0) * a11.segment<9>(0);
 
             // calculate first (7) torque
             _torque += parameters->dynamics * (mass.block<7,11>(0,0) * a11);
         }
     }
 
-    //Subtract centroidal acceleration to llok nicer at plots (so acceleration = input [ + cartesian control ])
-    _acceleration_target.segment<3>(0) -= centroidal;
+    //Subtract centripetal acceleration to look nicer at plots (so acceleration = input [ + cartesian control ])
+    _acceleration_target.segment<3>(0) -= centripetal;
 }
 
-bool franka_pole::AccelerationController::_init_level1(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+bool franka_pendulum::AccelerationController::_init_level1(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     _controller_period_counter = 0;
     _input_acceleration = Eigen::Matrix<double, 3, 1>::Zero();
@@ -234,7 +234,7 @@ bool franka_pole::AccelerationController::_init_level1(hardware_interface::Robot
 }
 
 #ifdef FRANKA_POLE_VELOCITY_INTERFACE
-Eigen::Matrix<double, 6, 1> franka_pole::AccelerationController::_get_velocity_level1(const ros::Time &time, const ros::Duration &period)
+Eigen::Matrix<double, 6, 1> franka_pendulum::AccelerationController::_get_velocity_level1(const ros::Time &time, const ros::Duration &period)
 {
     // compute target
     _controller_period_counter += parameters->command_period;
@@ -273,7 +273,7 @@ Eigen::Matrix<double, 6, 1> franka_pole::AccelerationController::_get_velocity_l
     return _velocity_target;
 }
 #else
-Eigen::Matrix<double, 7, 1> franka_pole::AccelerationController::_get_torque_level1(const ros::Time &time, const ros::Duration &period)
+Eigen::Matrix<double, 7, 1> franka_pendulum::AccelerationController::_get_torque_level1(const ros::Time &time, const ros::Duration &period)
 {
     // preparations
     _update_cartesian_targets(time, period);

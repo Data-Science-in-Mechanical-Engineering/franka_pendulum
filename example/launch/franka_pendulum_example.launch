@@ -13,7 +13,7 @@
   <arg name="logger"        default="false"               doc="Should logger be launched?" />
   <arg name="recorder"      default="false"               doc="Should recorder (rosbag) be launched?" />
 
-  <arg name="namespace"  	  default="franka_pole"         doc="Namespace of parameters and topics" />
+  <arg name="namespace"  	  default="franka_pendulum"         doc="Namespace of parameters and topics" />
   <arg name="log_name"  	  default="log"                 doc="Name of the log file" />
   <arg name="record_name"   default="log"                 doc="Name of the the record (.bag) file" />
   <arg name="arm_id"  	    default="panda"               doc="Name of the arm" />
@@ -21,13 +21,13 @@
   <arg name="vicon_ip"      default="134.130.192.68:801"  doc="IP address of the VICON system"/>
 
   <!-- Load available controllers -->
-  <rosparam file="$(find franka_pole_example)/config/franka_pole_example_controllers.yaml" subst_value="true" />
+  <rosparam file="$(find franka_pendulum_example)/config/franka_pendulum_example_controllers.yaml" subst_value="true" />
 
-  <!-- Launch franka_pole.launch -->
-  <include file="$(find franka_pole)/launch/franka_pole.launch">
+  <!-- Launch franka_pendulum.launch -->
+  <include file="$(find franka_pendulum)/launch/franka_pendulum.launch">
     <arg name="source"        value="$(arg source)" />
     <arg name="model"         value="$(arg model)" />
-    <arg name="type"          value="hybrid" /> <!-- franka_pole is fine with passing something else as type, it will just not launch a controller -->
+    <arg name="type"          value="hybrid" /> <!-- franka_pendulum is fine with passing something else as type, it will just not launch a controller -->
     <arg name="acceleration"  value="true" />
     <arg name="paused"        value="$(arg paused)" />
     

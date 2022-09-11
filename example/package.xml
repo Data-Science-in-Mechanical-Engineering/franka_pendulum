@@ -1,22 +1,22 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>franka_pole_example</name>
+  <name>franka_pendulum_example</name>
   <version>0.0.0</version>
-  <description>The franka_pole example project</description>
+  <description>The franka_pendulum example project</description>
 
   <author email="kyrylo.sovailo@rwth-aachen.de">Kyrylo Sovailo</author>
   <maintainer email="kyrylo.sovailo@rwth-aachen.de">Kyrylo Sovailo</maintainer>
 
   <license>MIT</license>
 
-  <url type="website">https://github.com/kyrylo-sovailo/franka_pole</url>
+  <url type="website">https://github.com/kyrylo-sovailo/franka_pendulum</url>
   
-  <depend>franka_pole</depend>
+  <depend>franka_pendulum</depend>
   <depend>controller_interface</depend>
   <doc_depend>doxygen</doc_depend>
   <buildtool_depend>catkin</buildtool_depend>
 
   <export>
-    <controller_interface plugin="${prefix}/config/franka_pole_example_controllers_plugin.xml"/>
+    <controller_interface plugin="${prefix}/config/franka_pendulum_example_controllers_plugin.xml"/>
   </export>
 </package>

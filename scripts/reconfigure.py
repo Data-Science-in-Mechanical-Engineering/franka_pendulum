@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from franka_pole.msg import CommandParameters
+from franka_pendulum.msg import CommandParameters
 import rospy
 import numpy as np
 import sys
@@ -7,7 +7,7 @@ import sys
 # Main
 if __name__ == '__main__':
     # Read arguments
-    namespace = "franka_pole"
+    namespace = "franka_pendulum"
     next_namespace = False
     for i in sys.argv:
         if next_namespace: namespace = i

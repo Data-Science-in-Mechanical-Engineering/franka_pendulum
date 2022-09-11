@@ -1,12 +1,12 @@
 #pragma once
 
-#include <franka_pole/position_controller.h>
-#include <franka_pole/CommandPosition.h>
+#include <franka_pendulum/position_controller.h>
+#include <franka_pendulum/CommandPosition.h>
 
 #include <Eigen/Dense>
 #include <mutex>
 
-namespace franka_pole
+namespace franka_pendulum
 {
     ///High-level position controller that returns position and acceleration set by ROS topic as target position and acceleration
     class ExternalPositionController : public PositionController
@@ -17,9 +17,9 @@ namespace franka_pole
         Eigen::Matrix<double, 3, 1> _velocity_target = Eigen::Matrix<double, 3, 1>::Zero();
         ros::Subscriber _subscriber;
         bool _subscribed = false;
-        void _callback(const franka_pole::CommandPosition::ConstPtr &msg);
+        void _callback(const franka_pendulum::CommandPosition::ConstPtr &msg);
 
-        //Overrides from franka_pole::PositionController
+        //Overrides from franka_pendulum::PositionController
         bool _init_level2(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) override;
         Eigen::Matrix<double, 3, 1> _get_position_level2(const ros::Time &time, const ros::Duration &period) override;
         Eigen::Matrix<double, 3, 1> _get_velocity_level2(const ros::Time &time, const ros::Duration &period) override;

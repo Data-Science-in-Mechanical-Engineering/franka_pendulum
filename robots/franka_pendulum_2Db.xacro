@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="franka_pole">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="franka_pendulum">
   <xacro:arg name="arm_id" default="panda" />
   <xacro:arg name="friction" default="false" />
   
@@ -9,7 +9,7 @@
     <xacro:include filename="$(find franka_description)/robots/panda_gazebo.xacro" />
   </xacro:unless>
   <xacro:if value="$(arg friction)">
-    <xacro:include filename="$(find franka_pole)/robots/panda_gazebo.xacro" />
+    <xacro:include filename="$(find franka_pendulum)/robots/panda_gazebo.xacro" />
   </xacro:if>
   <xacro:panda_arm arm_id="$(arg arm_id)" />
   <xacro:hand arm_id="$(arg arm_id)" rpy="0 0 ${-pi/4}" connected_to="$(arg arm_id)_link8" />
@@ -38,24 +38,24 @@
       <controlPeriod>0.001</controlPeriod>
       <robotSimType>franka_gazebo/FrankaHWSim</robotSimType>
     </plugin>
-    <plugin name="franka_pole_plugin" filename="libfranka_pole_plugin.so">
+    <plugin name="franka_pendulum_plugin" filename="libfranka_pendulum_plugin.so">
     </plugin>
     <self_collide>true</self_collide>
   </gazebo>
 
   <!-- Connection -->   
-  <joint name="$(arg arm_id)_pole_joint_connection" type="fixed">
+  <joint name="$(arg arm_id)_pendulum_joint_connection" type="fixed">
     <origin xyz="${0.110/sqrt(2)} -${0.110/sqrt(2)} 0.03" rpy="${pi} 0 ${-pi/4}" />
     <parent link="$(arg arm_id)_link8" />
-    <child  link="$(arg arm_id)_pole_link_lower" />
+    <child  link="$(arg arm_id)_pendulum_link_lower" />
   </joint>
   
   <!-- Lower bearing -->
-  <link name="$(arg arm_id)_pole_link_lower">
+  <link name="$(arg arm_id)_pendulum_link_lower">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://franka_pole/meshes/visual/2Db_lower.dae"/>
+        <mesh filename="package://franka_pendulum/meshes/visual/2Db_lower.dae"/>
       </geometry>
     </visual>
 
@@ -69,9 +69,9 @@
     </inertial>
   </link>
   
-  <joint name="$(arg arm_id)_pole_joint_y" type="revolute">
-    <parent link="$(arg arm_id)_pole_link_lower"/>
-    <child link="$(arg arm_id)_pole_link_middle"/>
+  <joint name="$(arg arm_id)_pendulum_joint_y" type="revolute">
+    <parent link="$(arg arm_id)_pendulum_link_lower"/>
+    <child link="$(arg arm_id)_pendulum_link_middle"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
     <limit velocity="1000000" lower="${-30*pi/180}" effort="0" upper="${30*pi/180}" />
@@ -79,7 +79,7 @@
   </joint>
 
   <!-- Middle bearing -->
-  <link name="$(arg arm_id)_pole_link_middle">
+  <link name="$(arg arm_id)_pendulum_link_middle">
     <inertial>
       <origin xyz="0 0 0.005" rpy="0 0 0"/>
       <mass value="0.001"/>
@@ -90,9 +90,9 @@
     </inertial>
   </link>
   
-  <joint name="$(arg arm_id)_pole_joint_x" type="revolute">
-    <parent link="$(arg arm_id)_pole_link_middle"/>
-    <child link="$(arg arm_id)_pole_link_upper"/>
+  <joint name="$(arg arm_id)_pendulum_joint_x" type="revolute">
+    <parent link="$(arg arm_id)_pendulum_link_middle"/>
+    <child link="$(arg arm_id)_pendulum_link_upper"/>
     <origin xyz="0 0 0.01" rpy="0 0 0"/>
     <axis xyz="1 0 0"/>
     <limit velocity="1000000" lower="${-30*pi/180}" effort="0" upper="${30*pi/180}" />
@@ -100,11 +100,11 @@
   </joint>
   
   <!-- Upper bearing, beam, pine and ball -->
-  <link name="$(arg arm_id)_pole_link_upper">
+  <link name="$(arg arm_id)_pendulum_link_upper">
     <visual>
       <origin xyz="0 0 -0.01" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://franka_pole/meshes/visual/2Db_upper.dae"/>
+        <mesh filename="package://franka_pendulum/meshes/visual/2Db_upper.dae"/>
       </geometry>
     </visual>
     <visual>
@@ -130,21 +130,21 @@
     </inertial>
   </link>
   
-  <transmission name="$(arg arm_id)_pole_joint_y_transmission">
+  <transmission name="$(arg arm_id)_pendulum_joint_y_transmission">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="$(arg arm_id)_pole_joint_y">
+    <joint name="$(arg arm_id)_pendulum_joint_y">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
-    <actuator name="$(arg arm_id)_pole_joint_y_motor">
+    <actuator name="$(arg arm_id)_pendulum_joint_y_motor">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </actuator>
   </transmission>
-  <transmission name="$(arg arm_id)_pole_joint_x_transmission">
+  <transmission name="$(arg arm_id)_pendulum_joint_x_transmission">
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="$(arg arm_id)_pole_joint_x">
+    <joint name="$(arg arm_id)_pendulum_joint_x">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
-    <actuator name="$(arg arm_id)_pole_joint_x_motor">
+    <actuator name="$(arg arm_id)_pendulum_joint_x_motor">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </actuator>
   </transmission>

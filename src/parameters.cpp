@@ -1,16 +1,16 @@
-#include <franka_pole/parameters.h>
-#include <franka_pole/parameter_reader.h>
+#include <franka_pendulum/parameters.h>
+#include <franka_pendulum/parameter_reader.h>
 
 bool PUBLISH = false;
 int IGNORE = 0;
 
-void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
+void franka_pendulum::Parameters::_receive(const CommandParameters::ConstPtr &msg)
 {
     std::lock_guard<std::mutex>(*_mutex);
 
     // Periods
     _receive_uint(&franka_period, msg->franka_period);
-    _receive_uint(&pole_period, msg->pole_period);
+    _receive_uint(&pendulum_period, msg->pendulum_period);
     _receive_uint(&command_period, msg->command_period);
     _receive_uint(&publish_period, msg->publish_period);
     _receive_uint(&controller_period, msg->controller_period);
@@ -28,8 +28,8 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     _receive_vector<3>(&initial_effector_position, msg->initial_effector_position);
     _receive_quaternion(&initial_effector_orientation, msg->initial_effector_orientation);
     _receive_vector<7>(&initial_joint_weights, msg->initial_joint_weights);
-    _receive_vector<2>(&initial_pole_positions, msg->initial_pole_positions);
-    _receive_vector<2>(&initial_pole_velocities, msg->initial_pole_velocities);
+    _receive_vector<2>(&initial_pendulum_positions, msg->initial_pendulum_positions);
+    _receive_vector<2>(&initial_pendulum_velocities, msg->initial_pendulum_velocities);
 
     // Stiffness
     _receive_vector<3>(&outbound_translation_stiffness, msg->outbound_translation_stiffness);
@@ -51,15 +51,15 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     pure_dynamics = msg->pure_dynamics;
 
     // Filters
-    _receive_double(&pole_angle_filter, msg->pole_angle_filter);
-    _receive_double(&pole_dangle_filter, msg->pole_dangle_filter);
+    _receive_double(&pendulum_angle_filter, msg->pendulum_angle_filter);
+    _receive_double(&pendulum_dangle_filter, msg->pendulum_dangle_filter);
 
     // Noise
     _receive_vector<7>(&joint_position_mean, msg->joint_position_mean);
     _receive_vector<7>(&joint_position_standard_deviation, msg->joint_position_standard_deviation);
     _receive_vector<7>(&joint_velocity_standard_deviation, msg->joint_velocity_standard_deviation);
-    _receive_vector<2>(&pole_angle_mean, msg->pole_angle_mean);
-    _receive_vector<2>(&pole_angle_standard_deviation, msg->pole_angle_standard_deviation);
+    _receive_vector<2>(&pendulum_angle_mean, msg->pendulum_angle_mean);
+    _receive_vector<2>(&pendulum_angle_standard_deviation, msg->pendulum_angle_standard_deviation);
 
     // Reset
     _receive_double(&hardware_reset_duration, msg->hardware_reset_duration);
@@ -67,7 +67,7 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     _receive_vector<7>(&hardware_reset_damping, msg->hardware_reset_damping);
 
     // Control
-    _receive_vector<8>(&pole_control, msg->pole_control);
+    _receive_vector<8>(&pendulum_control, msg->pendulum_control);
 
     //Test
     _receive_double(&startup_time, msg->startup_time);
@@ -79,13 +79,13 @@ void franka_pole::Parameters::_receive(const CommandParameters::ConstPtr &msg)
     if (_publish && _changed) { _publisher.publish(msg); _changed = false; }
 }
 
-void franka_pole::Parameters::_send()
+void franka_pendulum::Parameters::_send()
 {
     CommandParameters command;
 
     // Periods
     _send_uint(franka_period, &command.franka_period);
-    _send_uint(pole_period, &command.pole_period);
+    _send_uint(pendulum_period, &command.pendulum_period);
     _send_uint(command_period, &command.command_period);
     _send_uint(publish_period, &command.publish_period);
     _send_uint(controller_period, &command.controller_period);
@@ -103,8 +103,8 @@ void franka_pole::Parameters::_send()
     _send_vector<3>(initial_effector_position, &command.initial_effector_position);
     _send_quaternion(initial_effector_orientation, &command.initial_effector_orientation);
     _send_vector<7>(initial_joint_weights, &command.initial_joint_weights);
-    _send_vector<2>(initial_pole_positions, &command.initial_pole_positions);
-    _send_vector<2>(initial_pole_velocities, &command.initial_pole_velocities);
+    _send_vector<2>(initial_pendulum_positions, &command.initial_pendulum_positions);
+    _send_vector<2>(initial_pendulum_velocities, &command.initial_pendulum_velocities);
 
     // Stiffness
     _send_vector<3>(outbound_translation_stiffness, &command.outbound_translation_stiffness);
@@ -126,15 +126,15 @@ void franka_pole::Parameters::_send()
     command.pure_dynamics = pure_dynamics;
 
     // Filters
-    _send_double(pole_angle_filter, &command.pole_angle_filter);
-    _send_double(pole_dangle_filter, &command.pole_dangle_filter);
+    _send_double(pendulum_angle_filter, &command.pendulum_angle_filter);
+    _send_double(pendulum_dangle_filter, &command.pendulum_dangle_filter);
 
     // Noise
     _send_vector<7>(joint_position_mean, &command.joint_position_mean);
     _send_vector<7>(joint_position_standard_deviation, &command.joint_position_standard_deviation);
     _send_vector<7>(joint_velocity_standard_deviation, &command.joint_velocity_standard_deviation);
-    _send_vector<2>(pole_angle_mean, &command.pole_angle_mean);
-    _send_vector<2>(pole_angle_standard_deviation, &command.pole_angle_standard_deviation);
+    _send_vector<2>(pendulum_angle_mean, &command.pendulum_angle_mean);
+    _send_vector<2>(pendulum_angle_standard_deviation, &command.pendulum_angle_standard_deviation);
 
     // Reset
     _send_double(hardware_reset_duration, &command.hardware_reset_duration);
@@ -142,7 +142,7 @@ void franka_pole::Parameters::_send()
     _send_vector<7>(hardware_reset_damping, &command.hardware_reset_damping);
 
     // Control
-    _send_vector<8>(pole_control, &command.pole_control);
+    _send_vector<8>(pendulum_control, &command.pendulum_control);
 
     //Test
     _send_double(startup_time, &command.startup_time);
@@ -154,17 +154,17 @@ void franka_pole::Parameters::_send()
     _publisher.publish(command);
 }
 
-void franka_pole::Parameters::_receive_uint(unsigned int *dest, unsigned int source)
+void franka_pendulum::Parameters::_receive_uint(unsigned int *dest, unsigned int source)
 {
     if (source != 0) { if (*dest != source) _changed = true; *dest = source; }
 }
 
-void franka_pole::Parameters::_receive_double(double *dest, double source)
+void franka_pendulum::Parameters::_receive_double(double *dest, double source)
 {
     if (!isnan(source)) { if (*dest != source) _changed = true; *dest = source; }
 }
 
-void franka_pole::Parameters::_receive_quaternion(Eigen::Quaterniond *dest, const boost::array<double, 4> &source)
+void franka_pendulum::Parameters::_receive_quaternion(Eigen::Quaterniond *dest, const boost::array<double, 4> &source)
 {
     if (!isnan(source[0])) { if (dest->w() != source[0]) _changed = true; dest->w() = source[0]; }
     if (!isnan(source[1])) { if (dest->x() != source[1]) _changed = true; dest->x() = source[1]; }
@@ -172,7 +172,7 @@ void franka_pole::Parameters::_receive_quaternion(Eigen::Quaterniond *dest, cons
     if (!isnan(source[3])) { if (dest->z() != source[3]) _changed = true; dest->z() = source[3]; }
 }
 
-template<int N> void franka_pole::Parameters::_receive_vector(Eigen::Matrix<double, N, 1> *dest, const boost::array<double, N> &source)
+template<int N> void franka_pendulum::Parameters::_receive_vector(Eigen::Matrix<double, N, 1> *dest, const boost::array<double, N> &source)
 {
     for (size_t i = 0; i < N; i++)
     {
@@ -180,17 +180,17 @@ template<int N> void franka_pole::Parameters::_receive_vector(Eigen::Matrix<doub
     }
 }
 
-void franka_pole::Parameters::_send_uint(unsigned int source, unsigned int *dest)
+void franka_pendulum::Parameters::_send_uint(unsigned int source, unsigned int *dest)
 {
     *dest = source;
 }
 
-void franka_pole::Parameters::_send_double(double source, double *dest)
+void franka_pendulum::Parameters::_send_double(double source, double *dest)
 {
     *dest = source;
 }
 
-void franka_pole::Parameters::_send_quaternion(const Eigen::Quaterniond &source, boost::array<double, 4> *dest)
+void franka_pendulum::Parameters::_send_quaternion(const Eigen::Quaterniond &source, boost::array<double, 4> *dest)
 {
     (*dest)[0] = source.w();
     (*dest)[1] = source.x();
@@ -198,7 +198,7 @@ void franka_pole::Parameters::_send_quaternion(const Eigen::Quaterniond &source,
     (*dest)[3] = source.z();
 }
 
-template<int N> void franka_pole::Parameters::_send_vector(const Eigen::Matrix<double, N, 1> &source, boost::array<double, N> *dest)
+template<int N> void franka_pendulum::Parameters::_send_vector(const Eigen::Matrix<double, N, 1> &source, boost::array<double, N> *dest)
 {
     for (size_t i = 0; i < N; i++)
     {
@@ -206,7 +206,7 @@ template<int N> void franka_pole::Parameters::_send_vector(const Eigen::Matrix<d
     }
 }
 
-franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &reader, ros::NodeHandle &node_handle, bool publish) :
+franka_pendulum::Parameters::Parameters(std::mutex *mutex, const ParameterReader &reader, ros::NodeHandle &node_handle, bool publish) :
     _mutex(mutex),
     _publish(publish),
     _changed(false),
@@ -217,7 +217,7 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     model(reader.model()),
 
     franka_period(reader.franka_period()),
-    pole_period(reader.pole_period()),
+    pendulum_period(reader.pendulum_period()),
     command_period(reader.command_period()),
     publish_period(reader.publish_period()),
     controller_period(reader.controller_period()),
@@ -233,8 +233,8 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     initial_effector_position(reader.initial_effector_position()),
     initial_effector_orientation(reader.initial_effector_orientation()),
     initial_joint_weights(reader.initial_joint_weights()),
-    initial_pole_positions(reader.initial_pole_positions()),
-    initial_pole_velocities(reader.initial_pole_velocities()),
+    initial_pendulum_positions(reader.initial_pendulum_positions()),
+    initial_pendulum_velocities(reader.initial_pendulum_velocities()),
 
     outbound_translation_stiffness(reader.outbound_translation_stiffness()),
     outbound_translation_damping(reader.outbound_translation_damping()),
@@ -254,20 +254,20 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     dynamics(reader.dynamics()),
     pure_dynamics(reader.pure_dynamics()),
 
-    pole_angle_filter(reader.pole_angle_filter()),
-    pole_dangle_filter(reader.pole_dangle_filter()),
+    pendulum_angle_filter(reader.pendulum_angle_filter()),
+    pendulum_dangle_filter(reader.pendulum_dangle_filter()),
 
     joint_position_mean(reader.joint_position_mean()),
     joint_position_standard_deviation(reader.joint_position_standard_deviation()),
     joint_velocity_standard_deviation(reader.joint_velocity_standard_deviation()),
-    pole_angle_mean(reader.pole_angle_mean()),
-    pole_angle_standard_deviation(reader.pole_angle_standard_deviation()),
+    pendulum_angle_mean(reader.pendulum_angle_mean()),
+    pendulum_angle_standard_deviation(reader.pendulum_angle_standard_deviation()),
 
     hardware_reset_duration(reader.hardware_reset_duration()),
     hardware_reset_stiffness(reader.hardware_reset_stiffness()),
     hardware_reset_damping(reader.hardware_reset_damping()),
 
-    pole_control(reader.pole_control()),
+    pendulum_control(reader.pendulum_control()),
 
     startup_time(reader.startup_time()),
     test_rectangle(reader.test_rectangle()),
@@ -278,7 +278,7 @@ franka_pole::Parameters::Parameters(std::mutex *mutex, const ParameterReader &re
     // Publishing parameters once
     if (publish)
     {
-        _publisher = node_handle.advertise<franka_pole::CommandParameters>("/" + namespacee + "/command_parameters", 10, true);
+        _publisher = node_handle.advertise<franka_pendulum::CommandParameters>("/" + namespacee + "/command_parameters", 10, true);
         _send();
     }
 

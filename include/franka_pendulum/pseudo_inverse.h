@@ -2,7 +2,7 @@
 
 #include <Eigen/Dense>
 
-namespace franka_pole
+namespace franka_pendulum
 {
     ///Computes Moore-Penrose inverse of a matrix
     ///@param matrix Matrix to invert

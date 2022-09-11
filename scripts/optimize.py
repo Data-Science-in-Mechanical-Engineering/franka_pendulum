@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from franka_pole.msg import Sample, CommandParameters
+from franka_pendulum.msg import Sample, CommandParameters
 import rospy
 import threading
 import numpy as np
@@ -9,7 +9,7 @@ import sys
 def callback(sample):
     global cost, time, lock, condition
     lock.acquire()
-    cost += (sample.pole_angle[0] ** 2)
+    cost += (sample.pendulum_angle[0] ** 2)
     time += 0.01
     condition.notify_all()
     lock.release()
@@ -17,7 +17,7 @@ def callback(sample):
 # Main
 if __name__ == '__main__':
     # Read arguments
-    namespace = "franka_pole"
+    namespace = "franka_pendulum"
     next_namespace = False
     for i in sys.argv:
         if next_namespace: namespace = i

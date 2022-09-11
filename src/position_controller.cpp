@@ -1,14 +1,14 @@
-#include <franka_pole/franka_model.h>
-#include <franka_pole/position_controller.h>
-#include <franka_pole/franka_state.h>
-#include <franka_pole/parameters.h>
-#include <franka_pole/pole_state.h>
-#include <franka_pole/publisher.h>
-#include <franka_pole/pseudo_inverse.h>
+#include <franka_pendulum/franka_model.h>
+#include <franka_pendulum/position_controller.h>
+#include <franka_pendulum/franka_state.h>
+#include <franka_pendulum/parameters.h>
+#include <franka_pendulum/pendulum_state.h>
+#include <franka_pendulum/publisher.h>
+#include <franka_pendulum/pseudo_inverse.h>
 
 #include <type_traits>
 
-void franka_pole::PositionController::_update_cartesian_targets(const ros::Time &time, const ros::Duration &period)
+void franka_pendulum::PositionController::_update_cartesian_targets(const ros::Time &time, const ros::Duration &period)
 {
     // get position and velocity
     _controller_period_counter += parameters->command_period;
@@ -40,12 +40,12 @@ void franka_pole::PositionController::_update_cartesian_targets(const ros::Time 
     }
 }
 
-void franka_pole::PositionController::_init_step()
+void franka_pendulum::PositionController::_init_step()
 {
     _torque = Eigen::Matrix<double, 7, 1>::Zero();
 }
 
-void franka_pole::PositionController::_compute_jacobians()
+void franka_pendulum::PositionController::_compute_jacobians()
 {
     // Jacobian
     _jacobian = franka_model->get_effector_jacobian(franka_state->get_joint_positions());
@@ -60,7 +60,7 @@ void franka_pole::PositionController::_compute_jacobians()
     _jacobian_transpose_inverse = pseudo_inverse(_jacobian_transpose, Eigen::Matrix<double, 6, 1>(Eigen::Matrix<double, 6, 1>::Ones()), 0.2);
 }
 
-void franka_pole::PositionController::_cartesian_control()
+void franka_pendulum::PositionController::_cartesian_control()
 {
     // compute cartesian stiffness/damping
     Eigen::Matrix<double, 6, 1> cartesian_stiffness;
@@ -98,7 +98,7 @@ void franka_pole::PositionController::_cartesian_control()
     }
 }
 
-void franka_pole::PositionController::_joint_space_control()
+void franka_pendulum::PositionController::_joint_space_control()
 {
     if (!parameters->joint_stiffness.isZero() || !parameters->joint_damping.isZero())
     {
@@ -120,7 +120,7 @@ void franka_pole::PositionController::_joint_space_control()
     }
 }
 
-void franka_pole::PositionController::_nullspace_control()
+void franka_pendulum::PositionController::_nullspace_control()
 {
     if (!parameters->nullspace_stiffness.isZero() || !parameters->nullspace_damping.isZero())
     {
@@ -131,7 +131,7 @@ void franka_pole::PositionController::_nullspace_control()
     }
 }
 
-void franka_pole::PositionController::_gravity_coriolis_control()
+void franka_pendulum::PositionController::_gravity_coriolis_control()
 {
     if (get_model_freedom(parameters->model) == 0)
     {
@@ -143,20 +143,20 @@ void franka_pole::PositionController::_gravity_coriolis_control()
     else if (get_model_freedom(parameters->model) == 1)
     {
         // calculate gravity and coriolis
-        Eigen::Matrix<double, 10, 1> gravity = franka_model->get_gravity10(franka_state->get_joint_positions(), pole_state->get_joint_angle());
-        Eigen::Matrix<double, 10, 1> coriolis = franka_model->get_coriolis10(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());
+        Eigen::Matrix<double, 10, 1> gravity = franka_model->get_gravity10(franka_state->get_joint_positions(), pendulum_state->get_joint_angle());
+        Eigen::Matrix<double, 10, 1> coriolis = franka_model->get_coriolis10(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pendulum_state->get_joint_angle(), pendulum_state->get_joint_dangle());
         _torque += (gravity.segment<7>(0) + coriolis.segment<7>(0));
     }
     else
     {
         // calculate gravity and coriolis
-        Eigen::Matrix<double, 11, 1> gravity = franka_model->get_gravity11(franka_state->get_joint_positions(), pole_state->get_joint_angle());
-        Eigen::Matrix<double, 11, 1> coriolis = franka_model->get_coriolis11(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pole_state->get_joint_angle(), pole_state->get_joint_dangle());
+        Eigen::Matrix<double, 11, 1> gravity = franka_model->get_gravity11(franka_state->get_joint_positions(), pendulum_state->get_joint_angle());
+        Eigen::Matrix<double, 11, 1> coriolis = franka_model->get_coriolis11(franka_state->get_joint_positions(), franka_state->get_joint_velocities(), pendulum_state->get_joint_angle(), pendulum_state->get_joint_dangle());
         _torque += (gravity.segment<7>(0) + coriolis.segment<7>(0));
     }
 }
 
-bool franka_pole::PositionController::_init_level1(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+bool franka_pendulum::PositionController::_init_level1(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     _controller_period_counter = 0;
     _velocity_target = Eigen::Matrix<double, 6, 1>::Zero();
@@ -167,7 +167,7 @@ bool franka_pole::PositionController::_init_level1(hardware_interface::RobotHW *
 }
 
 #ifdef FRANKA_POLE_VELOCITY_INTERFACE
-Eigen::Matrix<double, 6, 1> franka_pole::PositionController::_get_velocity_level1(const ros::Time &time, const ros::Duration &period)
+Eigen::Matrix<double, 6, 1> franka_pendulum::PositionController::_get_velocity_level1(const ros::Time &time, const ros::Duration &period)
 {
     // compute target
     _controller_period_counter += parameters->command_period;
@@ -201,7 +201,7 @@ Eigen::Matrix<double, 6, 1> franka_pole::PositionController::_get_velocity_level
     return _velocity_target;
 }
 #else
-Eigen::Matrix<double, 7, 1> franka_pole::PositionController::_get_torque_level1(const ros::Time &time, const ros::Duration &period)
+Eigen::Matrix<double, 7, 1> franka_pendulum::PositionController::_get_torque_level1(const ros::Time &time, const ros::Duration &period)
 {
     // preparations
     _update_cartesian_targets(time, period);

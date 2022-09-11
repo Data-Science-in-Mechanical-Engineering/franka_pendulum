@@ -1,15 +1,15 @@
-#include <franka_pole/franka_model.h>
-#include <franka_pole/controller.h>
-#include <franka_pole/parameter_reader.h>
-#include <franka_pole/parameters.h>
-#include <franka_pole/franka_state.h>
-#include <franka_pole/pole_state.h>
-#include <franka_pole/publisher.h>
+#include <franka_pendulum/franka_model.h>
+#include <franka_pendulum/controller.h>
+#include <franka_pendulum/parameter_reader.h>
+#include <franka_pendulum/parameters.h>
+#include <franka_pendulum/franka_state.h>
+#include <franka_pendulum/pendulum_state.h>
+#include <franka_pendulum/publisher.h>
 
 #include <franka_msgs/ErrorRecoveryActionGoal.h>
 #include <fcntl.h>
 
-void franka_pole::Controller::_initiate_hardware_reset()
+void franka_pendulum::Controller::_initiate_hardware_reset()
 {
     if (!parameters->simulated) _hardware_reset_publisher.publish(franka_msgs::ErrorRecoveryActionGoal());
     _hardware_reset_start_position = franka_state->get_effector_position();
@@ -21,28 +21,28 @@ void franka_pole::Controller::_initiate_hardware_reset()
     _reset_mode = ResetMode::hardware_reset;
 }
 
-void franka_pole::Controller::_initiate_software_reset()
+void franka_pendulum::Controller::_initiate_software_reset()
 {
     sem_post(_software_reset_semaphore);
     _reset_mode = ResetMode::software_reset;
 }
 
-void franka_pole::Controller::_initiate_normal_mode()
+void franka_pendulum::Controller::_initiate_normal_mode()
 {
-    if (pole_state != nullptr) pole_state->reset(parameters->initial_pole_positions, parameters->initial_pole_velocities);
+    if (pendulum_state != nullptr) pendulum_state->reset(parameters->initial_pendulum_positions, parameters->initial_pendulum_velocities);
     franka_state->reset();
     _init_level1(_robot_hw, _node_handle);
     _reset_mode = ResetMode::normal;
 }
 
-void franka_pole::Controller::_callback(const franka_pole::CommandReset::ConstPtr &msg)
+void franka_pendulum::Controller::_callback(const franka_pendulum::CommandReset::ConstPtr &msg)
 {
     std::lock_guard<std::mutex> guard(mutex);
     if (msg->software) _initiate_software_reset();
     else _initiate_hardware_reset();
 }
 
-bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
+bool franka_pendulum::Controller::_init_level0(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle)
 {
     std::lock_guard<std::mutex> guard(mutex);
     
@@ -56,7 +56,7 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
         //Time
         _time = ros::Time(0,0);
         _franka_period_counter = 0;
-        _pole_period_counter = 0;
+        _pendulum_period_counter = 0;
         _command_period_counter = 0;
         _publish_period_counter = 0;
 
@@ -69,16 +69,16 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
         franka_state->reset();
         if (parameters->model != Model::D0)
         {
-            pole_state = new PoleState(parameters, franka_model, franka_state, publisher, &mutex, robot_hw, node_handle);
-            pole_state->reset(parameters->initial_pole_positions, parameters->initial_pole_velocities);
+            pendulum_state = new PendulumState(parameters, franka_model, franka_state, publisher, &mutex, robot_hw, node_handle);
+            pendulum_state->reset(parameters->initial_pendulum_positions, parameters->initial_pendulum_velocities);
         }
 
         //Reset
-        _reset_subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_reset", 10, &franka_pole::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
+        _reset_subscriber = node_handle.subscribe("/" + parameters->namespacee + "/command_reset", 10, &franka_pendulum::Controller::_callback, this, ros::TransportHints().reliable().tcpNoDelay());
         if (parameters->simulated)
         {
             _software_reset_semaphore = sem_open(("/" + parameters->namespacee + "_" + parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
-            if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_pole::Controller::_init_level0(): sem_open failed");
+            if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_pendulum::Controller::_init_level0(): sem_open failed");
             _initiate_software_reset();
         }
         else
@@ -102,17 +102,17 @@ bool franka_pole::Controller::_init_level0(hardware_interface::RobotHW *robot_hw
     return true;
 }
 
-void franka_pole::Controller::_starting_level0(const ros::Time &time)
+void franka_pendulum::Controller::_starting_level0(const ros::Time &time)
 {
     std::lock_guard<std::mutex> guard(mutex);
 }
 
-void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::Duration &period)
+void franka_pendulum::Controller::_update_level0(const ros::Time &time, const ros::Duration &period)
 {
     //Reading data
     _time += period;
     if (_franka_period_counter == 0) franka_state->update(_time);
-    if (_pole_period_counter == 0 && pole_state != nullptr) pole_state->update(_time);
+    if (_pendulum_period_counter == 0 && pendulum_state != nullptr) pendulum_state->update(_time);
 
     //Software reset
     if (_reset_mode == ResetMode::software_reset)
@@ -185,16 +185,16 @@ void franka_pole::Controller::_update_level0(const ros::Time &time, const ros::D
 
     //Updating time
     if (++_franka_period_counter >= parameters->franka_period) _franka_period_counter = 0;
-    if (++_pole_period_counter >= parameters->pole_period) _pole_period_counter = 0;
+    if (++_pendulum_period_counter >= parameters->pendulum_period) _pendulum_period_counter = 0;
     if (++_command_period_counter >= parameters->command_period) _command_period_counter = 0;
     if (++_publish_period_counter >= parameters->publish_period) _publish_period_counter = 0;
 }
 
-franka_pole::Controller::~Controller()
+franka_pendulum::Controller::~Controller()
 {
     if (parameters != nullptr) delete parameters;
     if (franka_model != nullptr) delete franka_model;
     if (franka_state != nullptr) delete franka_state;
-    if (pole_state != nullptr) delete pole_state;
+    if (pendulum_state != nullptr) delete pendulum_state;
     if (publisher != nullptr) delete publisher;
 }

@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>franka_pole</name>
+  <name>franka_pendulum</name>
   <version>0.0.0</version>
-  <description>The franka_pole package</description>
+  <description>The franka_pendulum package</description>
 
   <author email="kyrylo.sovailo@rwth-aachen.de">Kyrylo Sovailo</author>
   <maintainer email="kyrylo.sovailo@rwth-aachen.de">Kyrylo Sovailo</maintainer>
 
   <license>MIT</license>
 
-  <url type="website">https://github.com/kyrylo-sovailo/franka_pole</url>
+  <url type="website">https://github.com/kyrylo-sovailo/franka_pendulum</url>
 
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
@@ -22,7 +22,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <export>
-    <controller_interface plugin="${prefix}/config/franka_pole_controllers_plugin.xml"/>
+    <controller_interface plugin="${prefix}/config/franka_pendulum_controllers_plugin.xml"/>
     <rosdoc config="${prefix}/config/rosdoc.yaml" />
   </export>
 </package>

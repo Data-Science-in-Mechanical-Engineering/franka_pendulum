@@ -1,0 +1,37 @@
+<library path="/lib/libfranka_pendulum_controllers">
+  <class name="franka_pendulum/ExternalPositionController" type="franka_pendulum::ExternalPositionController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pendulum
+    </description>
+  </class>
+
+  <class name="franka_pendulum/SimplePositionController" type="franka_pendulum::SimplePositionController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pendulum
+    </description>
+  </class>
+
+  <class name="franka_pendulum/TestPositionController" type="franka_pendulum::TestPositionController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pendulum
+    </description>
+  </class>
+
+  <class name="franka_pendulum/ExternalAccelerationController" type="franka_pendulum::ExternalAccelerationController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pendulum
+    </description>
+  </class>
+
+  <class name="franka_pendulum/SimpleAccelerationController" type="franka_pendulum::SimpleAccelerationController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pendulum
+    </description>
+  </class>
+
+  <class name="franka_pendulum/TestAccelerationController" type="franka_pendulum::TestAccelerationController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Low-level controller for Franka Pendulum
+    </description>
+  </class>
+</library>

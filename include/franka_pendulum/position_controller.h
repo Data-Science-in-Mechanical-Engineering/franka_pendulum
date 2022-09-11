@@ -1,10 +1,10 @@
 #pragma once
 
-#include <franka_pole/controller.h>
+#include <franka_pendulum/controller.h>
 
 #include <Eigen/Dense>
 
-namespace franka_pole
+namespace franka_pendulum
 {
     class Parameters;
 
@@ -38,7 +38,7 @@ namespace franka_pole
         void _nullspace_control();                                                          ///< Applies nullspace controller. Affects _torque (normal) or _control_joint_acceleration (pure acceleration)
         void _gravity_coriolis_control();                                                   ///< Adds gravity and Coriolis terms. Affects _torque
 
-        //Overrides from franka_pole::Controller
+        //Overrides from franka_pendulum::Controller
         bool _init_level1(hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle) override;
         #ifdef FRANKA_POLE_VELOCITY_INTERFACE
             Eigen::Matrix<double, 6, 1> _get_velocity_level1(const ros::Time &time, const ros::Duration &period) override;

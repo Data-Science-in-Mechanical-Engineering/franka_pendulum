@@ -1,0 +1,8 @@
+motion_generators:
+    position:
+      gains:
+        $(arg arm_id)_pendulum_joint_x: { p: 0, d: 0, i: 0 }
+        $(arg arm_id)_pendulum_joint_y: { p: 0, d: 0, i: 0 }
+
+gazebo:
+  namespace: $(arg namespace)

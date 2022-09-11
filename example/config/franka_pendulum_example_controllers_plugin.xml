@@ -1,0 +1,7 @@
+<library path="/lib/libfranka_pendulum_example_controllers">
+  <class name="franka_pendulum_example/HybridController" type="franka_pendulum_example::HybridController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Hybrid between franka_pendulum::SimpleAccelerationController and franka_pendulum::ExternalAccelerationController
+    </description>
+  </class>
+</library>

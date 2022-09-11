@@ -109,7 +109,7 @@ def get_parts():
     ball_radius = 0.0275 #m
     ball_position = 0.41 #m
     beam_position = 0.06 #m
-    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pole") + "/meshes/1D.FCStd")
+    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pendulum") + "/meshes/1D.FCStd")
 
     lower = PartGroup([
         CADPart(document, "b_part8_001_", mass=base_mass),
@@ -135,7 +135,7 @@ def get_parts_2d():
     ball_radius = 0.0275 #m
     ball_position = 0.43+0.012 #m
     beam_position = 0.06+0.012 #m
-    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pole") + "/meshes/2D.FCStd")
+    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pendulum") + "/meshes/2D.FCStd")
 
     lower = PartGroup([
         CADPart(document, "b_part8_001_", mass=base_mass),
@@ -178,7 +178,7 @@ def get_parts_2db():
     ball_radius = 0.0275 #m
     ball_position = 0.215 #m
     ball_mass = 0.038 #kg
-    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pole") + "/meshes/2Db.FCStd")
+    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pendulum") + "/meshes/2Db.FCStd")
 
     lower = PartGroup([
         CADPart(document, "b_part8_001_", mass=base_mass),
@@ -206,7 +206,7 @@ def get_parts_2dc():
     ball_radius = 0.0275 #m
     ball_position = 0.215 #m
     ball_mass = 0.038 #kg
-    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pole") + "/meshes/2Dc.FCStd")
+    document = FreeCAD.open(rospkg.RosPack().get_path("franka_pendulum") + "/meshes/2Dc.FCStd")
 
     lower = PartGroup([
         CADPart(document, "b_part8_001_", mass=base_mass),

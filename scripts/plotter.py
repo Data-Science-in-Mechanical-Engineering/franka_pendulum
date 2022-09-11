@@ -2,7 +2,7 @@
 import rospy, rosbag, rospkg
 import numpy as np
 import sys
-from franka_pole.msg import Sample
+from franka_pendulum.msg import Sample
 from matplotlib import pyplot as plt
 from matplotlib import animation
 from threading import Lock
@@ -215,8 +215,8 @@ class Plotter:
 # Main
 if __name__ == '__main__':
     # Get aruments
-    log_name = "log.bag"
-    namespace = "franka_pole"
+    log_name = "log"
+    namespace = "franka_pendulum"
     start_time = None
     next_log_name = False
     next_start_time = False
@@ -230,8 +230,8 @@ if __name__ == '__main__':
         next_start_time = (i == "-S")
 
     # Plot structure
-    pole_angle_x = Signal("Pole angle around X")
-    pole_angle_y = Signal("Pole angle around Y")
+    pendulum_angle_x = Signal("Pendulum angle around X")
+    pendulum_angle_y = Signal("Pendulum angle around Y")
     franka_effector_x = Signal("Effector X")
     franka_effector_y = Signal("Effector Y")
     franka_effector_ddx = Signal("Effector X acceleration")
@@ -239,8 +239,8 @@ if __name__ == '__main__':
     command_effector_ddx = Signal("Desired X acceleration")
     command_effector_ddy = Signal("Desired Y acceleration")
     
-    position_plot_x = Plot("Position X", 0, 0, [ pole_angle_y, franka_effector_x ], -1, 1, 3)
-    position_plot_y = Plot("Position Y", 0, 1, [ pole_angle_x, franka_effector_y ], -1, 1, 3)
+    position_plot_x = Plot("Position X", 0, 0, [ pendulum_angle_y, franka_effector_x ], -1, 1, 3)
+    position_plot_y = Plot("Position Y", 0, 1, [ pendulum_angle_x, franka_effector_y ], -1, 1, 3)
     acceleration_plot_x = Plot("Acceleration X", 1, 0, [ franka_effector_ddx, command_effector_ddx ], -10, 10, 3)
     acceleration_plot_y = Plot("Acceleration Y", 1, 1, [ franka_effector_ddy, command_effector_ddy ], -10, 10, 3)
     
@@ -260,8 +260,8 @@ if __name__ == '__main__':
         filtered_effector_dx = (1.0 - filter_factor) * filtered_effector_dx + filter_factor * sample.franka_effector_velocity[0]
         filtered_effector_dy = (1.0 - filter_factor) * filtered_effector_dy + filter_factor * sample.franka_effector_velocity[1]
 
-        pole_angle_x.set(sample.pole_timestamp, sample.pole_angle[0])
-        pole_angle_y.set(sample.pole_timestamp, sample.pole_angle[1])
+        pendulum_angle_x.set(sample.pendulum_timestamp, sample.pendulum_angle[0])
+        pendulum_angle_y.set(sample.pendulum_timestamp, sample.pendulum_angle[1])
         franka_effector_x.set(sample.franka_timestamp, sample.franka_effector_position[0])
         franka_effector_y.set(sample.franka_timestamp, sample.franka_effector_position[1])
         franka_effector_ddx.set(sample.franka_timestamp, (filtered_effector_dx - previous_filtered_effector_dx) / (sample.franka_timestamp - previous_franka_timestamp))
@@ -283,7 +283,7 @@ if __name__ == '__main__':
     else:
         # Recorded
         duration = 3.0
-        bag = rosbag.Bag(rospkg.RosPack().get_path("franka_pole") + "/temp/" + log_name + ".bag")
+        bag = rosbag.Bag(rospkg.RosPack().get_path("franka_pendulum") + "/temp/" + log_name + ".bag")
         for topic, sample, time in bag.read_messages(topics=["/" + namespace + "/sample"]):
             if sample.franka_timestamp < start_time: continue
             if sample.franka_timestamp > start_time + duration: break

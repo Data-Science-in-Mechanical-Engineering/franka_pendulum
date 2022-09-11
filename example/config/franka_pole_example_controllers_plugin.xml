@@ -1,7 +1,0 @@
-<library path="/lib/libfranka_pole_example_controllers">
-  <class name="franka_pole_example/HybridController" type="franka_pole_example::HybridController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      Hybrid between franka_pole::SimpleAccelerationController and franka_pole::ExternalAccelerationController
-    </description>
-  </class>
-</library>

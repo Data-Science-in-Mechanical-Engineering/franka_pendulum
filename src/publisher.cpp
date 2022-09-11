@@ -1,10 +1,10 @@
-#include <franka_pole/publisher.h>
-#include <franka_pole/parameters.h>
+#include <franka_pendulum/publisher.h>
+#include <franka_pendulum/parameters.h>
 
-franka_pole::Publisher::Publisher(const Parameters *parameters, ros::NodeHandle &node_handle) :
+franka_pendulum::Publisher::Publisher(const Parameters *parameters, ros::NodeHandle &node_handle) :
 _parameters(parameters)
 {
-    _sample_publisher = node_handle.advertise<franka_pole::Sample>("/" + _parameters->namespacee + "/sample", 10);
+    _sample_publisher = node_handle.advertise<franka_pendulum::Sample>("/" + _parameters->namespacee + "/sample", 10);
     _joint_state_publisher = node_handle.advertise<sensor_msgs::JointState>("/" + _parameters->namespacee + "/joint_state", 10);
     
     
@@ -21,7 +21,7 @@ _parameters(parameters)
         _joint_state.position.resize(10, 0.0);
         _joint_state.velocity.resize(10, 0.0);
         _joint_state.effort.resize(10, 0.0);
-        _joint_state.name[9] = _parameters->arm_id + "_pole_joint_x";
+        _joint_state.name[9] = _parameters->arm_id + "_pendulum_joint_x";
     }
     else
     {
@@ -29,13 +29,13 @@ _parameters(parameters)
         _joint_state.position.resize(11, 0.0);
         _joint_state.velocity.resize(11, 0.0);
         _joint_state.effort.resize(11, 0.0);
-        _joint_state.name[9] = _parameters->arm_id + "_pole_joint_x";
-        _joint_state.name[10] = _parameters->arm_id + "_pole_joint_y";
+        _joint_state.name[9] = _parameters->arm_id + "_pendulum_joint_x";
+        _joint_state.name[10] = _parameters->arm_id + "_pendulum_joint_y";
     }
     for (size_t i = 0; i < 7; i++) _joint_state.name[i] = _parameters->arm_id + "_joint" + std::to_string(i+1);
     for (size_t i = 0; i < 2; i++) _joint_state.name[7+i] = _parameters->arm_id + "_finger_joint" + std::to_string(i+1);
 
-    set_pole(
+    set_pendulum(
         ros::Time(0,0),
         Eigen::Matrix<double, 2, 1>::Zero(),
         Eigen::Matrix<double, 2, 1>::Zero(),
@@ -62,33 +62,33 @@ _parameters(parameters)
     set_reset(false);
 }
 
-void franka_pole::Publisher::publish()
+void franka_pendulum::Publisher::publish()
 {
     _sample_publisher.publish(_sample);
     _joint_state_publisher.publish(_joint_state);
 }
 
-void franka_pole::Publisher::set_pole(
+void franka_pendulum::Publisher::set_pendulum(
     const ros::Time &timestamp,
     const Eigen::Matrix<double, 2, 1> &angle,
     const Eigen::Matrix<double, 2, 1> &dangle,
     const Eigen::Matrix<double, 2, 1> &joint_angle,
     const Eigen::Matrix<double, 2, 1> &joint_dangle)
 {
-    _sample.pole_timestamp = timestamp.toSec();
-    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_angle[0]) = angle;
-    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_dangle[0]) = dangle;
+    _sample.pendulum_timestamp = timestamp.toSec();
+    Eigen::Matrix<double, 2, 1>::Map(&_sample.pendulum_angle[0]) = angle;
+    Eigen::Matrix<double, 2, 1>::Map(&_sample.pendulum_dangle[0]) = dangle;
 
-    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_angle[0]) = angle;
+    Eigen::Matrix<double, 2, 1>::Map(&_sample.pendulum_joint_angle[0]) = angle;
     if (get_model_freedom(_parameters->model) >= 1) _joint_state.position[9] = -angle(0);
     if (get_model_freedom(_parameters->model) == 2) _joint_state.position[10] = angle(1);
 
-    Eigen::Matrix<double, 2, 1>::Map(&_sample.pole_joint_dangle[0]) = dangle;
+    Eigen::Matrix<double, 2, 1>::Map(&_sample.pendulum_joint_dangle[0]) = dangle;
     if (get_model_freedom(_parameters->model) >= 1) _joint_state.velocity[9] = -dangle(0);
     if (get_model_freedom(_parameters->model) == 2) _joint_state.velocity[10] = dangle(1);
 }
 
-void franka_pole::Publisher::set_franka(const ros::Time &timestamp,
+void franka_pendulum::Publisher::set_franka(const ros::Time &timestamp,
     const Eigen::Matrix<double, 3, 1> &position,
     const Eigen::Quaterniond &orientation,
     const Eigen::Matrix<double, 6, 1> &velocity,
@@ -107,7 +107,7 @@ void franka_pole::Publisher::set_franka(const ros::Time &timestamp,
     Eigen::Matrix<double, 7, 1>::Map(&_joint_state.velocity[0]) = velocities;
 }
 
-void franka_pole::Publisher::set_command(const ros::Time &timestamp,
+void franka_pendulum::Publisher::set_command(const ros::Time &timestamp,
     const Eigen::Matrix<double, 3, 1> &position,
     const Eigen::Quaterniond &orientation,
     const Eigen::Matrix<double, 6, 1> &velocity,
@@ -129,7 +129,7 @@ void franka_pole::Publisher::set_command(const ros::Time &timestamp,
     Eigen::Matrix<double, 7, 1>::Map(&_joint_state.effort[0]) = torques;
 }
 
-void franka_pole::Publisher::set_reset(bool reset)
+void franka_pendulum::Publisher::set_reset(bool reset)
 {
     _sample.reset = reset;
 }

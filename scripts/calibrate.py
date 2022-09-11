@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from franka_pole.msg import Sample, CommandParameters
+from franka_pendulum.msg import Sample, CommandParameters
 import numpy as np
 import rospy
 import sys
@@ -8,24 +8,24 @@ import sys
 def callback(sample):
     global counter, duration, angle, position
     counter += 1
-    angle += sample.pole_angle
+    angle += sample.pendulum_angle
     position += sample.franka_effector_position
     if counter >= duration:
         counter = 0
         angle /= duration
         position /= duration
-        parameters.pole_angle_mean = np.array([
-            parameters.pole_angle_mean[0] - angle[0],
-            parameters.pole_angle_mean[1] - angle[1]
+        parameters.pendulum_angle_mean = np.array([
+            parameters.pendulum_angle_mean[0] - angle[0],
+            parameters.pendulum_angle_mean[1] - angle[1]
         ])
-        print(parameters.pole_angle_mean)
+        print(parameters.pendulum_angle_mean)
         parameters_publisher.publish(parameters)
         position = np.zeros(3)
 
 # Main
 if __name__ == '__main__':
     # Read arguments
-    namespace = "franka_pole"
+    namespace = "franka_pendulum"
     next_namespace = False
     for i in sys.argv:
         if next_namespace: namespace = i

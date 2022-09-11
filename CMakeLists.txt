@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(franka_pole)
+project(franka_pendulum)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -39,7 +39,7 @@ generate_messages(
 ## The catkin_package macro generates cmake config files for your package
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES franka_pole_controllers
+  LIBRARIES franka_pendulum_controllers
   CATKIN_DEPENDS roscpp std_msgs message_generation controller_interface franka_description franka_gazebo
   DEPENDS gazebo pinocchio
 )
@@ -54,33 +54,33 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/temp")
 endif()
 
 ## Generate URDF files
-add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf")
-add_custom_target(franka_pole_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole.urdf")
-add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.urdf")
-add_custom_target(franka_pole_xacro_1D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_1D.urdf")
-add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
-add_custom_target(franka_pole_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2D.urdf")
-add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf")
-add_custom_target(franka_pole_xacro_2Db ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Db.urdf")
-add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.urdf")
-add_custom_target(franka_pole_xacro_2Dc ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pole_2Dc.urdf")
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pendulum.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pendulum.urdf")
+add_custom_target(franka_pendulum_xacro ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum.urdf")
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_1D.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_1D.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_1D.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_1D.urdf")
+add_custom_target(franka_pendulum_xacro_1D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_1D.urdf")
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2D.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2D.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2D.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2D.urdf")
+add_custom_target(franka_pendulum_xacro_2D ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2D.urdf")
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Db.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Db.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Db.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Db.urdf")
+add_custom_target(franka_pendulum_xacro_2Db ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Db.urdf")
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Dc.urdf" DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Dc.xacro" COMMAND xacro ARGS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Dc.xacro" > "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Dc.urdf")
+add_custom_target(franka_pendulum_xacro_2Dc ALL DEPENDS "${PROJECT_SOURCE_DIR}/robots/franka_pendulum_2Dc.urdf")
 
 ## Declare C++ libraries
-add_library(franka_pole_common SHARED
+add_library(franka_pendulum_common SHARED
 src/parameters.cpp
 src/parameter_reader.cpp
 src/franka_model.cpp
 src/model.cpp)
-target_include_directories(franka_pole_common PUBLIC include)
-target_compile_options(franka_pole_common PUBLIC -O3)
-target_include_directories(franka_pole_common PUBLIC ${catkin_INCLUDE_DIRS} ${pinocchio_INCLUDE_DIRS})
-target_link_libraries(franka_pole_common PUBLIC ${catkin_LIBRARIES} ${pinocchio_LIBRARIES})
-#target_compile_definitions(franka_pole_common PUBLIC FRANKA_POLE_VELOCITY_INTERFACE)
-add_dependencies(franka_pole_common ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_include_directories(franka_pendulum_common PUBLIC include)
+target_compile_options(franka_pendulum_common PUBLIC -O3)
+target_include_directories(franka_pendulum_common PUBLIC ${catkin_INCLUDE_DIRS} ${pinocchio_INCLUDE_DIRS})
+target_link_libraries(franka_pendulum_common PUBLIC ${catkin_LIBRARIES} ${pinocchio_LIBRARIES})
+#target_compile_definitions(franka_pendulum_common PUBLIC FRANKA_POLE_VELOCITY_INTERFACE)
+add_dependencies(franka_pendulum_common ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_library(franka_pole_controllers SHARED
+add_library(franka_pendulum_controllers SHARED
 src/franka_state.cpp
-src/pole_state.cpp
+src/pendulum_state.cpp
 src/publisher.cpp
 src/controller.cpp
 src/position_controller.cpp
@@ -91,12 +91,12 @@ src/test_position_controller.cpp
 src/external_acceleration_controller.cpp
 src/simple_acceleration_controller.cpp
 src/test_acceleration_controller.cpp)
-target_link_libraries(franka_pole_controllers PUBLIC franka_pole_common)
+target_link_libraries(franka_pendulum_controllers PUBLIC franka_pendulum_common)
 
-add_library(franka_pole_plugin SHARED
+add_library(franka_pendulum_plugin SHARED
 src/plugin.cpp)
-target_link_libraries(franka_pole_plugin PUBLIC franka_pole_common)
-target_include_directories(franka_pole_plugin PRIVATE ${GAZEBO_INCLUDE_DIRS})
-target_link_directories(franka_pole_plugin PRIVATE ${GAZEBO_LIBRARY_DIRS})
-target_link_libraries(franka_pole_plugin PRIVATE ${GAZEBO_LIBRARIES})
-target_compile_options(franka_pole_plugin PRIVATE ${GAZEBO_CXX_FLAGS})
+target_link_libraries(franka_pendulum_plugin PUBLIC franka_pendulum_common)
+target_include_directories(franka_pendulum_plugin PRIVATE ${GAZEBO_INCLUDE_DIRS})
+target_link_directories(franka_pendulum_plugin PRIVATE ${GAZEBO_LIBRARY_DIRS})
+target_link_libraries(franka_pendulum_plugin PRIVATE ${GAZEBO_LIBRARIES})
+target_compile_options(franka_pendulum_plugin PRIVATE ${GAZEBO_CXX_FLAGS})

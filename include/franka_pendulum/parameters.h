@@ -1,13 +1,13 @@
 #pragma once
 
-#include <franka_pole/model.h>
-#include <franka_pole/CommandParameters.h>
+#include <franka_pendulum/model.h>
+#include <franka_pendulum/CommandParameters.h>
 
 #include <ros/ros.h>
 #include <Eigen/Dense>
 #include <mutex>
 
-namespace franka_pole
+namespace franka_pendulum
 {
     class ParameterReader;
 
@@ -51,7 +51,7 @@ namespace franka_pole
 
         // Periods
         unsigned int franka_period;     ///< Period of franka state update, milliseconds
-        unsigned int pole_period;       ///< Period of pole state update, milliseconds
+        unsigned int pendulum_period;       ///< Period of pendulum state update, milliseconds
         unsigned int command_period;    ///< Period of franka torque update (and helper contollers), milliseconds
         unsigned int publish_period;    ///< Period between publishing to ROS topics, milliseconds
         unsigned int controller_period; ///< Period of high-level controllers
@@ -69,8 +69,8 @@ namespace franka_pole
         Eigen::Matrix<double, 3, 1> initial_effector_position;  ///< Effector's initial position
         Eigen::Quaterniond initial_effector_orientation;        ///< Effector's initial orientation
         Eigen::Matrix<double, 7, 1> initial_joint_weights;      ///< Initial weights of joints for inverse kinematic
-        Eigen::Matrix<double, 2, 1> initial_pole_positions;     ///< Pole's initial joint angles
-        Eigen::Matrix<double, 2, 1> initial_pole_velocities;    ///< Pole's initial joint angular velocities
+        Eigen::Matrix<double, 2, 1> initial_pendulum_positions;     ///< Pendulum's initial joint angles
+        Eigen::Matrix<double, 2, 1> initial_pendulum_velocities;    ///< Pendulum's initial joint angular velocities
 
         // Stiffness
         Eigen::Matrix<double, 3, 1> outbound_translation_stiffness; ///< Translational stiffness gain when the effector is out of it's boundaries
@@ -92,23 +92,23 @@ namespace franka_pole
         bool pure_dynamics;                                         ///< `true` if cartesian control should not be applied as force directly, but passed to inverse dynamics control instead
 
         // Filters
-        double pole_angle_filter;   ///< Filter factor of pole angle. 0.0 for no filter
-        double pole_dangle_filter;  ///< Filter factor of pole anglular velocity. 0.0 for no filter
+        double pendulum_angle_filter;   ///< Filter factor of pendulum angle. 0.0 for no filter
+        double pendulum_dangle_filter;  ///< Filter factor of pendulum anglular velocity. 0.0 for no filter
 
         // Noise
         Eigen::Matrix<double, 7, 1> joint_position_mean;                ///< Mean value of noise added to joint position measurements
         Eigen::Matrix<double, 7, 1> joint_position_standard_deviation;  ///< Standard deviation of noise added to joint position measurements
         Eigen::Matrix<double, 7, 1> joint_velocity_standard_deviation;  ///< Standard deviation of noise added to joint velocity measurements
-        Eigen::Matrix<double, 2, 1> pole_angle_mean;                    ///< Mean value of noise added to pole angle measurements
-        Eigen::Matrix<double, 2, 1> pole_angle_standard_deviation;      ///< Standard deviation of noise added to pole angle measurements
+        Eigen::Matrix<double, 2, 1> pendulum_angle_mean;                    ///< Mean value of noise added to pendulum angle measurements
+        Eigen::Matrix<double, 2, 1> pendulum_angle_standard_deviation;      ///< Standard deviation of noise added to pendulum angle measurements
 
         // Reset
         double hardware_reset_duration;                         ///< Duration of hardware reset
         Eigen::Matrix<double, 7, 1> hardware_reset_stiffness;   ///< Joint-space stiffness gain during hardware reset
         Eigen::Matrix<double, 7, 1> hardware_reset_damping;     ///< Joint-space damping gain during hardware reset
 
-        // Pole control
-        Eigen::Matrix<double, 8, 1> pole_control;   ///< Gain to be multiplied with observation vector
+        // Pendulum control
+        Eigen::Matrix<double, 8, 1> pendulum_control;   ///< Gain to be multiplied with observation vector
 
         //Test
         double startup_time;                        ///< Duration till test and simple controllers gradually increase their output from zero to full

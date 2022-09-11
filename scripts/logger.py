@@ -1,14 +1,14 @@
 #!/usr/bin/python3
-from franka_pole.msg import Sample
+from franka_pendulum.msg import Sample
 import rospy, rospkg
 import sys
 
 # Callback for receiving samples
 def callback(sample):
     file.write(
-        "pole_timestamp:                " + str(sample.pole_timestamp) + "\n" +
-        "pole_angle:                    " + str(sample.pole_angle) + "\n" +
-        "franka_timestamp:              " + str(sample.pole_angle) + "\n" +
+        "pendulum_timestamp:                " + str(sample.pendulum_timestamp) + "\n" +
+        "pendulum_angle:                    " + str(sample.pendulum_angle) + "\n" +
+        "franka_timestamp:              " + str(sample.pendulum_angle) + "\n" +
         "franka_effector_position:      " + str(sample.franka_effector_position) + "\n" +
         "franka_effector_velocity:      " + str(sample.franka_effector_velocity) + "\n" +
         "command_timestamp:             " + str(sample.command_timestamp) + "\n" +
@@ -18,9 +18,9 @@ def callback(sample):
 # Main
 if __name__ == '__main__':
     # Read arguments
-    namespace = "franka_pole"
+    namespace = "franka_pendulum"
     next_namespace = False
-    log_path = rospkg.RosPack().get_path("franka_pole") + "/temp/log"
+    log_path = rospkg.RosPack().get_path("franka_pendulum") + "/temp/log"
     next_log_path = False
     for i in sys.argv:
         if next_log_path: log_path = i

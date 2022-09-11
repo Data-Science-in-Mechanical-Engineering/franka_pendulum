@@ -1,7 +1,7 @@
 #!/usr/bin/freecadcmd
 import control, rospkg, numpy as np
 import sys
-sys.path.append(rospkg.RosPack().get_path("franka_pole") + "/scripts/")
+sys.path.append(rospkg.RosPack().get_path("franka_pendulum") + "/scripts/")
 import parts
 
 g = 9.81

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <franka_pole/model.h>
+#include <franka_pendulum/model.h>
 
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
@@ -11,15 +11,15 @@
 #include <random>
 #include <mutex>
 
-namespace franka_pole
+namespace franka_pendulum
 {
     class Parameters;
     class FrankaModel;
     class FrankaState;
     class Publisher;
 
-    ///Class responsible for obtaining, adding noise, filtering and differenting pole state
-    class PoleState
+    ///Class responsible for obtaining, adding noise, filtering and differenting pendulum state
+    class PendulumState
     {
     private:
         //Reserences
@@ -49,10 +49,10 @@ namespace franka_pole
         Eigen::Matrix<double, 2, 1> _joint_dangle;
 
         //Generalized processing from update & _callback
-        void _update(const Eigen::Quaterniond &pole_orientation, ros::Time timestamp);
+        void _update(const Eigen::Quaterniond &pendulum_orientation, ros::Time timestamp);
 
     public:
-        ///Creates pole state object
+        ///Creates pendulum state object
         ///@param parameters Reference to parameters object
         ///@param franka_model Reference to franka model object
         ///@param franka_state Reference to franka state object
@@ -60,29 +60,29 @@ namespace franka_pole
         ///@param mutex Reference system-wide mutex
         ///@param robot_hw `hardware_interface::RobotHW` object
         ///@param node_handle ROS node handle
-        PoleState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, std::mutex *mutex, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
-        ///Resets pole state filters
-        ///@param joint_angle Angles of revolute joints in the pole
-        ///@param joint_dangle Angular velocities of revolute joints in the pole
+        PendulumState(const Parameters *parameters, FrankaModel *franka_model, const FrankaState *franka_state, Publisher *publisher, std::mutex *mutex, hardware_interface::RobotHW *robot_hw, ros::NodeHandle &node_handle);
+        ///Resets pendulum state filters
+        ///@param joint_angle Angles of revolute joints in the pendulum
+        ///@param joint_dangle Angular velocities of revolute joints in the pendulum
         void reset(const Eigen::Matrix<double, 2, 1> &joint_angle, const Eigen::Matrix<double, 2, 1> &joint_dangle);
-        ///Updates pole state
+        ///Updates pendulum state
         ///@param time Current time
         void update(const ros::Time &time);
 
         ///Returns timestamp of the most recent update
         ///@return timestamp of the most recent update
         double get_timestamp();
-        ///Returns angle between the pole and YZ ("around X") and XZ ("around Y") planes. The angle is defined positive when the pole is headed to positive Y or X direction respectively
-        ///@return angle between the pole and the planes
+        ///Returns angle between the pendulum and YZ ("around X") and XZ ("around Y") planes. The angle is defined positive when the pendulum is headed to positive Y or X direction respectively
+        ///@return angle between the pendulum and the planes
         Eigen::Matrix<double, 2, 1> get_angle();
-        ///Returns angular velocity of the pole
-        ///@return derivative of the pole angle
+        ///Returns angular velocity of the pendulum
+        ///@return derivative of the pendulum angle
         Eigen::Matrix<double, 2, 1> get_dangle();
-        ///Returns angle of revolute joints of the pole. The angle is defined positive when the pole is headed to positive Y or X direction respectively
+        ///Returns angle of revolute joints of the pendulum. The angle is defined positive when the pendulum is headed to positive Y or X direction respectively
         ///@return angle of revolute joints
         Eigen::Matrix<double, 2, 1> get_joint_angle();
-        ///Returns angular velocity of the pole
-        ///@return derivative of the pole joint angle
+        ///Returns angular velocity of the pendulum
+        ///@return derivative of the pendulum joint angle
         Eigen::Matrix<double, 2, 1> get_joint_dangle();
     };
 }

@@ -1,4 +1,4 @@
 - builder: doxygen
-  name: franka_pole
+  name: franka_pendulum
   file_patterns: '*.h'
   exclude_patterns: '*/example/*'

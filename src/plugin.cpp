@@ -1,7 +1,7 @@
 #include <pinocchio/fwd.hpp>
-#include <franka_pole/parameters.h>
-#include <franka_pole/parameter_reader.h>
-#include <franka_pole/franka_model.h>
+#include <franka_pendulum/parameters.h>
+#include <franka_pendulum/parameter_reader.h>
+#include <franka_pendulum/franka_model.h>
 
 #include <ros/ros.h>
 #include <gazebo/gazebo.hh>
@@ -13,7 +13,7 @@
 #include <iostream>
 #include <mutex>
 
-namespace franka_pole
+namespace franka_pendulum
 {
     class Plugin : public gazebo::ModelPlugin
     {
@@ -22,7 +22,7 @@ namespace franka_pole
         gazebo::physics::ModelPtr _model;
         gazebo::physics::JointPtr _joints[7];
         gazebo::physics::JointPtr _fingers[2];
-        gazebo::physics::JointPtr _pole[2];
+        gazebo::physics::JointPtr _pendulum[2];
         gazebo::event::ConnectionPtr _connection;
 
         //Components
@@ -41,14 +41,14 @@ namespace franka_pole
         virtual ~Plugin();
     };
 
-    GZ_REGISTER_MODEL_PLUGIN(franka_pole::Plugin)
+    GZ_REGISTER_MODEL_PLUGIN(franka_pendulum::Plugin)
 }
 
-franka_pole::Plugin::Plugin()
+franka_pendulum::Plugin::Plugin()
 {
 }
 
-void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf)
+void franka_pendulum::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr sdf)
 {
     try
     {
@@ -63,7 +63,7 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
         
         //Init semaphore
         _software_reset_semaphore = sem_open(("/" + _parameters->namespacee + "_" + _parameters->arm_id + "_software_reset").c_str(), O_CREAT, 0644, 0);
-        if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_pole::Plugin::Load(): sem_open failed");
+        if (_software_reset_semaphore == SEM_FAILED) throw std::runtime_error("franka_pendulum::Plugin::Load(): sem_open failed");
         int value;
         sem_getvalue(_software_reset_semaphore, &value);
         while (value > 0) { sem_wait(_software_reset_semaphore); value--; }
@@ -73,22 +73,22 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
         for (size_t i = 0; i < 7; i++)
         {
             _joints[i] = model->GetJoint(name_base + "_joint" + std::to_string(i + 1));
-            if (_joints[i] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
+            if (_joints[i] == nullptr) throw std::runtime_error("franka_pendulum::Plugin::Load(): model->GetJoint() failed");
         }
         for (size_t i = 0; i < 2; i++)
         {
             _fingers[i] = model->GetJoint(name_base + "_finger_joint" + std::to_string(i + 1));
-            if (_fingers[i] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
+            if (_fingers[i] == nullptr) throw std::runtime_error("franka_pendulum::Plugin::Load(): model->GetJoint() failed");
         }
         if (get_model_freedom(_parameters->model) >= 1)
         {
-            _pole[0] = model->GetJoint(name_base + "_pole_joint_x");
-            if (_pole[0] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
+            _pendulum[0] = model->GetJoint(name_base + "_pendulum_joint_x");
+            if (_pendulum[0] == nullptr) throw std::runtime_error("franka_pendulum::Plugin::Load(): model->GetJoint() failed");
         }
         if (get_model_freedom(_parameters->model) == 2)
         {
-            _pole[1] = model->GetJoint(name_base + "_pole_joint_y");
-            if (_pole[1] == nullptr) throw std::runtime_error("franka_pole::Plugin::Load(): model->GetJoint() failed");
+            _pendulum[1] = model->GetJoint(name_base + "_pendulum_joint_y");
+            if (_pendulum[1] == nullptr) throw std::runtime_error("franka_pendulum::Plugin::Load(): model->GetJoint() failed");
         }
         
         //Initializing
@@ -107,12 +107,12 @@ void franka_pole::Plugin::Load(gazebo::physics::ModelPtr model, sdf::ElementPtr 
     }
     catch (const std::exception &e)
     {
-        ROS_ERROR_STREAM("Failed to load franka_pole_plugin: " << e.what());
+        ROS_ERROR_STREAM("Failed to load franka_pendulum_plugin: " << e.what());
     }
-    ROS_INFO_STREAM("Loaded franka_pole_plugin.");
+    ROS_INFO_STREAM("Loaded franka_pendulum_plugin.");
 }
 
-void franka_pole::Plugin::Reset()
+void franka_pendulum::Plugin::Reset()
 {
     const double hint[] = { 0.0, -M_PI/4, 0.0, -3*M_PI/4, 0.0, M_PI/2, M_PI/4 };
     Eigen::Matrix<double, 7, 1> initial_joint_positions = _franka_model->effector_inverse_kinematics(_parameters->initial_effector_position, _parameters->initial_effector_orientation, _parameters->initial_joint_weights, Eigen::Matrix<double, 7, 1>::Map(hint));
@@ -127,20 +127,20 @@ void franka_pole::Plugin::Reset()
         _fingers[i]->SetPosition(0, 0.0);
         _fingers[i]->SetVelocity(0, 0.0);
     }
-    if (_pole[0] != nullptr)
+    if (_pendulum[0] != nullptr)
     {
-        _pole[0]->SetPosition(0, _parameters->initial_pole_positions(0));
-        _pole[0]->SetVelocity(0, _parameters->initial_pole_velocities(0));
+        _pendulum[0]->SetPosition(0, _parameters->initial_pendulum_positions(0));
+        _pendulum[0]->SetVelocity(0, _parameters->initial_pendulum_velocities(0));
     }
-    if (_pole[1] != nullptr)
+    if (_pendulum[1] != nullptr)
     {
-        if (_parameters->model == Model::D2) _pole[1]->SetPosition(0, _parameters->initial_pole_positions(1) + M_PI/6);
-        else _pole[1]->SetPosition(0, _parameters->initial_pole_positions(1));
-        _pole[1]->SetVelocity(0, _parameters->initial_pole_velocities(1));
+        if (_parameters->model == Model::D2) _pendulum[1]->SetPosition(0, _parameters->initial_pendulum_positions(1) + M_PI/6);
+        else _pendulum[1]->SetPosition(0, _parameters->initial_pendulum_positions(1));
+        _pendulum[1]->SetVelocity(0, _parameters->initial_pendulum_velocities(1));
     }
 }
 
-void franka_pole::Plugin::Update(const gazebo::common::UpdateInfo &info)
+void franka_pendulum::Plugin::Update(const gazebo::common::UpdateInfo &info)
 {
     std::lock_guard<std::mutex> guard(_mutex);
     int value;
@@ -152,7 +152,7 @@ void franka_pole::Plugin::Update(const gazebo::common::UpdateInfo &info)
     }
 }
 
-franka_pole::Plugin::~Plugin()
+franka_pendulum::Plugin::~Plugin()
 {
-    ROS_INFO_STREAM("franka_pole::Plugin unloaded");
+    ROS_INFO_STREAM("franka_pendulum::Plugin unloaded");
 }
