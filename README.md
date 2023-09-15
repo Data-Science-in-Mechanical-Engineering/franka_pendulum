@@ -24,18 +24,18 @@ Here you will find a ROS package that is used for control of [Franka Emika Panda
 An installation script for Debian-based systems follows:
 ```
 ROS_DISTRO=<YOUR ROS DISTRIBUTION>
-sudo apt install ros-${ROS_DISTRO}-franka-ros                   # Installing franka_ros package
-sudo apt install ros-${ROS_DISTRO}-pinocchio                    # Installing pinocchio package
-sudo apt install ros-${ROS_DISTRO}-rosdoc-lite                  # Installing rosdoc-lite
-sudo apt install ros-${ROS_DISTRO}-fkie-master-sync             # Installing fkie-master-sync
-sudo apt install doxygen                                        # Installing Doxygen
-if [ ! -d ~/catkin_ws/src ]; then mkdir -p ~/catkin_ws/src; fi  # Creating ROS workspace
-cd ~/catkin_ws/src                                              # Setting directory to sources
-git clone https://github.com/kyrylo-sovailo/franka_pendulum         # Downloading source code
-cd ..                                                           # Setting directory to workspace
-source /opt/ros/${ROS_DISTRO}/setup.bash                        # Including ROS
-catkin_make                                                     # Building ROS workspace
-source ~/catkin_ws/devel/setup.bash                             # Including the workspace
+sudo apt install ros-${ROS_DISTRO}-franka-ros                                           # Installing franka_ros package
+sudo apt install ros-${ROS_DISTRO}-pinocchio                                            # Installing pinocchio package
+sudo apt install ros-${ROS_DISTRO}-rosdoc-lite                                          # Installing rosdoc-lite
+sudo apt install ros-${ROS_DISTRO}-fkie-master-sync                                     # Installing fkie-master-sync
+sudo apt install doxygen                                                                # Installing Doxygen
+if [ ! -d ~/catkin_ws/src ]; then mkdir -p ~/catkin_ws/src; fi                          # Creating ROS workspace
+cd ~/catkin_ws/src                                                                      # Setting directory to sources
+git clone https://github.com/Data-Science-in-Mechanical-Engineering/franka_pendulum     # Downloading source code
+cd ..                                                                                   # Setting directory to workspace
+source /opt/ros/${ROS_DISTRO}/setup.bash                                                # Including ROS
+catkin_make                                                                             # Building ROS workspace
+source ~/catkin_ws/devel/setup.bash                                                     # Including the workspace
 ```
 
 You may also want to add the following lines to your `~/.bashrc` in order to execute them automatically when you enter the terminal:
@@ -114,3 +114,5 @@ The documentation covers all C++ classes and interfaces important for developmen
 
 ### Contributors
  - Kyrylo Sovailo
+ - Shiming He
+ - Alexander von Rohr

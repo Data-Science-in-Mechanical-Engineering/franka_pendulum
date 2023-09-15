@@ -170,7 +170,7 @@ sudo apt install ros-${ROS_DISTRO}-fkie-master-sync             # Installing fki
 sudo apt install doxygen                                        # Installing Doxygen
 if [ ! -d ~/catkin_ws/src ]; then mkdir -p ~/catkin_ws/src; fi  # Creating ROS workspace
 cd ~/catkin_ws/src                                              # Setting directory to sources
-git clone https://github.com/kyrylo-sovailo/franka_pendulum         # Downloading source code
+git clone https://github.com/Data-Science-in-Mechanical-Engineering/franka_pendulum         # Downloading source code
 cd ..                                                           # Setting directory to workspace
 source /opt/ros/${ROS_DISTRO}/setup.bash                        # Including ROS
 catkin_make                                                     # Building ROS workspace
@@ -253,4 +253,6 @@ The documentation covers all C++ classes and interfaces important for developmen
 
 @section Contributors
  - Kyrylo Sovailo
+ - Shiming He
+ - Alexander von Rohr
 */

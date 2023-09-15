@@ -9,7 +9,7 @@
 
   <license>MIT</license>
 
-  <url type="website">https://github.com/kyrylo-sovailo/franka_pendulum</url>
+  <url type="website">https://github.com/Data-Science-in-Mechanical-Engineering/franka_pendulum</url>
 
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
